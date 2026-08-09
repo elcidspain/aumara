@@ -1,0 +1,135 @@
+{
+  "version": "1.0.0",
+  "project": "AUMARA Digital Twin / Immersive Site",
+  "owner": "EL CID VENTURES BENIDOLEIG S.L. / Ilia Doroshenko",
+  "site": {
+    "name": "AUMARA Glamping @ Complejo El Cid",
+    "address": "Urb. Rincón del Silencio 2-3, 03759 Benidoleig (Alicante)",
+    "finca": "2071 Benidoleig · RP Pedreguer",
+    "catastro": "8982501YH5988S0001UG",
+    "superficie_parcela_m2": 8141,
+    "referencia_cota_msnm": 91,
+    "architect": "PUCHOL ARQUITECTES / Arquipuchol S.L.P. — Francisco Puchol Pericás",
+    "plan_source": "240307_9-PLANOS_Glamping.pdf (Drive: 17QLrZ1RiBlkojppNcEMG1TcXuoYJcVS2)"
+  },
+  "sources_of_truth": {
+    "planos_pdf": {
+      "name": "240307_9-PLANOS_Glamping.pdf",
+      "drive_file_id": "17QLrZ1RiBlkojppNcEMG1TcXuoYJcVS2",
+      "pages": 19,
+      "key_sheets": [
+        "ESQUEMA UBICACIÓN DE LA PROPUESTA E. 1/500",
+        "PLANO DE Distribución parcela. Estado Reformado 1/250",
+        "ESQUEMA DE DISTRIBUCIÓN EN PLANTA E. 1/500",
+        "PLANO DE Plantas distribución domos 1/100"
+      ]
+    },
+    "proyecto_completo": {
+      "name": "240307_Proyecto completo_Glamping_RH_firmado.pdf",
+      "drive_file_id": "1tm7HwRDk4s3bT5ZLD-sKRytHP0RAdU5j"
+    },
+    "required_assets": [
+      "aumara_site_plan_clean.jpg",
+      "ground_real.jpg / pnoa_25cm.jpg (PNOA orthophoto)",
+      "terrain_real.json (heightmap + mesh)",
+      "l2-scene.tsx (React Three Fiber / drei scene)"
+    ],
+    "repo_targets": {
+      "github_owner": "elcidspain",
+      "github_repo_suggested": "aumara",
+      "paths": [
+        "/components/aumara/l2-scene.tsx",
+        "/twin/terrain_real.json",
+        "/public/aumara/site_plan_clean.jpg",
+        "/AUMARA_TWIN_LOCK.json"
+      ]
+    },
+    "vercel": {
+      "preview_domain": "aumara.vercel.app",
+      "production_domain_hint": "aumara.elcidspain.com or aumara.es"
+    }
+  },
+  "geometry_locks": {
+    "domes": {
+      "types": [
+        { "id": "domo_o9", "diameter_m": 9, "area_m2_approx": 49.89, "count_target": 2 },
+        { "id": "domo_o7", "diameter_m": 7, "area_m2_approx": 27.69, "count_target": 3 },
+        { "id": "domo_o7_adapt", "diameter_m": 7, "area_m2_approx": 29.51, "count_target": 1 }
+      ],
+      "rules": [
+        "NEVER place any dome on the padel court footprint",
+        "NEVER allow dome-to-dome overlap (min center distance = (r1+r2)*1.15)",
+        "Domes must sit on real terrain mesh (height from terrain_real.json), not floating or buried",
+        "Keep relative layout from Puchol 1/500 distribution plan"
+      ]
+    },
+    "pool": {
+      "approx_dims_m": [16, 18],
+      "proportion_lock": 0.58,
+      "notes": "User smoke: proportion 0.58 of the basin. Do not stretch arbitrarily."
+    },
+    "padel": {
+      "rules": ["Domes MUST NOT occupy padel court. Keep court free and visible in L2."]
+    },
+    "terrain": {
+      "ground_exists_at_camera_height_m": 18,
+      "reference_msnm": 91,
+      "rules": [
+        "At camera/eye height ≈18 m the ground mesh MUST be visible and continuous",
+        "No holes / missing tiles under the glamping zone",
+        "Use real PNOA / ground_real as albedo + height source"
+      ]
+    },
+    "scale": {
+      "world_units": "meters",
+      "origin": "parcel centroid or U43 / Rincón del Silencio entrance as defined in plan",
+      "max_building_height_m": 5.65
+    }
+  },
+  "smoke_tests": {
+    "L2_scene": [
+      {
+        "id": "SMOKE_01_GROUND_18M",
+        "desc": "At 18 m camera height the terrain mesh is present and continuous under the entire glamping zone",
+        "pass_criteria": "no empty void / black hole under domes or pool"
+      },
+      {
+        "id": "SMOKE_02_NO_DOMES_ON_PADEL",
+        "desc": "Zero domes intersect the padel court polygon",
+        "pass_criteria": "padel court free; domes outside its AABB + margin"
+      },
+      {
+        "id": "SMOKE_03_NO_OVERLAP",
+        "desc": "Domes do not overlap one-on-one",
+        "pass_criteria": "min center-center distance > sum of radii * 1.15"
+      },
+      {
+        "id": "SMOKE_04_POOL_PROPORTION",
+        "desc": "Pool basin aspect / proportion = 0.58 (or within 0.02)",
+        "pass_criteria": "width/length ≈ 0.58 or the locked ratio from plan"
+      }
+    ],
+    "fail_action": "Agent MUST keep iterating (edit terrain_real.json + l2-scene.tsx + re-deploy preview) until ALL smoke tests pass. No partial delivery."
+  },
+  "workflow": {
+    "connectors_required": [
+      "Google Drive (read planos + upload lock + assets)",
+      "GitHub (write to elcidspain/aumara or create it)",
+      "Vercel (preview aumara.vercel.app with cache)",
+      "Knowledge / this lock file as single source of truth"
+    ],
+    "agent_loop": "Prod Imagine Grok agent runs non-stop until smoke suite green, then proceeds to L8.1 promo (same terrain) and L10 interiors.",
+    "output_artifacts": [
+      "updated /twin/terrain_real.json",
+      "updated /components/aumara/l2-scene.tsx",
+      "Vercel preview URL",
+      "screenshot / video proof of smoke pass"
+    ]
+  },
+  "next_stages_after_smoke": [
+    "L8.1 — promo flyover / hero using locked terrain + correct dome positions",
+    "L10 — interiors of Domo Ø9 / Ø7"
+  ],
+  "created": "2026-08-09",
+  "status": "LOCKED — do not change geometry without new version + re-smoke"
+}
