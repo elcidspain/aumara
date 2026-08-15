@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Submit Nominalia reset request
+      - name: Submit Nominalia reset request by client ID
         shell: bash
         env:
-          RECOVERY_EMAIL: elcidspain@gmail.com
+          CLIENT_ID: ID29270161-NOMI
         run: |
           python -m pip install --quiet selenium
           python - <<'PY'
@@ -37,36 +37,39 @@ jobs:
               wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
               selects = driver.find_elements(By.TAG_NAME, 'select')
-              if selects:
-                  sel = Select(selects[0])
-                  for opt in sel.options:
-                      text = (opt.text or '').lower()
-                      if 'correo' in text or 'email' in text or 'e-mail' in text:
-                          sel.select_by_visible_text(opt.text)
-                          break
+              if not selects:
+                  raise RuntimeError('No recovery selector found')
+              sel = Select(selects[0])
+              options = [(o.text or '').strip() for o in sel.options]
+              print('RECOVERY_OPTIONS=' + repr(options))
+              chosen = next((t for t in options if 'nombre de usuario' in t.lower()), None)
+              if not chosen:
+                  raise RuntimeError('Username recovery option not found')
+              sel.select_by_visible_text(chosen)
+              driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles:true}));", selects[0])
+              time.sleep(1)
 
               inputs = [el for el in driver.find_elements(By.TAG_NAME, 'input') if el.is_displayed() and el.is_enabled() and (el.get_attribute('type') or '').lower() in ('text','email','')]
               if not inputs:
                   raise RuntimeError('No recovery input found')
               target = inputs[-1]
+              print('RECOVERY_INPUT=' + str(target.get_attribute('name')))
               target.clear()
-              target.send_keys(os.environ['RECOVERY_EMAIL'])
+              target.send_keys(os.environ['CLIENT_ID'])
 
               buttons = driver.find_elements(By.XPATH, "//button|//input[@type='submit']")
-              submit = None
-              for b in buttons:
-                  label = ((b.text or '') + ' ' + (b.get_attribute('value') or '')).lower()
-                  if 'continuar' in label or 'continue' in label:
-                      submit = b
-                      break
+              submit = next((b for b in buttons if 'continuar' in (((b.text or '') + ' ' + (b.get_attribute('value') or '')).lower())), None)
               if submit is None:
-                  submit = next((b for b in buttons if b.is_displayed() and b.is_enabled()), None)
-              if submit is None:
-                  raise RuntimeError('No submit button found')
+                  raise RuntimeError('Continuar button not found')
+              before = driver.current_url
               submit.click()
-              time.sleep(5)
-              print('RESET_REQUEST_SUBMITTED')
-              print(' '.join(driver.find_element(By.TAG_NAME, 'body').text.split())[:1200])
+              time.sleep(6)
+              after = driver.current_url
+              body = ' '.join(driver.find_element(By.TAG_NAME, 'body').text.split())
+              print('RESET_REQUEST_CLICKED')
+              print('URL_CHANGED=' + str(before != after))
+              print('POST_URL=' + after)
+              print('POST_BODY=' + body[:1800])
           finally:
               driver.quit()
           PY
