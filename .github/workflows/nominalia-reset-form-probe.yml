@@ -1,0 +1,59 @@
+name: Probe Nominalia reset form contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nominalia-reset-form-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read sanitized reset form contract
+        shell: bash
+        run: |
+          python -m pip install --quiet requests beautifulsoup4
+          python - <<'PY'
+          import json, requests
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin
+
+          r = requests.get('https://controlpanel.nominalia.com/password/', timeout=30)
+          r.raise_for_status()
+          s = BeautifulSoup(r.text, 'html.parser')
+          out = []
+          for f in s.find_all('form'):
+              fields = []
+              for el in f.find_all(['input','select','button']):
+                  item = {
+                      'tag': el.name,
+                      'type': el.get('type'),
+                      'name': el.get('name'),
+                      'id': el.get('id'),
+                  }
+                  if el.name == 'select':
+                      item['options'] = [
+                          {'text': o.get_text(' ', strip=True), 'value': o.get('value')}
+                          for o in el.find_all('option')
+                      ]
+                  elif (el.get('type') or '').lower() == 'hidden':
+                      item['value_present'] = bool(el.get('value'))
+                  else:
+                      item['value'] = el.get('value')
+                      item['text'] = el.get_text(' ', strip=True)[:120]
+                  fields.append(item)
+              out.append({
+                  'method': (f.get('method') or 'get').lower(),
+                  'action': urljoin(r.url, f.get('action') or r.url),
+                  'id': f.get('id'),
+                  'name': f.get('name'),
+                  'onsubmit': f.get('onsubmit'),
+                  'fields': fields,
+              })
+          print(json.dumps(out, ensure_ascii=False, indent=2))
+          PY
