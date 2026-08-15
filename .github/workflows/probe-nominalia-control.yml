@@ -1,0 +1,36 @@
+name: Probe Nominalia control credential
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-nominalia-control.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      S_NOMINALIA_CONTROL_PASSWORD: ${{ secrets.NOMINALIA_CONTROL_PASSWORD }}
+      S_NOMINALIA_CONTROLPASSWORD: ${{ secrets.NOMINALIA_CONTROLPASSWORD }}
+      S_NOMINALIACONTROLPASSWORD: ${{ secrets.NOMINALIACONTROLPASSWORD }}
+      S_CONTROL_PASSWORD: ${{ secrets.CONTROL_PASSWORD }}
+      S_NOMINALIA_PASSWORD: ${{ secrets.NOMINALIA_PASSWORD }}
+      S_NOMINALIA_PANEL_PASSWORD: ${{ secrets.NOMINALIA_PANEL_PASSWORD }}
+      S_NOMINALIA_CONTROL_USER: ${{ secrets.NOMINALIA_CONTROL_USER }}
+      S_NOMINALIA_CONTROL_USERNAME: ${{ secrets.NOMINALIA_CONTROL_USERNAME }}
+      S_NOMINALIA_USERNAME: ${{ secrets.NOMINALIA_USERNAME }}
+      S_NOMINALIA_USER: ${{ secrets.NOMINALIA_USER }}
+      S_NOMINALIA_EMAIL: ${{ secrets.NOMINALIA_EMAIL }}
+    steps:
+      - name: Report names only
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          print(json.dumps(sorted(k[2:] for k,v in os.environ.items() if k.startswith('S_') and v)))
+          PY
