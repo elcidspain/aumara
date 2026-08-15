@@ -1,0 +1,72 @@
+name: Nominalia password reset request
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nominalia-reset-request.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  request-reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Submit Nominalia reset request
+        shell: bash
+        env:
+          RECOVERY_EMAIL: elcidspain@gmail.com
+        run: |
+          python -m pip install --quiet selenium
+          python - <<'PY'
+          import os, time
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import Select, WebDriverWait
+
+          opts = webdriver.ChromeOptions()
+          opts.add_argument('--headless=new')
+          opts.add_argument('--no-sandbox')
+          opts.add_argument('--disable-dev-shm-usage')
+          driver = webdriver.Chrome(options=opts)
+          try:
+              driver.get('https://controlpanel.nominalia.com/password/')
+              wait = WebDriverWait(driver, 30)
+              wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+              selects = driver.find_elements(By.TAG_NAME, 'select')
+              if selects:
+                  sel = Select(selects[0])
+                  for opt in sel.options:
+                      text = (opt.text or '').lower()
+                      if 'correo' in text or 'email' in text or 'e-mail' in text:
+                          sel.select_by_visible_text(opt.text)
+                          break
+
+              inputs = [el for el in driver.find_elements(By.TAG_NAME, 'input') if el.is_displayed() and el.is_enabled() and (el.get_attribute('type') or '').lower() in ('text','email','')]
+              if not inputs:
+                  raise RuntimeError('No recovery input found')
+              target = inputs[-1]
+              target.clear()
+              target.send_keys(os.environ['RECOVERY_EMAIL'])
+
+              buttons = driver.find_elements(By.XPATH, "//button|//input[@type='submit']")
+              submit = None
+              for b in buttons:
+                  label = ((b.text or '') + ' ' + (b.get_attribute('value') or '')).lower()
+                  if 'continuar' in label or 'continue' in label:
+                      submit = b
+                      break
+              if submit is None:
+                  submit = next((b for b in buttons if b.is_displayed() and b.is_enabled()), None)
+              if submit is None:
+                  raise RuntimeError('No submit button found')
+              submit.click()
+              time.sleep(5)
+              print('RESET_REQUEST_SUBMITTED')
+              print(' '.join(driver.find_element(By.TAG_NAME, 'body').text.split())[:1200])
+          finally:
+              driver.quit()
+          PY
