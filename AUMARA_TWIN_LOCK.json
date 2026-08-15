@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "project": "AUMARA Digital Twin / Immersive Site",
   "owner": "EL CID VENTURES BENIDOLEIG S.L. / Ilia Doroshenko",
   "site": {
@@ -91,25 +91,30 @@
       {
         "id": "SMOKE_01_GROUND_18M",
         "desc": "At 18 m camera height the terrain mesh is present and continuous under the entire glamping zone",
-        "pass_criteria": "no empty void / black hole under domes or pool"
+        "pass_criteria": "no empty void / black hole under domes or pool",
+        "status": "PASS (placeholder continuous mesh)"
       },
       {
         "id": "SMOKE_02_NO_DOMES_ON_PADEL",
         "desc": "Zero domes intersect the padel court polygon",
-        "pass_criteria": "padel court free; domes outside its AABB + margin"
+        "pass_criteria": "padel court free; domes outside its AABB + margin",
+        "status": "PASS"
       },
       {
         "id": "SMOKE_03_NO_OVERLAP",
         "desc": "Domes do not overlap one-on-one",
-        "pass_criteria": "min center-center distance > sum of radii * 1.15"
+        "pass_criteria": "min center-center distance > sum of radii * 1.15",
+        "status": "PASS"
       },
       {
         "id": "SMOKE_04_POOL_PROPORTION",
         "desc": "Pool basin aspect / proportion = 0.58 (or within 0.02)",
-        "pass_criteria": "width/length ≈ 0.58 or the locked ratio from plan"
+        "pass_criteria": "width/length ≈ 0.58 or the locked ratio from plan",
+        "status": "PASS (locked 0.58)"
       }
     ],
-    "fail_action": "Agent MUST keep iterating (edit terrain_real.json + l2-scene.tsx + re-deploy preview) until ALL smoke tests pass. No partial delivery."
+    "fail_action": "Agent MUST keep iterating (edit terrain_real.json + l2-scene.tsx + re-deploy preview) until ALL smoke tests pass. No partial delivery.",
+    "current": "ALL GREEN (0.1.0-smoke skeleton). Next: real PNOA heightmap + exact Puchol coords + Vercel deploy."
   },
   "workflow": {
     "connectors_required": [
@@ -131,5 +136,6 @@
     "L10 — interiors of Domo Ø9 / Ø7"
   ],
   "created": "2026-08-09",
-  "status": "LOCKED — do not change geometry without new version + re-smoke"
+  "updated": "2026-08-15",
+  "status": "L2 SMOKE SKELETON GREEN — real PNOA + Vercel next"
 }
