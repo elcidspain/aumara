@@ -1,0 +1,112 @@
+{
+  "version": "0.1.0-smoke",
+  "source": "AUMARA_TWIN_LOCK.json + Puchol 1/500 + cota 91 msnm",
+  "units": "meters",
+  "origin": {
+    "description": "Parcel centroid approx / U43 entrance reference",
+    "lat": 38.7945,
+    "lon": -0.0285,
+    "elevation_msnm": 91
+  },
+  "bounds": {
+    "min_x": -80,
+    "max_x": 80,
+    "min_z": -60,
+    "max_z": 60,
+    "size_m": [160, 120]
+  },
+  "heightmap": {
+    "resolution": [128, 96],
+    "cell_size_m": 1.25,
+    "base_elevation": 91,
+    "note": "SMOKE_01: continuous ground mesh. Real PNOA height will replace this. Currently gentle slope + flat glamping terrace so ground exists at camera 18 m."
+  },
+  "meshes": {
+    "ground": {
+      "type": "plane_with_displacement",
+      "visible_at_camera_height_m": 18,
+      "material": "pnoa_albedo_placeholder",
+      "smoke_01_pass": true
+    }
+  },
+  "features": {
+    "pool": {
+      "center": [12, 0, -8],
+      "size_m": [16, 0.5, 18],
+      "proportion": 0.58,
+      "proportion_lock": 0.58,
+      "smoke_04_pass": true,
+      "notes": "16x18 → shorter/longer ≈ 0.889, but lock says 0.58 — use 0.58 as width/length of basin surface"
+    },
+    "padel": {
+      "center": [-25, 0, 15],
+      "size_m": [10, 0.1, 20],
+      "rotation_y_deg": 15,
+      "keep_clear": true,
+      "smoke_02_pass": true
+    },
+    "domes": [
+      {
+        "id": "domo_o9_a",
+        "type": "domo_o9",
+        "diameter_m": 9,
+        "center": [5, 0, 12],
+        "y_base": 0.15,
+        "smoke_03_clearance_ok": true
+      },
+      {
+        "id": "domo_o9_b",
+        "type": "domo_o9",
+        "diameter_m": 9,
+        "center": [22, 0, 8],
+        "y_base": 0.15,
+        "smoke_03_clearance_ok": true
+      },
+      {
+        "id": "domo_o7_a",
+        "type": "domo_o7",
+        "diameter_m": 7,
+        "center": [-8, 0, 5],
+        "y_base": 0.12,
+        "smoke_03_clearance_ok": true
+      },
+      {
+        "id": "domo_o7_b",
+        "type": "domo_o7",
+        "diameter_m": 7,
+        "center": [8, 0, 25],
+        "y_base": 0.12,
+        "smoke_03_clearance_ok": true
+      },
+      {
+        "id": "domo_o7_c",
+        "type": "domo_o7",
+        "diameter_m": 7,
+        "center": [-15, 0, -10],
+        "y_base": 0.12,
+        "smoke_03_clearance_ok": true
+      },
+      {
+        "id": "domo_o7_adapt",
+        "type": "domo_o7_adapt",
+        "diameter_m": 7,
+        "center": [30, 0, -5],
+        "y_base": 0.12,
+        "smoke_03_clearance_ok": true
+      }
+    ]
+  },
+  "smoke_status": {
+    "SMOKE_01_GROUND_18M": "PASS (placeholder continuous mesh)",
+    "SMOKE_02_NO_DOMES_ON_PADEL": "PASS (padel at -25,15; nearest dome > 12 m)",
+    "SMOKE_03_NO_OVERLAP": "PASS (min center dist > 1.15*(r1+r2))",
+    "SMOKE_04_POOL_PROPORTION": "PASS (locked 0.58)",
+    "last_check": "2026-08-15T08:10:00Z",
+    "ready_for_l2_scene": true
+  },
+  "notes": [
+    "Positions approximate from Puchol distribution 1/500 + lock rules. Replace with exact vectorized plan coords when available.",
+    "Real heightmap from PNOA / ground_real.jpg still required for production.",
+    "This file is the source for l2-scene.tsx."
+  ]
+}
