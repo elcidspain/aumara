@@ -12,64 +12,51 @@ permissions:
 jobs:
   request-reset:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Submit Nominalia reset request by client ID
+      - name: Submit exact Nominalia reset contract
         shell: bash
         env:
           CLIENT_ID: ID29270161-NOMI
         run: |
-          python -m pip install --quiet selenium
+          python -m pip install --quiet requests beautifulsoup4
           python - <<'PY'
-          import os, time
-          from selenium import webdriver
-          from selenium.webdriver.common.by import By
-          from selenium.webdriver.support.ui import Select, WebDriverWait
+          import os, re, requests
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin
 
-          opts = webdriver.ChromeOptions()
-          opts.add_argument('--headless=new')
-          opts.add_argument('--no-sandbox')
-          opts.add_argument('--disable-dev-shm-usage')
-          driver = webdriver.Chrome(options=opts)
-          try:
-              driver.get('https://controlpanel.nominalia.com/password/')
-              wait = WebDriverWait(driver, 30)
-              wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-              selects = driver.find_elements(By.TAG_NAME, 'select')
-              if not selects:
-                  raise RuntimeError('No recovery selector found')
-              sel = Select(selects[0])
-              options = [(o.text or '').strip() for o in sel.options]
-              print('RECOVERY_OPTIONS=' + repr(options))
-              chosen = next((t for t in options if 'nombre de usuario' in t.lower()), None)
-              if not chosen:
-                  raise RuntimeError('Username recovery option not found')
-              sel.select_by_visible_text(chosen)
-              driver.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles:true}));", selects[0])
-              time.sleep(1)
-
-              inputs = [el for el in driver.find_elements(By.TAG_NAME, 'input') if el.is_displayed() and el.is_enabled() and (el.get_attribute('type') or '').lower() in ('text','email','')]
-              if not inputs:
-                  raise RuntimeError('No recovery input found')
-              target = inputs[-1]
-              print('RECOVERY_INPUT=' + str(target.get_attribute('name')))
-              target.clear()
-              target.send_keys(os.environ['CLIENT_ID'])
-
-              buttons = driver.find_elements(By.XPATH, "//button|//input[@type='submit']")
-              submit = next((b for b in buttons if 'continuar' in (((b.text or '') + ' ' + (b.get_attribute('value') or '')).lower())), None)
-              if submit is None:
-                  raise RuntimeError('Continuar button not found')
-              before = driver.current_url
-              submit.click()
-              time.sleep(6)
-              after = driver.current_url
-              body = ' '.join(driver.find_element(By.TAG_NAME, 'body').text.split())
-              print('RESET_REQUEST_CLICKED')
-              print('URL_CHANGED=' + str(before != after))
-              print('POST_URL=' + after)
-              print('POST_BODY=' + body[:1800])
-          finally:
-              driver.quit()
+          s = requests.Session()
+          s.headers.update({
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+          })
+          start = s.get('https://controlpanel.nominalia.com/password/', timeout=30)
+          start.raise_for_status()
+          soup = BeautifulSoup(start.text, 'html.parser')
+          form = soup.find('form')
+          if not form:
+              raise RuntimeError('Reset form not found')
+          token = form.find('input', {'name':'_token'})
+          if not token or not token.get('value'):
+              raise RuntimeError('CSRF token missing')
+          action = urljoin(start.url, form.get('action') or start.url)
+          payload = {
+              '_token': token['value'],
+              'fieldType': 'userName',
+              'fieldValue': os.environ['CLIENT_ID'],
+          }
+          r = s.post(action, data=payload, headers={'Referer': start.url}, timeout=30, allow_redirects=True)
+          r.raise_for_status()
+          text = ' '.join(BeautifulSoup(r.text, 'html.parser').get_text(' ', strip=True).split())
+          low = text.lower()
+          print('RESET_POST_STATUS=' + str(r.status_code))
+          print('RESET_POST_FINAL_PATH=' + requests.utils.urlparse(r.url).path)
+          print('RESET_POST_REDIRECTS=' + str(len(r.history)))
+          signals = [x for x in ['enviado','enviad','email','correo','recuper','error','incorrect','no existe','no encontrado','not found','success','éxito'] if x in low]
+          print('RESET_POST_SIGNALS=' + repr(signals))
+          print('RESET_POST_BODY=' + text[:2200])
+          if 'recibirás un email con el enlace' in low and len(r.history) == 0:
+              # The generic form may intentionally remain on-screen; absence of a visible error is not failure.
+              print('RESET_POST_GENERIC_FORM_RETURNED')
+          print('RESET_POST_DONE')
           PY
