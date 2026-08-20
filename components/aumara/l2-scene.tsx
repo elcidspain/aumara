@@ -5,13 +5,11 @@
  */
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Environment, Html, useTexture } from "@react-three/drei";
-import { Suspense, useMemo, useRef } from "react";
-import * as THREE from "three";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Environment, Html } from "@react-three/drei";
+import { Suspense } from "react";
 import terrain from "../../twin/terrain_real.json";
 
-// --- Geometry helpers from lock ---
 const DOME_TYPES = {
   domo_o9: { r: 4.5, h: 4.2, color: "#e8d5b7" },
   domo_o7: { r: 3.5, h: 3.4, color: "#d4c4a8" },
@@ -22,7 +20,6 @@ function Dome({ dome }: { dome: any }) {
   const t = DOME_TYPES[dome.type as keyof typeof DOME_TYPES] || DOME_TYPES.domo_o7;
   return (
     <group position={[dome.center[0], dome.y_base + t.h * 0.5, dome.center[2]]}>
-      {/* geodesic-ish dome: sphere + base ring */}
       <mesh castShadow receiveShadow>
         <sphereGeometry args={[t.r, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
         <meshStandardMaterial color={t.color} roughness={0.65} metalness={0.05} />
@@ -37,8 +34,7 @@ function Dome({ dome }: { dome: any }) {
 
 function Pool() {
   const p = terrain.features.pool;
-  // proportion lock 0.58 → use as width/length of surface
-  const w = p.size_m[0] * 0.58; // force lock
+  const w = p.size_m[0] * 0.58;
   const l = p.size_m[2];
   return (
     <group position={p.center as [number, number, number]}>
@@ -46,7 +42,6 @@ function Pool() {
         <planeGeometry args={[w, l]} />
         <meshStandardMaterial color="#3a8fb7" transparent opacity={0.85} roughness={0.1} metalness={0.3} />
       </mesh>
-      {/* deck */}
       <mesh position={[0, -0.05, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[w + 2.5, l + 2.5]} />
         <meshStandardMaterial color="#c2b280" roughness={0.9} />
@@ -60,10 +55,9 @@ function Padel() {
   return (
     <group position={p.center as [number, number, number]} rotation={[0, (p.rotation_y_deg * Math.PI) / 180, 0]}>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[p.size_m[0], p.size_m[2]]} />
+        <planeGeometry args={[p.size_m[0], p.size_m[2]] />
         <meshStandardMaterial color="#2d5a27" roughness={0.7} />
       </mesh>
-      {/* glass walls simple */}
       <mesh position={[0, 1.5, p.size_m[2] / 2]}>
         <boxGeometry args={[p.size_m[0], 3, 0.08]} />
         <meshStandardMaterial color="#a8d4e6" transparent opacity={0.35} />
@@ -73,7 +67,6 @@ function Padel() {
 }
 
 function Ground() {
-  // SMOKE_01: continuous ground that exists at camera 18 m
   const size = terrain.bounds.size_m;
   return (
     <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
@@ -84,7 +77,6 @@ function Ground() {
 }
 
 function CameraHeightMarker() {
-  // visual proof for SMOKE_01 — camera eye at ~18 m should see ground
   return (
     <mesh position={[0, 18, 0]}>
       <sphereGeometry args={[0.4, 16, 16]} />

@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 /**
  * AUMARA Director — GitHub-native agent.
- * Runs in Actions with GITHUB_TOKEN. No Copilot SDK required.
+ * Reads the actual Auto-Prepare-Merge conclusion. A green badge with a
+ * failing lint step is a hold, not a go.
  */
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const REPO = process.env.GITHUB_REPOSITORY;
 const PR = process.env.PR_NUMBER || "";
+const HEAD_SHA = process.env.HEAD_SHA || process.env.GITHUB_SHA || "";
+const PREPARE_CONCLUSION = (process.env.PREPARE_CONCLUSION || "").toLowerCase();
 
 if (!TOKEN || !REPO) {
   console.error("GITHUB_TOKEN and GITHUB_REPOSITORY are required");
@@ -31,12 +34,42 @@ async function gh(path, { method = "GET", body } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-function buildReport({ pulls, files }) {
+async function prepareConclusion() {
+  if (PREPARE_CONCLUSION) return PREPARE_CONCLUSION;
+  if (!HEAD_SHA) return "unknown";
+  const data = await gh(
+    `/repos/${owner}/${repo}/actions/workflows/auto-prepare-merge.yml/runs?head_sha=${HEAD_SHA}&per_page=5`,
+  );
+  const run = (data.workflow_runs || []).find((r) => r.status === "completed");
+  return (run?.conclusion || "unknown").toLowerCase();
+}
+
+function decision({ lockTouched, prepare }) {
+  if (prepare !== "success") {
+    return {
+      verdict: "HOLD",
+      text: `Auto-Prepare-Merge conclusion is **${prepare}**. Green means typecheck AND lint both passed. Do not merge.`,
+    };
+  }
+  if (lockTouched) {
+    return {
+      verdict: "HOLD",
+      text: "Lock or terrain changed. Re-run the L2 smoke suite before merge.",
+    };
+  }
+  return {
+    verdict: "GO",
+    text: "Auto-Prepare-Merge is a real success (typecheck + lint). Lock untouched. Ready for review.",
+  };
+}
+
+function buildReport({ pulls, files, prepare, verdict }) {
   const lines = [
     "## AUMARA Director",
     "",
     `Repository: **${owner}/${repo}**`,
     `Open PRs: **${pulls.length}**`,
+    `Auto-Prepare-Merge: **${prepare}**`,
     "",
   ];
 
@@ -47,15 +80,8 @@ function buildReport({ pulls, files }) {
       lines.push(`- \`${f.filename}\` (+${f.additions}/-${f.deletions})`);
     }
     lines.push("");
-    const lockTouched = files.some(
-      (f) => f.filename === "AUMARA_TWIN_LOCK.json" || f.filename.startsWith("twin/"),
-    );
-    lines.push("### Decision");
-    lines.push(
-      lockTouched
-        ? "Lock or terrain changed. Re-run the L2 smoke suite before merge."
-        : "Lock untouched. After Auto-Prepare-Merge is green, this PR is ready for review.",
-    );
+    lines.push(`### Decision: ${verdict.verdict}`);
+    lines.push(verdict.text);
   } else if (pulls.length === 0) {
     lines.push("PR queue is empty. Pipeline is standing by for the next slice.");
   }
@@ -74,7 +100,12 @@ async function main() {
   const files = PR
     ? await gh(`/repos/${owner}/${repo}/pulls/${PR}/files?per_page=100`)
     : [];
-  const report = buildReport({ pulls, files });
+  const prepare = await prepareConclusion();
+  const lockTouched = files.some(
+    (f) => f.filename === "AUMARA_TWIN_LOCK.json" || f.filename.startsWith("twin/"),
+  );
+  const verdict = decision({ lockTouched, prepare });
+  const report = buildReport({ pulls, files, prepare, verdict });
   console.log(report);
   if (PR) {
     await gh(`/repos/${owner}/${repo}/issues/${PR}/comments`, {
