@@ -55,7 +55,7 @@ function Padel() {
   return (
     <group position={p.center as [number, number, number]} rotation={[0, (p.rotation_y_deg * Math.PI) / 180, 0]}>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[p.size_m[0], p.size_m[2]] />
+        <planeGeometry args={[p.size_m[0], p.size_m[2]]} />
         <meshStandardMaterial color="#2d5a27" roughness={0.7} />
       </mesh>
       <mesh position={[0, 1.5, p.size_m[2] / 2]}>
