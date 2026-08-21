@@ -1,14 +1,14 @@
 name: AUMARA Director
 
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: write
   issues: write
+  actions: read
+  checks: read
 
 jobs:
   director:
@@ -25,5 +25,4 @@ jobs:
       - name: Run director
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: node agent/director.mjs
