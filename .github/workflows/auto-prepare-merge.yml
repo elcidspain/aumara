@@ -3,6 +3,7 @@ name: Auto-Prepare-Merge
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -24,6 +25,33 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Lock + terrain gate
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const lock = JSON.parse(fs.readFileSync('AUMARA_TWIN_LOCK.json', 'utf8'));
+          if (!lock.status) {
+            console.error('AUMARA_TWIN_LOCK.json missing status');
+            process.exit(1);
+          }
+          const terrain = JSON.parse(fs.readFileSync('twin/terrain_real.json', 'utf8'));
+          console.log('lock.status', lock.status);
+          console.log('canonical', lock.canonical && lock.canonical.repository);
+          console.log('terrain.keys', Object.keys(terrain).length);
+          if (String(lock.status).includes('GREEN')) {
+            console.error('GREEN lock is invalid in elcidspain/aumara. Canonical twin is elcidspain/elcidspain.github.io');
+            process.exit(1);
+          }
+          if (lock.status !== 'SUPERSEDED_DO_NOT_EXECUTE') {
+            console.error('Unexpected lock status:', lock.status);
+            process.exit(1);
+          }
+          if (!lock.canonical || lock.canonical.repository !== 'elcidspain/elcidspain.github.io') {
+            console.error('canonical.repository must stay elcidspain/elcidspain.github.io');
+            process.exit(1);
+          }
+          NODE
+
       - name: Install
         run: npm install
 
@@ -37,7 +65,7 @@ jobs:
 
   director:
     needs: prepare-merge
-    if: always()
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
