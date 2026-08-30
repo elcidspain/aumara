@@ -1,10 +1,11 @@
 # AUMARA / EL CID — agent rules
 
-You are working in the AUMARA digital twin (Complejo El Cid, Rincón del Silencio, Benidoleig).
+This repository is **historical**. Live twin is **not** here.
 
-- Single source of truth: `AUMARA_TWIN_LOCK.json`. The lock wins over improvisation.
-- Owner/repo: `elcidspain/aumara`.
-- Geometry, dome placement, pool proportion (0.58), and smoke suite live in the lock. Do not invent coordinates.
-- Prefer small, reviewable PRs. After TS/TSX changes, keep `npx tsc --noEmit` green.
-- The Director agent (`agent/director.mjs`) comments on PRs. Do not remove it.
-- Auto-Prepare-Merge must stay green before merge to `main`.
+- `AUMARA_TWIN_LOCK.json` status is `SUPERSEDED_DO_NOT_EXECUTE`.
+- Canonical: `elcidspain/elcidspain.github.io` (`aumara/world/AUMARA_SOURCE_REGISTRY.json`).
+- Do not deploy this repo, do not treat legacy dome/L2 smoke as current truth, do not use Vercel from here.
+- `twin/terrain_real.json` stays as a frozen artifact; do not invent coordinates.
+- Prefer small PRs. After TS/TSX changes: `npx tsc --noEmit` and `npm run lint` must pass.
+- Auto-Prepare-Merge: lock gate + typecheck + lint. **No auto-commit, no auto-push to main.**
+- Director (`agent/director.mjs`) comments GO or HOLD. Do not remove it.
