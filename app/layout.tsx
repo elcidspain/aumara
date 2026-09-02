@@ -13,16 +13,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AUMARA — Walk the place, choose your house, book direct",
   description:
-    "Private geodesic houses in Benidoleig, Marina Alta. Walk the recorded site route, compare Chalet and Superior Chalet, and book direct through Beds24.",
+    "Geodesic eco houses in Benidoleig, Marina Alta. An exterior flight between standing houses, a recorded walkthrough, and direct Beds24 booking.",
   robots: "index,follow,max-image-preview:large",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     title: "AUMARA — Walk the place before you book",
     description:
-      "Geodesic houses above the Marina Alta valley. Real stills, an on-site walkthrough, and direct Beds24 booking.",
+      "Geodesic eco houses in Benidoleig, Marina Alta. Real exterior flight, on-site walkthrough, and direct Beds24 booking.",
     url: SITE_URL,
-    images: [{ url: "/media/hero-houses.jpg", width: 1800, height: 1200 }],
+    images: [{ url: "/media/flight/poster.jpg", width: 1920, height: 1080 }],
   },
 };
 

@@ -1,4 +1,10 @@
 export const SITE_URL = "https://www.aumara.me";
+export const EL_CID_URL = "https://elcidspain.com/";
+
+export const FLIGHT = {
+  video: "/media/flight/flight.mp4",
+  poster: "/media/flight/poster.jpg",
+} as const;
 
 export const BEDS24 = {
   propertyId: "324882",
