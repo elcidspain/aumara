@@ -26,6 +26,15 @@ logo.png                        booking-select/logo/aumara-logo.png
 site-plan.jpg
   existing live walkthrough plan, hosted locally so the guest page does not depend on Drive hotlinks.
 
+flight/flight.mp4
+  recorded exterior archive mill between standing geodesic houses
+  source: https://www.aumara.me/media/flight/flight.mp4
+  1920x1080 h264, ~64s, muted phone-archive; guest hero only — not a Hercules GLB look
+
+flight/poster.jpg
+  still from the same exterior flight, 1920x1080 JPEG
+  source: https://www.aumara.me/media/flight/poster.jpg
+
 nodes/node-01.mp4 … node-08.mp4
   existing on-site walkthrough clips from www.aumara.me/media/nodes/
 

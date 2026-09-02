@@ -5,6 +5,8 @@ import {
   BOOK_CHALET,
   BOOK_DIRECT,
   BOOK_SUPERIOR,
+  EL_CID_URL,
+  FLIGHT,
   NODE_POSITIONS,
   WALK_NODES,
   beds24Url,
@@ -72,6 +74,9 @@ export default function GuestHome() {
           <a href="#explore">Walk the site</a>
           <a href="#houses">Houses</a>
           <a href="#retreats">Retreats</a>
+          <a className="elcid" href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+            El Cid
+          </a>
           <a href="#operator">Operator</a>
           <a className="book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
             Book direct
@@ -81,18 +86,26 @@ export default function GuestHome() {
 
       <main id="top">
         <section className="hero">
-          <img
+          <video
             className="hero-bg"
-            src="/media/hero-houses.jpg"
-            alt="Ochre and terracotta geodesic houses among pines at AUMARA"
+            src={FLIGHT.video}
+            poster={FLIGHT.poster}
+            muted
+            autoPlay
+            playsInline
+            loop
+            preload="metadata"
+            aria-label="Recorded flight between standing geodesic houses at AUMARA in Benidoleig"
           />
           <div className="hero-inner">
             <div className="wrap">
-              <p className="eyebrow">Benidoleig · Marina Alta · Costa Blanca</p>
+              <p className="eyebrow">AUMARA · geodesic · eco · Benidoleig · Marina Alta</p>
               <h1>Walk the place before you choose the house.</h1>
               <p className="lead">
-                AUMARA is a private nature stay above the valley: geodesic houses on paths through
-                trees, terraces and changing views. Each booking is for a complete house.
+                The opening film flies between geodesic houses already standing on the hill. Then
+                the map and eight recorded points take you along the paths and into the houses.
+                AUMARA is an eco stay in Benidoleig, Marina Alta. Each booking is for a complete
+                house.
               </p>
               <div className="actions">
                 <a className="btn primary" href="#explore">
@@ -104,7 +117,12 @@ export default function GuestHome() {
               </div>
               <div className="operator">
                 <strong>AUMARA</strong> is operated by <strong>EL CID VENTURES BENIDOLEIG S.L.</strong>{" "}
-                Direct availability and reservations are handled through Beds24.
+                Direct availability and reservations are handled through Beds24. Restaurant and
+                country club:{" "}
+                <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+                  El Cid · elcidspain.com
+                </a>
+                .
               </div>
             </div>
           </div>
@@ -218,8 +236,9 @@ export default function GuestHome() {
                     </a>
                   </div>
                   <div className="walk-note">
-                    The videos are short, muted by default and recorded on the paths between houses.
-                    Use the arrows inside the viewer to move through the eight points.
+                    After the opening flight between standing houses, these clips are the walk on
+                    the paths and into the houses. They are muted by default. Use the arrows inside
+                    the viewer to move through the eight points.
                   </div>
                 </div>
               </article>
@@ -417,7 +436,15 @@ export default function GuestHome() {
               <div className="identity-card">
                 <p className="eyebrow">Brand and place</p>
                 <h3>AUMARA</h3>
-                <p>Private houses and hosted gatherings in Benidoleig, Alicante.</p>
+                <p>Geodesic eco houses and hosted gatherings in Benidoleig, Marina Alta.</p>
+                <div className="identity-row">
+                  <strong>El Cid</strong>
+                  <span>
+                    <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+                      Restaurant & country club · elcidspain.com
+                    </a>
+                  </span>
+                </div>
                 <div className="identity-row">
                   <strong>Direct booking</strong>
                   <span>
@@ -438,7 +465,13 @@ export default function GuestHome() {
               <div className="identity-card">
                 <p className="eyebrow">Legal operator</p>
                 <h3>EL CID VENTURES BENIDOLEIG S.L.</h3>
-                <p>The company responsible for the accommodation operation.</p>
+                <p>
+                  The company responsible for the accommodation operation. Same firm as{" "}
+                  <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+                    El Cid restaurant & country club
+                  </a>
+                  .
+                </p>
                 <div className="identity-row">
                   <strong>CIF</strong>
                   <span>B53816989</span>
@@ -489,7 +522,12 @@ export default function GuestHome() {
           <div>
             <strong>AUMARA</strong> · Operated by EL CID VENTURES BENIDOLEIG S.L. · CIF B53816989
           </div>
-          <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a>
+          <div className="footer-links">
+            <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+              El Cid · elcidspain.com
+            </a>
+            <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a>
+          </div>
         </div>
       </footer>
 

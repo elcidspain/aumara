@@ -2,7 +2,7 @@
 
 Guest website for [aumara.me](https://www.aumara.me/) — private houses in Benidoleig, Marina Alta.
 
-- Public app: Next.js guest pages (photography, walkthrough, Beds24 booking).
+- Public app: Next.js guest pages (exterior flight hero, photography, walkthrough, Beds24 booking).
 - Legal operator: EL CID VENTURES BENIDOLEIG S.L. (CIF B53816989).
 - Direct booking: Beds24 property `324882`.
 - Stills: curated from `elcidspain/aumara-photos` (see `public/media/SOURCES.txt`). Folder names in that repo often lie — files here are named after what the photograph actually shows.
