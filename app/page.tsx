@@ -1,5 +1,5 @@
-import L2Scene from "../components/aumara/l2-scene";
+import GuestHome from "@/components/site/GuestHome";
 
 export default function Home() {
-  return <L2Scene />;
+  return <GuestHome />;
 }

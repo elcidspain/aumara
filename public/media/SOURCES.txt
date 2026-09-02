@@ -1,0 +1,33 @@
+AUMARA guest-site media
+
+Stills are copied from elcidspain/aumara-photos after visual check.
+GitHub folder names often lie; filenames here describe what the photograph shows.
+
+hero-houses.jpg
+  source: booking-select/hero/hero-main-group-houses.jpg
+  resized 1800px JPEG for the guest hero (coloured geodesic houses among pines)
+
+stills/path-green-ochre.jpg     booking-3x2/house-04.jpg
+stills/pines-domes.jpg          booking-3x2/01-site-hill.jpg
+stills/inside-valley.jpg        booking-3x2/01-hero-all-houses.jpg  (view from inside, not an aerial of all houses)
+stills/inside-trees.jpg         booking-3x2/house-03-terrace.jpg
+stills/ochre-valley.jpg         booking-3x2/bedroom-02.jpg          (exterior ochre house + valley)
+stills/colored-houses.jpg       booking-3x2/kitchen-05.jpg          (exteriors, not a kitchen)
+stills/green-house.jpg          booking-3x2/living-03.jpg           (green house exterior)
+stills/domes-up.jpg             booking-3x2/house-06.jpg
+stills/ochre-path.jpg           booking-select/hero/hero-one-house-below.jpg
+stills/chalet-mezzanine.jpg     booking-3x2/living-01.jpg           (looking down from mezzanine — Chalet volume)
+stills/chalet-bed.jpg           booking-3x2/bedroom-01.jpg
+stills/superior-living.jpg      booking-3x2/kitchen-02.jpg          (white sofa + stair — Superior)
+stills/dining-windows.jpg       booking-3x2/living-02.jpg
+stills/pines-sky.jpg            booking-3x2/kitchen-03.jpg          (exteriors under pines)
+logo.png                        booking-select/logo/aumara-logo.png
+
+site-plan.jpg
+  existing live walkthrough plan, hosted locally so the guest page does not depend on Drive hotlinks.
+
+nodes/node-01.mp4 … node-08.mp4
+  existing on-site walkthrough clips from www.aumara.me/media/nodes/
+
+Not used as lead (toilets / baths / sink close-ups):
+  booking-3x2/house-02.jpg, bathroom-01.jpg, 02-two-houses.jpg

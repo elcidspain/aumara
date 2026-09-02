@@ -63,6 +63,9 @@ jobs:
           CI: true
         run: npm run lint
 
+      - name: Guest copy gate
+        run: npm run assert-copy
+
   director:
     needs: prepare-merge
     if: always() && github.event_name == 'pull_request'

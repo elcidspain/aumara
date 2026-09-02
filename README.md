@@ -1,12 +1,11 @@
-# AUMARA legacy repository
+# AUMARA
 
-**STATUS: SUPERSEDED — DO NOT USE AS THE ACTIVE CONTROL PLANE.**
+Guest website for [aumara.me](https://www.aumara.me/) — private houses in Benidoleig, Marina Alta.
 
-Current executable truth:
+- Public app: Next.js guest pages (photography, walkthrough, Beds24 booking).
+- Legal operator: EL CID VENTURES BENIDOLEIG S.L. (CIF B53816989).
+- Direct booking: Beds24 property `324882`.
+- Stills: curated from `elcidspain/aumara-photos` (see `public/media/SOURCES.txt`). Folder names in that repo often lie — files here are named after what the photograph actually shows.
+- Twin / mill (`/twin`, `twin/terrain_real.json`, `AUMARA_TWIN_LOCK.json`) is historical and unlisted. Do not put Gaussian splat, depth maps, or mill diagnostics on guest pages.
 
-- Repository: `elcidspain/elcidspain.github.io`
-- Source registry: `aumara/world/AUMARA_SOURCE_REGISTRY.json`
-- Control plane: `aumara/AUMARA_CONTROL_PLANE.md`
-- Drive working/ingestion root `WEB`: `1csfG7ehFiNUZEYD75EpEiCqmEsdwbY-b`
-
-The former Vercel/L2/dome-smoke workflow in this repository is historical. Do not launch agents from the old prompt or lock. Git history retains the previous implementation for audit/recovery.
+Guest copy must not advertise physical-vs-bookable inventory counts (`npm run assert-copy`).
