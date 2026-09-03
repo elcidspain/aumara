@@ -7,6 +7,7 @@ import {
   BOOK_SUPERIOR,
   EL_CID_URL,
   FLIGHT,
+  INVENTORY,
   NODE_POSITIONS,
   WALK_NODES,
   beds24Url,
@@ -250,10 +251,14 @@ export default function GuestHome() {
           <div className="wrap">
             <div className="section-head">
               <p className="eyebrow">Stay</p>
-              <h2>Two house formats. One landscape.</h2>
+              <h2>Six geodesic houses. Two formats.</h2>
               <p>
-                Each booking is for a complete private house with its own entrance and outdoor
-                relationship to the site. Live availability is on Beds24.
+                AUMARA has {INVENTORY.totalHouses} geodesic houses in two formats:{" "}
+                {INVENTORY.chalet.count} × {INVENTORY.chalet.label} (Beds24 room{" "}
+                {INVENTORY.chalet.roomId}, up to {INVENTORY.chalet.maxGuests} guests) and{" "}
+                {INVENTORY.superior.count} × {INVENTORY.superior.label} (Beds24 room{" "}
+                {INVENTORY.superior.roomId}, up to {INVENTORY.superior.maxGuests} guests). Live
+                availability is on Beds24.
               </p>
             </div>
             <div className="house-grid">
@@ -319,6 +324,19 @@ export default function GuestHome() {
                   </div>
                 </div>
               </article>
+            </div>
+          </div>
+        </section>
+
+        <section className="section" id="gift">
+          <div className="wrap">
+            <div className="section-head">
+              <h2>Direct booking perk</h2>
+              <p>
+                Book your geodesic house on AUMARA.me and we welcome you with a small local
+                experience on arrival — a taste of Marina Alta waiting in the house. Ask at
+                check-in. Direct reservations only.
+              </p>
             </div>
           </div>
         </section>
