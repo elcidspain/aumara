@@ -12,6 +12,22 @@ export const BEDS24 = {
   superiorRoomId: "674466",
 } as const;
 
+export const INVENTORY = {
+  totalHouses: 6,
+  chalet: {
+    count: 4,
+    label: "Ø7.5 Chalet",
+    roomId: BEDS24.chaletRoomId,
+    maxGuests: 4,
+  },
+  superior: {
+    count: 2,
+    label: "Ø9 Superior Chalet",
+    roomId: BEDS24.superiorRoomId,
+    maxGuests: 6,
+  },
+} as const;
+
 export function beds24Url(opts?: {
   roomId?: string;
   checkin?: string;
