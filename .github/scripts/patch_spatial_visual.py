@@ -1,0 +1,49 @@
+from pathlib import Path
+p = Path('public/spatial/index.html')
+s = p.read_text()
+old = '.cesium-widget-credits,.cesium-credit-lightbox-overlay{display:block!important;visibility:visible!important;z-index:6}'
+new = '.cesium-widget-credits{display:block!important;visibility:visible!important;z-index:6}'
+if old not in s:
+    raise SystemExit('credit overlay block missing')
+s = s.replace(old, new, 1)
+old = '''      if (other && finiteVec(p) && finiteVec(other)) {
+        const dir = atEnd ? C.Cartesian3.subtract(p, other, new C.Cartesian3()) : C.Cartesian3.subtract(other, p, new C.Cartesian3());
+        const mag2 = C.Cartesian3.magnitudeSquared(dir);
+        if (mag2 >= 1e-12 && finiteVec(dir)) {
+          C.Cartesian3.normalize(dir, dir);
+          const up = C.Ellipsoid.WGS84.geodeticSurfaceNormal(p, new C.Cartesian3());
+          const right = C.Cartesian3.cross(dir, up, new C.Cartesian3());
+          if (finiteVec(up) && finiteVec(right) && C.Cartesian3.magnitudeSquared(right) >= 1e-12) {
+            C.Cartesian3.normalize(right, right);
+            const pitch = alt > 1e6 ? -0.12 : alt > 2e4 ? -0.22 : alt > 400 ? -0.30 : -0.38;
+            const look = C.Matrix3.multiplyByVector(C.Matrix3.fromQuaternion(C.Quaternion.fromAxisAngle(right, pitch)), dir, new C.Cartesian3());
+            if (finiteVec(look)) viewer.camera.setView({ destination: p, orientation: { direction: look, up } });
+          }
+        }
+      }'''
+new = '''      if (other && finiteVec(p) && finiteVec(other)) {
+        let dir;
+        if (alt > 600) {
+          const target = C.Cartesian3.fromDegrees(lon, lat, originH);
+          dir = C.Cartesian3.subtract(target, p, new C.Cartesian3());
+        } else {
+          dir = atEnd ? C.Cartesian3.subtract(p, other, new C.Cartesian3()) : C.Cartesian3.subtract(other, p, new C.Cartesian3());
+        }
+        const mag2 = C.Cartesian3.magnitudeSquared(dir);
+        if (mag2 >= 1e-12 && finiteVec(dir)) {
+          C.Cartesian3.normalize(dir, dir);
+          const anchor = C.Cartesian3.fromDegrees(lon, lat, originH);
+          const basisUp = C.Ellipsoid.WGS84.geodeticSurfaceNormal(anchor, new C.Cartesian3());
+          let right = C.Cartesian3.cross(dir, basisUp, new C.Cartesian3());
+          if (C.Cartesian3.magnitudeSquared(right) < 1e-12) right = C.Cartesian3.cross(dir, C.Cartesian3.UNIT_Z, right);
+          if (finiteVec(right) && C.Cartesian3.magnitudeSquared(right) >= 1e-12) {
+            C.Cartesian3.normalize(right, right);
+            const up = C.Cartesian3.cross(right, dir, new C.Cartesian3());
+            if (finiteVec(up)) viewer.camera.setView({ destination: p, orientation: { direction: dir, up } });
+          }
+        }
+      }'''
+if old not in s:
+    raise SystemExit('camera block missing')
+p.write_text(s.replace(old, new, 1))
+print('SPATIAL_VISUAL_PATCH_OK')
