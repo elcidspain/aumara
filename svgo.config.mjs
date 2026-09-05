@@ -1,4 +1,4 @@
-/** SVGO 4 config for AUMARA lockups (CSS background / <img>, not inline). */
+/** SVGO 4 — AUMARA lockup (file URL / CSS background, not inline). */
 export default {
   multipass: true,
   floatPrecision: 2,
@@ -19,13 +19,22 @@ export default {
             applyTransformsStroked: true,
             straightCurves: true,
             convertToQ: true,
+            convertToZ: true,
             lineShorthands: true,
+            curveSmoothShorthands: true,
             collapseRepeated: true,
             utilizeAbsolute: true,
-            negativeExtraSpace: true,
+            forceAbsolutePath: false,
+            removeUseless: true,
           },
           cleanupNumericValues: { floatPrecision: 2, leadingZero: true },
-          convertColors: { currentColor: false, names2hex: true, rgb2hex: true, shorthex: true },
+          convertColors: {
+            currentColor: false,
+            names2hex: true,
+            rgb2hex: true,
+            shorthex: true,
+            shortname: false,
+          },
           mergePaths: { force: false, floatPrecision: 2 },
           collapseGroups: true,
           cleanupIds: { minify: true, remove: true },
