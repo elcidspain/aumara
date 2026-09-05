@@ -1,0 +1,74 @@
+{
+  "schema": "aumara.live-spatial-proof.v1",
+  "status": "PASS_PREVIEW_LIVE_BROWSER",
+  "date": "2026-09-05",
+  "repository": "elcidspain/aumara",
+  "branch": "preview/spatial-descent-integration-20260905",
+  "tested_head": "552aed317f0bd4a0dd75eace2dd53a3e29ed6884",
+  "vercel": {
+    "commit_status": "success",
+    "project": "aumara-path-cut",
+    "production_changed": false,
+    "domains_changed": false
+  },
+  "global_runtime": {
+    "engine": "CesiumJS 1.134",
+    "provider": "ARCGIS_WORLD_IMAGERY",
+    "credential_required": false,
+    "google_photorealistic_3d_tiles_exercised": false,
+    "google_photorealistic_optional_upgrade": true,
+    "truth_note": "ArcGIS World Imagery is satellite imagery on the Cesium globe; it is not Google Photorealistic 3D Tiles."
+  },
+  "hf_network_gate": {
+    "job_id": "6a9c842be686246ca69a4588",
+    "hardware": "cpu-basic",
+    "status": "success",
+    "cesium_js_http": 200,
+    "arcgis_world_imagery_http": 200,
+    "arcgis_metadata_http": 200
+  },
+  "live_browser_stage_proof": {
+    "Earth": {"visible": true, "GlobalEarthStageVisible": true},
+    "Iberia": {"visible": true},
+    "Costa_Blanca": {"visible": true},
+    "Benidoleig": {"visible": true},
+    "Parcel_Approach": {"visible": true, "GlobalParcelApproachVisible": true},
+    "Local_Handoff": {"handoffComplete": true, "blendComplete": true, "localTwinVisible": true},
+    "WP0": {"localTwinVisibleAtWP0": true},
+    "WP27": {"flightComplete": true, "waypointReached": 27},
+    "House_Interaction": {"world_controls": 6, "sheetOpen": true}
+  },
+  "final_owner_proof": {
+    "verification_status": "READY",
+    "globalTilesStatus": "READY",
+    "provider": "ARCGIS_WORLD_IMAGERY",
+    "continuousCamera": true,
+    "GlobalEarthStageVisible": true,
+    "GlobalParcelApproachVisible": true,
+    "handoffComplete": true,
+    "localTwinVisibleAtWP0": true,
+    "flightComplete": true,
+    "blendComplete": true,
+    "waypointReached": 27,
+    "fatalRenderError": false
+  },
+  "interaction_proof": {
+    "count": 6,
+    "sheetOpen": true,
+    "sheetText": "Casa A | Chalet · Ø7 · AUMARA spatial house | VER DISPONIBILIDAD",
+    "stalePrice": false,
+    "staleBookable": false,
+    "bookingDotCom": false
+  },
+  "security": {
+    "cesium_ion_token_recovered": false,
+    "token_printed": false,
+    "token_committed": false,
+    "token_put_in_url": false
+  },
+  "compatibility_note": "Legacy event names GOOGLE_LOCAL_HANDOFF_START/COMPLETE remain in runtime for receipt compatibility even when the active global provider is ArcGIS World Imagery.",
+  "release": {
+    "preview": "PASS",
+    "production": "HOLD"
+  }
+}
