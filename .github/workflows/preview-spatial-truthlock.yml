@@ -1,0 +1,52 @@
+name: Truth-lock spatial preview copy
+
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-truthlock.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Remove stale sales claims from spatial runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/spatial/index.html')
+          s=p.read_text()
+          repl={
+            'AUMARA El Cid — Glamping Benidoleig':'AUMARA — Spatial Experience · Benidoleig',
+            'AUMARA · casas privadas en Benidoleig, Costa Blanca. EL CID VENTURES BENIDOLEIG S.L. · CIF B53816989.':'AUMARA · casas geodésicas en Benidoleig, Marina Alta.',
+            'Glamping · Benidoleig':'Benidoleig · Marina Alta',
+            'Casas privadas en el interior tranquilo de la Costa Blanca.':'Geodesic houses on this land.',
+            'Seis casas. Un paisaje. El mundo 3D se abre solo si lo pides.':'Seis casas físicas. Un paisaje continuo.',
+            'https://www.booking.com/hotel/es/aumara.es.html':'https://beds24.com/booking2.php?propid=324882',
+            'function housePrice(h) { return h.diameterMetres === 9 ? "from €320 / noche" : "from €200 / noche"; }':'function housePrice(h) { return "AUMARA spatial house"; }',
+            ' · bookable</div>':' · physical house</div>',
+            '>Booking<':'>Disponibilidad<',
+            '>Fechas<':'>Disponibilidad<',
+            '>Reservar<':'>Ver disponibilidad<' 
+          }
+          for a,b in repl.items():
+            s=s.replace(a,b)
+          p.write_text(s)
+          assert 'from €200' not in s and 'from €320' not in s and ' · bookable' not in s
+          assert 'www.booking.com' not in s
+          PY
+      - name: Commit preview-only truth lock
+        run: |
+          git config user.name "aumara-preview-bot"
+          git config user.email "elcidspain@gmail.com"
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "preview: truth-lock spatial sales copy [skip ci]"
+          git push origin HEAD:preview/spatial-descent-integration-20260905
