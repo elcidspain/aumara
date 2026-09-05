@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AUMARA El Cid — Glamping Benidoleig</title>
-<meta name="description" content="AUMARA · casas privadas en Benidoleig, Costa Blanca. EL CID VENTURES BENIDOLEIG S.L. · CIF B53816989."/>
-<meta property="og:title" content="AUMARA El Cid — Glamping Benidoleig"/>
+<base href="/spatial/"/>
+<title>AUMARA — Spatial Experience · Benidoleig</title>
+<meta name="description" content="AUMARA · casas geodésicas en Benidoleig, Marina Alta."/>
+<meta property="og:title" content="AUMARA — Spatial Experience · Benidoleig"/>
 <meta property="og:image" content="https://lh3.googleusercontent.com/d/1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO=w1200"/>
 <style>
   :root{--ink:#0a1a14;--cream:#f3ecde;--gold:#c49a64;--line:rgba(255,255,255,.12)}
@@ -59,16 +60,16 @@
   </a>
   <div class="row">
     <a class="btn ghost" href="https://wa.me/34663592733">WhatsApp</a>
-    <a class="btn gold" href="https://www.booking.com/hotel/es/aumara.es.html" target="_blank" rel="noreferrer">Fechas</a>
+    <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
   </div>
 </header>
 <section class="hero">
   <img src="https://lh3.googleusercontent.com/d/1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO=w2200" alt="AUMARA · Benidoleig"/>
-  <p class="kicker">Glamping · Benidoleig</p>
-  <h1>Casas privadas en el interior tranquilo de la Costa Blanca.</h1>
-  <p class="lead">Seis casas. Un paisaje. El mundo 3D se abre solo si lo pides.</p>
+  <p class="kicker">Benidoleig · Marina Alta</p>
+  <h1>Geodesic houses on this land.</h1>
+  <p class="lead">Seis casas físicas. Un paisaje continuo.</p>
   <div class="row" style="margin-top:18px">
-    <a class="btn gold" href="https://www.booking.com/hotel/es/aumara.es.html" target="_blank" rel="noreferrer">Booking</a>
+    <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
     <button class="btn ghost" id="flight" type="button">3D tour / FLIGHT</button>
     <button class="btn ghost" id="ionbtn" type="button">Ion</button>
   </div>
@@ -88,7 +89,7 @@
   <div id="sheet"></div>
 </div>
 <script>
-const BOOK = "https://www.booking.com/hotel/es/aumara.es.html";
+const BOOK = "https://beds24.com/booking2.php?propid=324882";
 const CESIUM_JS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Cesium.js";
 const CESIUM_CSS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Widgets/widgets.css";
 const DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
@@ -113,7 +114,7 @@ function housePhoto(id) {
   return m ? pic(m.id) : pic("1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO");
 }
 function houseKind(h) { return h.diameterMetres === 9 ? "Superior" : "Chalet"; }
-function housePrice(h) { return h.diameterMetres === 9 ? "from €320 / noche" : "from €200 / noche"; }
+function housePrice(h) { return "AUMARA spatial house"; }
 Promise.all([
   fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => r.json()),
   fetch("./world/media-index.json").then((r) => r.json()).catch(() => ({ houses: {} })),
@@ -123,7 +124,7 @@ Promise.all([
     const a = document.createElement("a");
     a.className = "card"; a.href = BOOK; a.target = "_blank"; a.rel = "noreferrer";
     a.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt="Casa ${h.spatialId}"/><div>
-      <div class="meta">Ø${h.diameterMetres} · ${houseKind(h)} · bookable</div>
+      <div class="meta">Ø${h.diameterMetres} · ${houseKind(h)} · physical house</div>
       <h2>Casa ${h.spatialId}</h2><p>${housePrice(h)}</p></div>`;
     housesEl.appendChild(a);
   });
@@ -158,7 +159,7 @@ function openSheet(h) {
   sheet.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt=""/>
     <div style="flex:1"><h3>Casa ${h.spatialId}</h3>
     <p>${houseKind(h)} · Ø${h.diameterMetres} · ${housePrice(h)}</p>
-    <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Reservar</a></div>`;
+    <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Ver disponibilidad</a></div>`;
 }
 let started = false;
 document.getElementById("flight").onclick = () => startFlight();
@@ -234,8 +235,15 @@ async function runTwin() {
     events.push({ name, t: Date.now(), extra: extra || null });
     if (window.__AUMARA) window.__AUMARA.events = events;
   }
-  let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-  try {
+  let tilesOn = false, tileset = null, satelliteLayer = null, globalProvider = "NONE", firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
+  async function enableSatelliteFallback() {
+    try {
+      const provider = new C.UrlTemplateImageryProvider({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maximumLevel: 19, credit: new C.Credit("Esri, Maxar, Earthstar Geographics, and the GIS User Community") });
+      satelliteLayer = viewer.imageryLayers.addImageryProvider(provider); satelliteLayer.show = true; viewer.scene.globe.show = true;
+      tilesOn = true; tilesStatus = "READY"; globalProvider = "ARCGIS_WORLD_IMAGERY"; emit("SATELLITE_FALLBACK_READY"); return true;
+    } catch (e) { tilesOn = false; tilesStatus = "FALLBACK_FAILED"; return false; }
+  }
+  if (sessionIon) try {
     tileset = await C.createGooglePhotorealistic3DTileset();
     tileset.maximumScreenSpaceError = mobile ? 16 : 8;
     tileset.skipLevelOfDetail = true;
@@ -243,7 +251,7 @@ async function runTwin() {
     tileset.dynamicScreenSpaceError = true;
     if (tileset.cacheBytes !== undefined) tileset.cacheBytes = mobile ? 256 * 1024 * 1024 : 768 * 1024 * 1024;
     viewer.scene.primitives.add(tileset);
-    tilesOn = true;
+    tilesOn = true; globalProvider = "GOOGLE_PHOTOREALISTIC_3D_TILES";
     tilesStatus = "LOADING";
     const markTile = () => {
       if (firstGoogleTileRendered) return;
@@ -258,24 +266,22 @@ async function runTwin() {
     };
     tileset.tileVisible.addEventListener(markTile);
     if (tileset.initialTilesLoaded) tileset.initialTilesLoaded.addEventListener(markTile);
-  } catch (e) {
-    tilesOn = false;
-    tileset = null;
-    tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-    viewer.scene.globe.show = false;
-  }
-  if (tilesOn) {
+  } catch (e) { tilesOn = false; tileset = null; await enableSatelliteFallback(); } else { await enableSatelliteFallback(); }
+  if (tilesOn && tileset) {
     const waitUntil = Date.now() + 14000;
     while (!firstGoogleTileRendered && Date.now() < waitUntil) {
       await new Promise((r) => setTimeout(r, 200));
     }
     if (!firstGoogleTileRendered) {
       tilesStatus = sessionIon ? "LOADING" : "AWAITING_OWNER_RUNTIME_PROOF";
-      if (!sessionIon) tilesOn = false;
+      if (!sessionIon) { tilesOn = false; await enableSatelliteFallback(); }
     }
   }
+  const globalReady = tilesOn && (firstGoogleTileRendered || globalProvider === "ARCGIS_WORLD_IMAGERY");
+  function globalVisible() { return tileset ? !!tileset.show : !!(satelliteLayer && satelliteLayer.show && viewer.scene.globe.show); }
+  function setGlobalVisible(v) { if (tileset) tileset.show = v; if (satelliteLayer) satelliteLayer.show = v; if (satelliteLayer) viewer.scene.globe.show = v; }
   let originH = tilesOn ? refMsl : 0;
-  if (tilesOn) {
+  if (tilesOn && tileset) {
     try {
       const originProbe = C.Cartographic.fromDegrees(lon, lat);
       const sampled = await viewer.scene.sampleHeightMostDetailed([originProbe]);
@@ -410,8 +416,8 @@ async function runTwin() {
     user_agent: navigator.userAgent, glb_sha: null,
     firstFrameRendered: false, waypointReached: 0, twinLoaded: true,
     rawAgl, samples: [], consoleErrors: [], events,
-    globalTilesStatus: tilesOn && firstGoogleTileRendered ? "READY" : tilesStatus,
-    provider: "GOOGLE_PHOTOREALISTIC_3D_TILES",
+    globalTilesStatus: globalReady ? "READY" : tilesStatus,
+    provider: globalProvider,
     ionSessionToken: sessionIon,
     ionDefaultTokenPresent: ionPresent,
     firstGoogleTileRendered, attributionVisible: !!(creditsEl && creditsEl.offsetParent !== null || (creditsEl && creditsEl.childNodes.length)),
@@ -421,11 +427,12 @@ async function runTwin() {
     zFightingObserved: false, globalTilesVisible: tilesOn, handoffComplete: !tilesOn,
     mobileGoogleHiddenBeforeWP0: !mobile || !tilesOn, localTwinVisibleAtWP0: false,
     GoogleEarthStageVisible: false, GoogleParcelApproachVisible: false,
+    GlobalEarthStageVisible: false, GlobalParcelApproachVisible: false,
     clipSupported: clipSupported, renderError: null, fatalRenderError: false,
     ionQueryRemoved: !new URL(location.href).searchParams.has("ion"),
     flightComplete: false,
     stage: tilesOn ? "EARTH" : "LOCAL_FALLBACK",
-    verification_status: tilesOn && firstGoogleTileRendered ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",
+    verification_status: globalReady ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",
     required_events: ["GOOGLE_TILE_FIRST_RENDER","EARTH_STAGE","IBERIA_STAGE","COSTA_BLANCA_STAGE","PARCEL_APPROACH","GOOGLE_LOCAL_HANDOFF_START","GOOGLE_LOCAL_HANDOFF_COMPLETE","LOCAL_TWIN_VISIBLE","BLEND_COMPLETE","WP0","WP27"],
     ownerProof: function () {
       const a = window.__AUMARA;
@@ -448,6 +455,8 @@ async function runTwin() {
         localTwinVisibleAtWP0: a.localTwinVisibleAtWP0,
         GoogleEarthStageVisible: a.GoogleEarthStageVisible,
         GoogleParcelApproachVisible: a.GoogleParcelApproachVisible,
+        GlobalEarthStageVisible: a.GlobalEarthStageVisible,
+        GlobalParcelApproachVisible: a.GlobalParcelApproachVisible,
         zFightingObserved: a.zFightingObserved,
         clipSupported: a.clipSupported,
         renderError: a.renderError,
@@ -520,19 +529,17 @@ async function runTwin() {
     const enNow = lonLatToEn(lonX, latX, lon, lat);
     const horiz = Math.hypot(enNow.east, enNow.north);
     const localAlt = alt - originH;
-    if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {
-      if (!tileset.show) tileset.show = true;
-    }
-    if (st === "EARTH" && tileset && tileset.show) window.__AUMARA.GoogleEarthStageVisible = true;
-    if (st === "PARCEL_APPROACH" && tileset && tileset.show) window.__AUMARA.GoogleParcelApproachVisible = true;
+    if (tilesOn && (localAlt > 600 || elapsed < 4) && !globalVisible()) setGlobalVisible(true);
+    if (st === "EARTH" && globalVisible()) { window.__AUMARA.GlobalEarthStageVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleEarthStageVisible = true; }
+    if (st === "PARCEL_APPROACH" && globalVisible()) { window.__AUMARA.GlobalParcelApproachVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleParcelApproachVisible = true; }
     if (tilesOn && !window.__AUMARA._handoffStart && horiz < 220 && localAlt < 120) {
       window.__AUMARA._handoffStart = true;
       emit("GOOGLE_LOCAL_HANDOFF_START");
     }
     const mobileHide = mobile && tilesOn && horiz < 180 && localAlt < 90;
     const deskHide = !mobile && tilesOn && horiz < 180 && localAlt < 70;
-    if (tileset && (mobileHide || deskHide || (tilesOn && elapsed >= intro))) tileset.show = false;
-    const googleHidden = !tileset || !tileset.show;
+    if (mobileHide || deskHide || (tilesOn && elapsed >= intro)) setGlobalVisible(false);
+    const googleHidden = !globalVisible();
     if (!glb.show && (!tilesOn || (googleHidden && localAlt < 140))) {
       glb.show = true;
       localTwinVisible = true;
@@ -540,7 +547,7 @@ async function runTwin() {
       window.__AUMARA.localTwinVisible = true;
       window.__AUMARA.localTwinLoaded = true;
     }
-    if (localTwinVisible && tileset && tileset.show && localAlt > 140) {
+    if (localTwinVisible && globalVisible() && localAlt > 140) {
       localTwinVisibleBeforeBlend = true;
       window.__AUMARA.localTwinVisibleBeforeBlend = true;
     }
@@ -552,9 +559,9 @@ async function runTwin() {
       emit("GOOGLE_LOCAL_HANDOFF_COMPLETE");
       emit("BLEND_COMPLETE");
     }
-    window.__AUMARA.globalTilesVisible = !!(tileset && tileset.show);
+    window.__AUMARA.globalTilesVisible = globalVisible();
     window.__AUMARA.localTwinVisible = !!glb.show;
-    const googleBlockingWp = !!(mobile && tilesOn && tileset && tileset.show);
+    const googleBlockingWp = !!(mobile && tilesOn && globalVisible());
     if (elapsed >= intro && !googleBlockingWp) {
       if (googleHidden) window.__AUMARA.mobileGoogleHiddenBeforeWP0 = true;
       if (glb.show) window.__AUMARA.localTwinVisibleAtWP0 = true;
