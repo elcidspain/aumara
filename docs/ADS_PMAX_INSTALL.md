@@ -168,8 +168,9 @@ Square:
 - https://www.aumara.me/media/stills/dining-windows.jpg
 - https://www.aumara.me/media/stills/inside-trees.jpg
 
-Logo (site header, gold lockup, transparent): https://www.aumara.me/media/logo.png
-Mark only (asset-group logo if Ads UI needs a square mark): https://www.aumara.me/media/logo-mark.png
+Logo (site header, vector): https://www.aumara.me/media/logo.svg
+Raster lockup if Ads rejects SVG: https://www.aumara.me/media/logo.png
+Mark only (asset-group square slot): https://www.aumara.me/media/logo-mark.png
 Do not upload either file as Google Ads Business logo — that field stays empty.
 
 Video: upload https://www.aumara.me/media/flight/flight.mp4 to YouTube as unlisted `AUMARA Benidoleig flight`, then attach. Prefer this over Google auto-generated video.

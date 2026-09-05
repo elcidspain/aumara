@@ -26,7 +26,9 @@ Legal company name is not a third guest brand. CIF/razon social stay in the foot
 - any inferred 3rd/4th brand Google auto-detected from Final URL
 
 Business name asset for AUMARA campaigns: `AUMARA` only.
-Logo: AUMARA mark only — https://www.aumara.me/media/logo.png
+Logo (header, vector): https://www.aumara.me/media/logo.svg
+Raster lockup for Ads / OG: https://www.aumara.me/media/logo.png
+Mark only (square Ads slot): https://www.aumara.me/media/logo-mark.png
 Do not attach the personal / ILIA logo.
 
 ## Ads account
