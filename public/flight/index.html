@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>AUMARA FLIGHT</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08120e;color:#f3ecde;font-family:system-ui,-apple-system,sans-serif}canvas{display:block;width:100%;height:100%}.hud{position:fixed;z-index:5;left:16px;top:16px;padding:10px 13px;border-radius:999px;background:#07100dcc;border:1px solid #ffffff26;font:700 11px/1.2 ui-monospace,monospace;letter-spacing:.08em}.brand{position:fixed;z-index:5;right:18px;top:18px;font:700 12px/1 system-ui;letter-spacing:.22em;color:#d6aa72}.bar{position:fixed;z-index:5;left:16px;right:16px;bottom:18px;display:flex;align-items:center;gap:10px}.track{height:3px;flex:1;background:#ffffff26;border-radius:10px;overflow:hidden}.fill{height:100%;width:0;background:#d6aa72}.btn{border:1px solid #ffffff32;background:#07100ddc;color:#f3ecde;border-radius:999px;padding:10px 14px;font:700 10px system-ui;letter-spacing:.12em}.error{position:fixed;inset:0;display:none;place-items:center;padding:32px;background:#08120e;color:#f3ecde;text-align:center;z-index:9}.error.on{display:grid}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="hud" id="hud">LOADING · WP0/27</div><div class="brand">AUMARA · FLIGHT</div>
+<div class="bar"><button class="btn" id="restart">RESTART</button><div class="track"><div class="fill" id="fill"></div></div><button class="btn" id="toggle">PAUSE</button></div><div class="error" id="error"></div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const DURATION=48;
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91a59d);scene.fog=new THREE.FogExp2(0x91a59d,.0065);
+const camera=new THREE.PerspectiveCamera(64,innerWidth/innerHeight,.08,500);
+scene.add(new THREE.HemisphereLight(0xe8f0ff,0x384330,2.2));const sun=new THREE.DirectionalLight(0xfff2d4,3.2);sun.position.set(35,70,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+const hud=document.getElementById('hud'),fill=document.getElementById('fill'),toggle=document.getElementById('toggle'),err=document.getElementById('error');
+let path=[],running=true,start=performance.now(),pauseAt=0,ready=false;
+function point(w){return new THREE.Vector3(w.local.east,w.local.ground_z+w.target_agl_m,-w.local.north)}
+function at(u){u=Math.max(0,Math.min(.999999,u));const q=u*(path.length-1),i=Math.floor(q),f=q-i;return path[i].clone().lerp(path[Math.min(i+1,path.length-1)],f)}
+function lookAtU(u){const p=at(Math.min(.999,u+.025));p.y-=1.35;return p}
+async function boot(){try{const flight=await fetch('/spatial/world/flight-path.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('flight path '+r.status);return r.json()});path=flight.waypoints.map(point);const gltf=await new GLTFLoader().loadAsync('/spatial/world/aumara-site-v2_1.glb');const world=gltf.scene;world.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.side=THREE.DoubleSide;o.material.needsUpdate=true}}});scene.add(world);const box=new THREE.Box3().setFromObject(world);if(box.isEmpty())throw Error('GLB bounds empty');ready=true;start=performance.now();window.__AUMARA_FLIGHT={ready:true,waypoint:0,complete:false,bounds:{min:box.min.toArray(),max:box.max.toArray()}};animate()}catch(e){err.classList.add('on');err.textContent='FLIGHT ERROR · '+e.message;window.__AUMARA_FLIGHT={ready:false,error:e.message}}}
+function animate(now=performance.now()){requestAnimationFrame(animate);if(!ready)return;let elapsed=running?(now-start)/1000:pauseAt;let u=Math.min(1,elapsed/DURATION);const p=at(u>=1?.999999:u);camera.position.copy(p);camera.lookAt(lookAtU(u>=1?.999:u));const wp=Math.min(27,Math.round(u*27));hud.textContent=(u>=1?'COMPLETE':'FLIGHT')+' · WP'+wp+'/27 · '+(p.y.toFixed(1))+'m';fill.style.width=(u*100).toFixed(2)+'%';window.__AUMARA_FLIGHT.waypoint=wp;window.__AUMARA_FLIGHT.complete=u>=1;renderer.render(scene,camera);if(u>=1)running=false}
+toggle.onclick=()=>{if(!ready)return;if(running){pauseAt=(performance.now()-start)/1000;running=false;toggle.textContent='PLAY'}else{start=performance.now()-pauseAt*1000;running=true;toggle.textContent='PAUSE'}};document.getElementById('restart').onclick=()=>{start=performance.now();pauseAt=0;running=true;toggle.textContent='PAUSE'};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});boot();
+</script>
+</body>
+</html>
