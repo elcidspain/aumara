@@ -1,0 +1,33 @@
+name: Preview spatial visual fix v2
+
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-visual-fix-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Patch visual descent
+        run: python .github/scripts/patch_spatial_visual.py
+      - name: Verify visual patch
+        run: |
+          grep -q 'if (alt > 600)' public/spatial/index.html
+          grep -q 'ARCGIS_WORLD_IMAGERY' public/spatial/index.html
+      - name: Commit preview visual fix
+        run: |
+          git config user.name "aumara-preview-bot"
+          git config user.email "elcidspain@gmail.com"
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "preview: visible Earth-to-AUMARA descent [skip ci]"
+          git push origin HEAD:preview/spatial-descent-integration-20260905
