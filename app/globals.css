@@ -107,11 +107,16 @@ p {
 .brand {
   display: block;
   flex: 0 0 auto;
-  width: min(240px, 72vw);
+  width: 240px;
   height: 56px;
   padding: 0;
   min-width: 0;
   overflow: visible;
+  background: url("/media/logo.png?v=path") left center / contain no-repeat;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
+.brand img {
+  display: none !important;
 }
 
 .mark {
@@ -1189,33 +1194,10 @@ input {
   }
 }
 
-a.brand img.brand-logo,
-img.brand-logo,
-.brand-logo {
-  display: block !important;
-  width: auto !important;
-  height: 56px !important;
-  max-width: min(240px, 72vw) !important;
-  max-height: 56px !important;
-  object-fit: contain !important;
-  object-position: left center !important;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
-}
 @media (max-width: 620px) {
   .brand {
-    width: min(200px, 74vw);
-    height: 44px;
-  }
-  a.brand img.brand-logo,
-  img.brand-logo,
-  .brand-logo {
-    height: 44px !important;
-    max-width: min(200px, 74vw) !important;
-    max-height: 44px !important;
+    width: 196px;
+    height: 46px;
   }
 }
 .header-tools {

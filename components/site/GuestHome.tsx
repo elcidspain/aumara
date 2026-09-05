@@ -145,15 +145,7 @@ export default function GuestHome() {
   return (
     <>
       <header className="header">
-        <a className="brand" href="#top" aria-label="AUMARA">
-          <img
-            src="/media/logo.png?v=lockup"
-            alt="AUMARA"
-            className="brand-logo"
-            width={1800}
-            height={636}
-          />
-        </a>
+        <a className="brand" href="#top" aria-label="AUMARA" />
         <div className="header-tools">
           <nav className="nav">
             <a href="#explore">{t.navWalk}</a>
