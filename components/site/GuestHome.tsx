@@ -167,7 +167,7 @@ export default function GuestHome() {
           <div className="wrap">
             <p className="eyebrow">The place</p>
             <p className="manifesto">
-              Not a row of rooms and not a generic resort. AUMARA is a small landscape of private
+              Not a row of rooms and not a generic resort. AUMARA is a landscape of private
               houses where <em>the route, the distance, the trees and the view</em> are part of the
               stay.
             </p>
@@ -333,7 +333,7 @@ export default function GuestHome() {
             <div className="section-head">
               <h2>Direct booking perk</h2>
               <p>
-                Book your geodesic house on AUMARA.me and we welcome you with a small local
+                Book your geodesic house on AUMARA.me and we welcome you with a local
                 experience on arrival — a taste of Marina Alta waiting in the house. Ask at
                 check-in. Direct reservations only.
               </p>
@@ -380,7 +380,7 @@ export default function GuestHome() {
           <div className="wrap">
             <div className="section-head">
               <p className="eyebrow">Hosted time</p>
-              <h2>A place for small groups that usually meet online.</h2>
+              <h2>A place for groups that usually meet online.</h2>
               <p>
                 Sleep, movement, food, attention and a quiet landscape. Programmes are hosted and
                 reviewed; the houses remain the accommodation.
@@ -420,7 +420,7 @@ export default function GuestHome() {
               <p className="eyebrow">Private gatherings</p>
               <h2>Take the place as a whole.</h2>
               <p>
-                AUMARA can host small-scale formats that need privacy, accommodation and a coherent
+                AUMARA can host private formats that need privacy, accommodation and a coherent
                 setting rather than a conventional event hall.
               </p>
               <div className="event-list">
@@ -428,7 +428,7 @@ export default function GuestHome() {
                 <div>Creative residencies</div>
                 <div>Leadership off-sites</div>
                 <div>Community gatherings</div>
-                <div>Small celebrations</div>
+                <div>Private gatherings</div>
                 <div>Hosted food experiences</div>
               </div>
               <div className="actions">
