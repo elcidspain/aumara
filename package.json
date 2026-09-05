@@ -9,7 +9,10 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "assert-copy": "node scripts/assert-guest-copy.mjs",
-    "logo:svgo": "npx --yes svgo public/media/logo.svg -o public/media/logo.svg --config svgo.config.mjs"
+    "svg:optimize": "npx --yes svgo@4.1.0 -f public --recursive --exclude node_modules --config svgo.config.mjs",
+    "svg:check": "npm run svg:optimize && git diff --exit-code -- '*.svg'",
+    "logo:svgo": "npm run svg:optimize",
+    "prebuild": "npm run svg:optimize"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",

@@ -1,0 +1,35 @@
+name: SVG
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  svgo:
+    name: Optimize and gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: SVGO
+        run: npm run svg:optimize
+
+      - name: Fail if committed SVG is not optimized
+        run: |
+          if ! git diff --exit-code -- '*.svg'; then
+            echo "::error::SVG is not optimized. Run npm run svg:optimize and commit the result."
+            git --no-pager diff -- '*.svg'
+            exit 1
+          fi
+          echo "SVG already matches svgo.config.mjs"
