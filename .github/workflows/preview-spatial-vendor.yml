@@ -1,0 +1,40 @@
+name: Vendor spatial runtime into preview
+
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-vendor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Fetch bounded spatial runtime
+        run: |
+          set -euo pipefail
+          base="https://olive-parts-bow.loca.lt"
+          mkdir -p public/spatial/world
+          curl -fL --retry 3 "$base/index.html" -o public/spatial/index.html
+          curl -fL --retry 3 "$base/ion.js" -o public/spatial/ion.js
+          curl -fL --retry 3 "$base/AUMARA_WORLD_GEOREFERENCE_v1.json" -o public/spatial/AUMARA_WORLD_GEOREFERENCE_v1.json
+          curl -fL --retry 3 "$base/world/flight-path.json" -o public/spatial/world/flight-path.json
+          curl -fL --retry 3 "$base/world/heightmap.json" -o public/spatial/world/heightmap.json
+          curl -fL --retry 3 "$base/world/media-index.json" -o public/spatial/world/media-index.json
+          curl -fL --retry 3 "$base/world/aumara-site-v2_1.glb" -o public/spatial/world/aumara-site-v2_1.glb
+          test "$(wc -c < public/spatial/world/aumara-site-v2_1.glb)" -gt 4000000
+      - name: Commit preview-only vendored runtime
+        run: |
+          git config user.name "aumara-preview-bot"
+          git config user.email "elcidspain@gmail.com"
+          git add public/spatial
+          git diff --cached --quiet && exit 0
+          git commit -m "preview: vendor spatial runtime [skip ci]"
+          git push origin HEAD:preview/spatial-descent-integration-20260905
