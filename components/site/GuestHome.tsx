@@ -146,7 +146,7 @@ export default function GuestHome() {
     <>
       <header className="header">
         <a className="brand" href="#top" aria-label="AUMARA">
-          <img src="/media/logo.png" alt="AUMARA" className="brand-logo" />
+          <img src="/media/logo.png?v=gold" alt="AUMARA" className="brand-logo" />
         </a>
         <div className="header-tools">
           <nav className="nav">
@@ -207,7 +207,7 @@ export default function GuestHome() {
           <div className="hero-inner">
             <div className="wrap">
               <img
-                src="/media/logo.png"
+                src="/media/logo.png?v=gold"
                 alt="AUMARA"
                 className="hero-lockup hero-in hero-in-0"
               />
