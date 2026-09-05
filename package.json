@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "assert-copy": "node scripts/assert-guest-copy.mjs"
+    "assert-copy": "node scripts/assert-guest-copy.mjs",
+    "logo:svgo": "npx --yes svgo public/media/logo.svg -o public/media/logo.svg --config svgo.config.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",
