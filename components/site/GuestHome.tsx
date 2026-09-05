@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BOOK_CHALET,
   BOOK_DIRECT,
@@ -12,6 +12,37 @@ import {
   beds24Url,
 } from "@/lib/guest";
 import { COPY, LANGS, detectLang, persistLang, type Lang } from "@/lib/i18n";
+import { createOpeningPad, type PadHandle } from "@/lib/openingPad";
+
+const LISTEN: Record<Lang, string> = {
+  es: "Escuchar",
+  en: "Listen",
+  ru: "Слушать",
+  fr: "Écouter",
+  de: "Hören",
+  nl: "Luisteren",
+  it: "Ascolta",
+  pt: "Escutar",
+  ca: "Escoltar",
+  pl: "Słuchaj",
+  uk: "Слухати",
+  sv: "Lyssna",
+};
+
+const QUIET: Record<Lang, string> = {
+  es: "Silencio",
+  en: "Quiet",
+  ru: "Тишина",
+  fr: "Silence",
+  de: "Stille",
+  nl: "Stil",
+  it: "Silenzio",
+  pt: "Silêncio",
+  ca: "Silenci",
+  pl: "Cisza",
+  uk: "Тиша",
+  sv: "Tystnad",
+};
 
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -38,11 +69,14 @@ export default function GuestHome() {
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState<Lang>("es");
   const [langOpen, setLangOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
+  const padRef = useRef<PadHandle | null>(null);
 
   const t = COPY[lang];
   const node = WALK_NODES[current];
   const nodeT = t.nodes[node.id] ?? t.nodes["01"];
   const searchHref = beds24Url({ checkin, checkout });
+  const [h1a, h1b] = t.h1.split("\n");
 
   useEffect(() => {
     const next = detectLang();
@@ -53,6 +87,14 @@ export default function GuestHome() {
   useEffect(() => {
     persistLang(lang);
   }, [lang]);
+
+  useEffect(() => {
+    padRef.current = createOpeningPad();
+    return () => {
+      padRef.current?.stop();
+      padRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +123,23 @@ export default function GuestHome() {
   function chooseLang(next: Lang) {
     setLang(next);
     setLangOpen(false);
+  }
+
+  async function toggleSound() {
+    const pad = padRef.current;
+    if (!pad) return;
+    if (soundOn) {
+      pad.stop();
+      padRef.current = createOpeningPad();
+      setSoundOn(false);
+      return;
+    }
+    try {
+      await pad.start();
+      setSoundOn(true);
+    } catch {
+      setSoundOn(false);
+    }
   }
 
   return (
@@ -147,10 +206,18 @@ export default function GuestHome() {
           />
           <div className="hero-inner">
             <div className="wrap">
-              <p className="eyebrow">{t.eyebrow}</p>
-              <h1>{t.h1}</h1>
-              <p className="lead">{t.lead}</p>
-              <div className="actions">
+              <img
+                src="/media/logo.png"
+                alt="AUMARA"
+                className="hero-lockup hero-in hero-in-0"
+              />
+              <p className="eyebrow hero-in hero-in-1">{t.eyebrow}</p>
+              <h1 className="hero-title">
+                <span className="hero-line hero-line-1">{h1a}</span>
+                {h1b ? <span className="hero-line hero-line-2">{h1b}</span> : null}
+              </h1>
+              <p className="lead hero-in hero-in-3">{t.lead}</p>
+              <div className="actions hero-in hero-in-4">
                 <a className="btn primary" href="#explore">
                   {t.ctaWalk}
                 </a>
@@ -158,7 +225,7 @@ export default function GuestHome() {
                   {t.ctaBookBeds}
                 </a>
               </div>
-              <div className="operator">
+              <div className="operator hero-in hero-in-5">
                 {t.operator}{" "}
                 <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
                   El Cid · elcidspain.com
@@ -167,6 +234,16 @@ export default function GuestHome() {
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            className={soundOn ? "sound-btn on" : "sound-btn"}
+            aria-pressed={soundOn}
+            aria-label={soundOn ? QUIET[lang] : LISTEN[lang]}
+            onClick={toggleSound}
+          >
+            <span className="sound-dot" aria-hidden="true" />
+            {soundOn ? QUIET[lang] : LISTEN[lang]}
+          </button>
         </section>
 
         <div className="quick" id="availability">

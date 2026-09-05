@@ -50,10 +50,10 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display), "Playfair Display", Georgia, "Times New Roman", serif;
   font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 0.99;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   margin: 0;
 }
 
@@ -93,21 +93,21 @@ p {
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  padding: 15px max(18px, env(safe-area-inset-left));
+  padding: 18px 4vw 18px max(28px, env(safe-area-inset-left));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #fff;
-  background: linear-gradient(#0b150ee8, transparent);
+  gap: 20px;
+  color: #f0ddb0;
+  background: linear-gradient(#0b150ef2, transparent);
+  overflow: visible;
 }
 
 .brand {
   display: flex;
-  gap: 11px;
+  flex: 0 0 auto;
   align-items: center;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.17em;
+  padding: 2px 0;
 }
 
 .mark {
@@ -117,7 +117,7 @@ p {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font: 500 25px Georgia, serif;
+  font: 500 25px var(--font-display), Georgia, serif;
 }
 
 .nav {
@@ -144,7 +144,7 @@ p {
 .hero {
   min-height: 94svh;
   position: relative;
-  color: #fff;
+  color: var(--gold-bright);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -176,14 +176,127 @@ video.hero-bg {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 145px 0 60px;
+  padding: 168px 0 72px;
+}
+
+.hero-lockup {
+  display: block;
+  width: min(440px, 84vw);
+  height: auto;
+  max-height: 104px;
+  margin: 0 0 28px;
+  object-fit: contain;
+  object-position: left center;
+  background: transparent;
+  filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.45));
+}
+
+.hero-title {
+  font-family: var(--font-display), "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  max-width: min(16.5em, 92vw);
+  text-wrap: balance;
+  color: var(--gold-bright);
+  white-space: normal;
+}
+
+.hero-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(22px);
+  filter: blur(10px);
+  animation: titleArrive 1.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-line-1 {
+  font-style: italic;
+  font-size: clamp(34px, 5.6vw, 76px);
+  animation-delay: 0.55s;
+  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+}
+
+.hero-line-2 {
+  margin-top: 0.34em;
+  font-style: normal;
+  font-size: clamp(22px, 3.2vw, 40px);
+  color: #ead7a8;
+  animation-delay: 1.45s;
+  text-shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+}
+
+.hero-in {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(6px);
+  animation: titleArrive 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-in-0 { animation-delay: 0.08s; }
+.hero-in-1 { animation-delay: 0.28s; }
+.hero-in-3 { animation-delay: 2.05s; }
+.hero-in-4 { animation-delay: 2.4s; }
+.hero-in-5 { animation-delay: 2.7s; }
+
+@keyframes titleArrive {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.sound-btn {
+  position: absolute;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: 28px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid #e2c27a73;
+  background: #0b150e66;
+  color: var(--gold-bright);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.sound-btn .sound-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 #e2c27a88;
+}
+
+.sound-btn.on {
+  background: var(--gold-bright);
+  color: #1b1712;
+  border-color: var(--gold-bright);
+}
+
+.sound-btn.on .sound-dot {
+  animation: soundPulse 1.6s ease-out infinite;
+}
+
+@keyframes soundPulse {
+  0% { box-shadow: 0 0 0 0 #1b171255; }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .lead {
-  font-size: clamp(18px, 2vw, 24px);
-  max-width: 790px;
-  color: #ffffffd8;
-  margin: 25px 0 0;
+  font-size: clamp(17px, 1.9vw, 22px);
+  max-width: 720px;
+  color: #ead9b4;
+  margin: 22px 0 0;
 }
 
 .actions {
@@ -210,25 +323,25 @@ video.hero-bg {
 }
 
 .secondary {
-  color: #fff;
-  border-color: #ffffff91;
-  background: #ffffff10;
+  color: var(--gold-bright);
+  border-color: #e2c27a91;
+  background: #e2c27a14;
 }
 
 .operator {
   margin-top: 25px;
   max-width: 790px;
   padding: 15px 17px;
-  border: 1px solid #ffffff38;
+  border: 1px solid #e2c27a38;
   border-radius: 17px;
-  background: #ffffff0d;
-  color: #ffffffc7;
+  background: #0b150e55;
+  color: #ead9b4;
   font-size: 13px;
   backdrop-filter: blur(10px);
 }
 
 .operator a {
-  color: #fff;
+  color: var(--gold-bright);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1003,7 +1116,7 @@ input {
     width: min(100% - 28px, 1240px);
   }
   .header {
-    padding: 13px 15px;
+    padding: 14px 18px 14px max(18px, env(safe-area-inset-left));
   }
   .hero {
     min-height: 82svh;
@@ -1064,22 +1177,29 @@ input {
 }
 
 .brand-logo {
-  width: auto;
-  height: 48px;
-  max-height: 48px;
-  max-width: min(240px, 62vw);
+  display: block;
+  width: min(340px, 70vw);
+  height: auto;
+  max-height: 80px;
+  max-width: min(340px, 70vw);
   object-fit: contain;
   object-position: left center;
   background: transparent;
   border: 0;
   border-radius: 0;
+  flex-shrink: 0;
 }
 @media (max-width: 620px) {
   .brand-logo {
-    width: auto;
-    height: 40px;
-    max-height: 40px;
-    max-width: min(210px, 68vw);
+    width: min(292px, 74vw);
+    height: auto;
+    max-height: 68px;
+    max-width: min(292px, 74vw);
+  }
+  .hero-lockup {
+    width: min(360px, 86vw);
+    max-height: 84px;
+    margin-bottom: 22px;
   }
 }
 .header-tools {
@@ -1137,5 +1257,15 @@ input {
 @media (max-width: 1050px) {
   .header-tools .nav {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
