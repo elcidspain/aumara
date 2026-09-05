@@ -7,11 +7,11 @@ import {
   BOOK_SUPERIOR,
   EL_CID_URL,
   FLIGHT,
-  INVENTORY,
   NODE_POSITIONS,
   WALK_NODES,
   beds24Url,
 } from "@/lib/guest";
+import { COPY, LANGS, detectLang, persistLang, type Lang } from "@/lib/i18n";
 
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -36,9 +36,23 @@ export default function GuestHome() {
   const [minOut, setMinOut] = useState(initial.minOut);
   const [current, setCurrent] = useState(0);
   const [open, setOpen] = useState(false);
+  const [lang, setLang] = useState<Lang>("es");
+  const [langOpen, setLangOpen] = useState(false);
 
+  const t = COPY[lang];
   const node = WALK_NODES[current];
+  const nodeT = t.nodes[node.id] ?? t.nodes["01"];
   const searchHref = beds24Url({ checkin, checkout });
+
+  useEffect(() => {
+    const next = detectLang();
+    setLang(next);
+    persistLang(next);
+  }, []);
+
+  useEffect(() => {
+    persistLang(lang);
+  }, [lang]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,25 +78,59 @@ export default function GuestHome() {
     if (!checkout || checkout <= value) setCheckout(next);
   }
 
+  function chooseLang(next: Lang) {
+    setLang(next);
+    setLangOpen(false);
+  }
+
   return (
     <>
       <header className="header">
         <a className="brand" href="#top">
-          <span className="mark">A</span>
+          <img src="/media/logo.png" alt="AUMARA" className="brand-logo" />
           <span>AUMARA</span>
         </a>
-        <nav className="nav">
-          <a href="#explore">Walk the site</a>
-          <a href="#houses">Houses</a>
-          <a href="#retreats">Retreats</a>
-          <a className="elcid" href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-            El Cid
-          </a>
-          <a href="#operator">Operator</a>
-          <a className="book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-            Book direct
-          </a>
-        </nav>
+        <div className="header-tools">
+          <nav className="nav">
+            <a href="#explore">{t.navWalk}</a>
+            <a href="#houses">{t.navHouses}</a>
+            <a href="#retreats">{t.navRetreats}</a>
+            <a className="elcid" href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
+              El Cid
+            </a>
+            <a href="#operator">{t.navOperator}</a>
+            <a className="book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
+              {t.navBook}
+            </a>
+          </nav>
+          <div className="lang">
+            <button
+              type="button"
+              className="lang-btn"
+              aria-label={t.langLabel}
+              aria-expanded={langOpen}
+              onClick={() => setLangOpen((v) => !v)}
+            >
+              {LANGS.find((item) => item.id === lang)?.code ?? "ES"}
+            </button>
+            {langOpen ? (
+              <div className="lang-menu" role="listbox" aria-label={t.langLabel}>
+                {LANGS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="option"
+                    aria-selected={item.id === lang}
+                    className={item.id === lang ? "active" : undefined}
+                    onClick={() => chooseLang(item.id)}
+                  >
+                    {item.code} · {item.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
       </header>
 
       <main id="top">
@@ -96,30 +144,23 @@ export default function GuestHome() {
             playsInline
             loop
             preload="metadata"
-            aria-label="Recorded flight between standing geodesic houses at AUMARA in Benidoleig"
+            aria-label={t.flightAria}
           />
           <div className="hero-inner">
             <div className="wrap">
-              <p className="eyebrow">AUMARA · geodesic · eco · Benidoleig · Marina Alta</p>
-              <h1>Walk the place before you choose the house.</h1>
-              <p className="lead">
-                The opening film flies between geodesic houses already standing on the hill. Then
-                the map and eight recorded points take you along the paths and into the houses.
-                AUMARA is an eco stay in Benidoleig, Marina Alta. Each booking is for a complete
-                house.
-              </p>
+              <p className="eyebrow">{t.eyebrow}</p>
+              <h1>{t.h1}</h1>
+              <p className="lead">{t.lead}</p>
               <div className="actions">
                 <a className="btn primary" href="#explore">
-                  Start the walkthrough
+                  {t.ctaWalk}
                 </a>
                 <a className="btn secondary" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-                  Book direct with Beds24
+                  {t.ctaBookBeds}
                 </a>
               </div>
               <div className="operator">
-                <strong>AUMARA</strong> is operated by <strong>EL CID VENTURES BENIDOLEIG S.L.</strong>{" "}
-                Direct availability and reservations are handled through Beds24. Restaurant and
-                country club:{" "}
+                {t.operator}{" "}
                 <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
                   El Cid · elcidspain.com
                 </a>
@@ -133,7 +174,7 @@ export default function GuestHome() {
           <div className="wrap">
             <div className="quick-box">
               <div>
-                <label htmlFor="checkin">Check-in</label>
+                <label htmlFor="checkin">{t.checkin}</label>
                 <input
                   id="checkin"
                   type="date"
@@ -143,7 +184,7 @@ export default function GuestHome() {
                 />
               </div>
               <div>
-                <label htmlFor="checkout">Check-out</label>
+                <label htmlFor="checkout">{t.checkout}</label>
                 <input
                   id="checkout"
                   type="date"
@@ -153,23 +194,20 @@ export default function GuestHome() {
                 />
               </div>
               <a className="btn primary" href={searchHref} target="_blank" rel="noopener noreferrer">
-                Open live availability
+                {t.openAvail}
               </a>
-              <p className="quick-note">
-                Dates are passed to the AUMARA Beds24 page (property 324882). Live prices, house
-                availability and reservation terms are confirmed there.
-              </p>
+              <p className="quick-note">{t.quickNote}</p>
             </div>
           </div>
         </div>
 
         <section className="section tight">
           <div className="wrap">
-            <p className="eyebrow">The place</p>
+            <p className="eyebrow">{t.placeEyebrow}</p>
             <p className="manifesto">
-              Not a row of rooms and not a generic resort. AUMARA is a landscape of private
-              houses where <em>the route, the distance, the trees and the view</em> are part of the
-              stay.
+              {t.manifestoBefore}
+              <em>{t.manifestoEm}</em>
+              {t.manifestoAfter}
             </p>
           </div>
         </section>
@@ -178,18 +216,15 @@ export default function GuestHome() {
           <div className="wrap">
             <div className="explore-head">
               <div>
-                <p className="eyebrow">Interactive walkthrough</p>
-                <h2>Choose a point. Enter the real video.</h2>
+                <p className="eyebrow">{t.exploreEyebrow}</p>
+                <h2>{t.exploreH2}</h2>
               </div>
-              <p>
-                The plan is the navigation layer. Tap any numbered point to open footage recorded on
-                site, then move forward or backward through the route.
-              </p>
+              <p>{t.exploreP}</p>
             </div>
             <div className="explore-shell">
               <div className="map-viewport" id="mapViewport">
                 <div className="site-map">
-                  <img src="/media/site-plan.jpg" alt="AUMARA site plan with houses along the paths" />
+                  <img src="/media/site-plan.jpg" alt={t.mapAlt} />
                   <svg className="route-svg" viewBox="0 0 1000 562" preserveAspectRatio="none">
                     <path
                       className="route-base"
@@ -200,47 +235,48 @@ export default function GuestHome() {
                       d="M220 365 C280 342 330 330 400 305 C445 285 480 270 490 250 C515 220 555 210 580 214 C610 245 625 300 630 343 C555 345 465 334 400 305 C350 325 290 350 220 365"
                     />
                   </svg>
-                  <span className="map-tag tag-west">← West / EL CID</span>
-                  <span className="map-tag tag-road">Valley road</span>
+                  <span className="map-tag tag-west">{t.tagWest}</span>
+                  <span className="map-tag tag-road">{t.tagRoad}</span>
                   <span className="map-tag tag-north">N</span>
-                  {WALK_NODES.map((n, i) => (
-                    <button
-                      key={n.id}
-                      className={`node ${NODE_POSITIONS[i]} ${i === current ? "active" : ""}`}
-                      aria-label={`Open point ${i + 1}: ${n.label}`}
-                      onClick={() => {
-                        setCurrent(i);
-                        setOpen(true);
-                      }}
-                    >
-                      <span className="node-dot">{i + 1}</span>
-                      <span className="node-label">{n.label}</span>
-                    </button>
-                  ))}
+                  {WALK_NODES.map((n, i) => {
+                    const label = t.nodes[n.id]?.label ?? n.label;
+                    return (
+                      <button
+                        key={n.id}
+                        className={`node ${NODE_POSITIONS[i]} ${i === current ? "active" : ""}`}
+                        aria-label={`${t.openPoint} ${i + 1}: ${label}`}
+                        onClick={() => {
+                          setCurrent(i);
+                          setOpen(true);
+                        }}
+                      >
+                        <span className="node-dot">{i + 1}</span>
+                        <span className="node-label">{label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <article className="explore-card">
                 <div className="node-preview">
-                  <img src={node.poster} alt={node.title} />
-                  <span className="preview-code">Point {node.id} · real site footage</span>
+                  <img src={node.poster} alt={nodeT.title} />
+                  <span className="preview-code">
+                    {t.pointOf} {node.id} · {t.pointFootage}
+                  </span>
                 </div>
                 <div className="explore-body">
-                  <p className="eyebrow">{node.title}</p>
-                  <h3>{node.subtitle}</h3>
-                  <p>{node.description}</p>
+                  <p className="eyebrow">{nodeT.title}</p>
+                  <h3>{nodeT.subtitle}</h3>
+                  <p>{nodeT.description}</p>
                   <div className="node-controls">
                     <button className="walk" type="button" onClick={() => setOpen(true)}>
-                      Enter this point
+                      {t.enterPoint}
                     </button>
                     <a href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-                      Open Beds24 availability
+                      {t.openBeds}
                     </a>
                   </div>
-                  <div className="walk-note">
-                    After the opening flight between standing houses, these clips are the walk on
-                    the paths and into the houses. They are muted by default. Use the arrows inside
-                    the viewer to move through the eight points.
-                  </div>
+                  <div className="walk-note">{t.walkNote}</div>
                 </div>
               </article>
             </div>
@@ -250,45 +286,34 @@ export default function GuestHome() {
         <section className="section" id="houses">
           <div className="wrap">
             <div className="section-head">
-              <p className="eyebrow">Stay</p>
-              <h2>Six geodesic houses. Two formats.</h2>
-              <p>
-                AUMARA has {INVENTORY.totalHouses} geodesic houses in two formats:{" "}
-                {INVENTORY.chalet.count} × {INVENTORY.chalet.label} (Beds24 room{" "}
-                {INVENTORY.chalet.roomId}, up to {INVENTORY.chalet.maxGuests} guests) and{" "}
-                {INVENTORY.superior.count} × {INVENTORY.superior.label} (Beds24 room{" "}
-                {INVENTORY.superior.roomId}, up to {INVENTORY.superior.maxGuests} guests). Live
-                availability is on Beds24.
-              </p>
+              <p className="eyebrow">{t.stayEyebrow}</p>
+              <h2>{t.stayH2}</h2>
+              <p>{t.stayP}</p>
             </div>
             <div className="house-grid">
               <article className="card">
                 <div className="photo">
                   <img
                     src="/media/stills/chalet-mezzanine.jpg"
-                    alt="Chalet interior seen from the mezzanine toward the dining table and windows"
+                    alt={t.chaletH3}
                   />
                 </div>
                 <div className="body">
                   <p className="eyebrow">Chalet</p>
-                  <h3>Open volume. Bed with the windows.</h3>
-                  <p>
-                    A complete compact house: the bed sits in the glazed volume, the kitchen is in
-                    the same room, and a ladder reaches the mezzanine. Warm timber, a private
-                    entrance, and a direct path into the planting.
-                  </p>
+                  <h3>{t.chaletH3}</h3>
+                  <p>{t.chaletP}</p>
                   <div className="facts">
-                    <span className="fact">Complete house</span>
-                    <span className="fact">Open-plan living</span>
-                    <span className="fact">Mezzanine</span>
-                    <span className="fact">Panoramic windows</span>
+                    <span className="fact">{t.factHouse}</span>
+                    <span className="fact">{t.factOpen}</span>
+                    <span className="fact">{t.factMezz}</span>
+                    <span className="fact">{t.factPan}</span>
                   </div>
                   <div className="card-actions">
                     <a href={BOOK_CHALET} target="_blank" rel="noopener noreferrer">
-                      Book Chalet direct
+                      {t.bookChalet}
                     </a>
                     <a className="alt" href="#explore">
-                      See on the route
+                      {t.seeRoute}
                     </a>
                   </div>
                 </div>
@@ -297,29 +322,25 @@ export default function GuestHome() {
                 <div className="photo">
                   <img
                     src="/media/stills/superior-living.jpg"
-                    alt="Superior Chalet living room with white sofa, stair and timber window wall"
+                    alt={t.supH3}
                   />
                 </div>
                 <div className="body">
                   <p className="eyebrow">Superior Chalet</p>
-                  <h3>Sitting room. Separate bedroom.</h3>
-                  <p>
-                    The larger house format: a living room with a white sofa and stair, a separate
-                    bedroom, and more space for longer stays. Same geodesic structure, a quieter
-                    split between living and sleeping.
-                  </p>
+                  <h3>{t.supH3}</h3>
+                  <p>{t.supP}</p>
                   <div className="facts">
-                    <span className="fact">Larger house</span>
-                    <span className="fact">Living room</span>
-                    <span className="fact">Separate bedroom</span>
-                    <span className="fact">Private outdoor space</span>
+                    <span className="fact">{t.factLarger}</span>
+                    <span className="fact">{t.factLiving}</span>
+                    <span className="fact">{t.factBed}</span>
+                    <span className="fact">{t.factOutdoor}</span>
                   </div>
                   <div className="card-actions">
                     <a href={BOOK_SUPERIOR} target="_blank" rel="noopener noreferrer">
-                      Book Superior direct
+                      {t.bookSup}
                     </a>
                     <a className="alt" href="#explore">
-                      See on the route
+                      {t.seeRoute}
                     </a>
                   </div>
                 </div>
@@ -331,12 +352,8 @@ export default function GuestHome() {
         <section className="section" id="gift">
           <div className="wrap">
             <div className="section-head">
-              <h2>Direct booking perk</h2>
-              <p>
-                Book your geodesic house on AUMARA.me and we welcome you with a local
-                experience on arrival — a taste of Marina Alta waiting in the house. Ask at
-                check-in. Direct reservations only.
-              </p>
+              <h2>{t.perkH2}</h2>
+              <p>{t.perkP}</p>
             </div>
           </div>
         </section>
@@ -344,33 +361,30 @@ export default function GuestHome() {
         <section className="section" id="gallery">
           <div className="wrap">
             <div className="section-head">
-              <p className="eyebrow">Daylight and open views</p>
-              <h2>Houses in the trees. Valley beyond the frames.</h2>
-              <p>
-                Exteriors, coloured houses, paths and the view from inside the timber geometry.
-                Photographs from the AUMARA stills archive — not generated, not a stock landscape.
-              </p>
+              <p className="eyebrow">{t.galEyebrow}</p>
+              <h2>{t.galH2}</h2>
+              <p>{t.galP}</p>
             </div>
             <div className="gallery">
               <figure>
-                <img src="/media/stills/path-green-ochre.jpg" alt="Green and ochre houses beside a stone-edged path" />
-                <figcaption>Path between houses</figcaption>
+                <img src="/media/stills/path-green-ochre.jpg" alt={t.capPath} />
+                <figcaption>{t.capPath}</figcaption>
               </figure>
               <figure>
-                <img src="/media/stills/ochre-valley.jpg" alt="Ochre house above the Marina Alta valley" />
-                <figcaption>Valley below</figcaption>
+                <img src="/media/stills/ochre-valley.jpg" alt={t.capValley} />
+                <figcaption>{t.capValley}</figcaption>
               </figure>
               <figure>
-                <img src="/media/stills/inside-valley.jpg" alt="View from inside a house across the valley" />
-                <figcaption>From inside the dome</figcaption>
+                <img src="/media/stills/inside-valley.jpg" alt={t.capInside} />
+                <figcaption>{t.capInside}</figcaption>
               </figure>
               <figure>
-                <img src="/media/stills/colored-houses.jpg" alt="Coloured geodesic houses among pines" />
-                <figcaption>Coloured houses</figcaption>
+                <img src="/media/stills/colored-houses.jpg" alt={t.capColored} />
+                <figcaption>{t.capColored}</figcaption>
               </figure>
               <figure>
-                <img src="/media/stills/green-house.jpg" alt="Green house with terrace chairs at golden hour" />
-                <figcaption>Green house</figcaption>
+                <img src="/media/stills/green-house.jpg" alt={t.capGreen} />
+                <figcaption>{t.capGreen}</figcaption>
               </figure>
             </div>
           </div>
@@ -379,33 +393,30 @@ export default function GuestHome() {
         <section className="section dark" id="retreats">
           <div className="wrap">
             <div className="section-head">
-              <p className="eyebrow">Hosted time</p>
-              <h2>A place for groups that usually meet online.</h2>
-              <p>
-                Sleep, movement, food, attention and a quiet landscape. Programmes are hosted and
-                reviewed; the houses remain the accommodation.
-              </p>
+              <p className="eyebrow">{t.retEyebrow}</p>
+              <h2>{t.retH2}</h2>
+              <p>{t.retP}</p>
             </div>
             <div className="retreat-grid">
               <article className="retreat-card">
-                <small>Hosted rest</small>
-                <h3>Women’s Reset</h3>
-                <p>Rest, body, food, nature and relief from the operational load of daily life.</p>
+                <small>{t.r1s}</small>
+                <h3>{t.r1h}</h3>
+                <p>{t.r1p}</p>
               </article>
               <article className="retreat-card">
-                <small>Communities</small>
-                <h3>Community Retreats</h3>
-                <p>Established learning groups brought carefully into real space.</p>
+                <small>{t.r2s}</small>
+                <h3>{t.r2h}</h3>
+                <p>{t.r2p}</p>
               </article>
               <article className="retreat-card">
-                <small>Movement</small>
-                <h3>NeuroAdventure</h3>
-                <p>Outdoor formats with structure: mountains, games and time outdoors.</p>
+                <small>{t.r3s}</small>
+                <h3>{t.r3h}</h3>
+                <p>{t.r3p}</p>
               </article>
               <article className="retreat-card">
-                <small>Your programme</small>
-                <h3>Bring Your Own Retreat</h3>
-                <p>You bring the content; AUMARA provides houses, food, local routes and operations.</p>
+                <small>{t.r4s}</small>
+                <h3>{t.r4h}</h3>
+                <p>{t.r4p}</p>
               </article>
             </div>
           </div>
@@ -414,26 +425,23 @@ export default function GuestHome() {
         <section className="section" id="events">
           <div className="wrap event-band">
             <div className="event-photo">
-              <img src="/media/stills/inside-trees.jpg" alt="Timber window frames looking into pines from inside a house" />
+              <img src="/media/stills/inside-trees.jpg" alt={t.capInside} />
             </div>
             <div className="event-copy">
-              <p className="eyebrow">Private gatherings</p>
-              <h2>Take the place as a whole.</h2>
-              <p>
-                AUMARA can host private formats that need privacy, accommodation and a coherent
-                setting rather than a conventional event hall.
-              </p>
+              <p className="eyebrow">{t.evEyebrow}</p>
+              <h2>{t.evH2}</h2>
+              <p>{t.evP}</p>
               <div className="event-list">
-                <div>Family weekends</div>
-                <div>Creative residencies</div>
-                <div>Leadership off-sites</div>
-                <div>Community gatherings</div>
-                <div>Private gatherings</div>
-                <div>Hosted food experiences</div>
+                <div>{t.ev1}</div>
+                <div>{t.ev2}</div>
+                <div>{t.ev3}</div>
+                <div>{t.ev4}</div>
+                <div>{t.ev5}</div>
+                <div>{t.ev6}</div>
               </div>
               <div className="actions">
                 <a className="btn primary" href="mailto:elcidspain@gmail.com?subject=AUMARA%20private%20gathering">
-                  Discuss a gathering
+                  {t.discuss}
                 </a>
               </div>
             </div>
@@ -443,69 +451,66 @@ export default function GuestHome() {
         <section className="section" id="operator">
           <div className="wrap">
             <div className="section-head">
-              <p className="eyebrow">Operator and booking</p>
-              <h2>Clear identity. Direct reservation path.</h2>
-              <p>
-                AUMARA is the public place and accommodation brand. The legal operator and
-                direct-booking system are stated separately.
-              </p>
+              <p className="eyebrow">{t.opEyebrow}</p>
+              <h2>{t.opH2}</h2>
+              <p>{t.opP}</p>
             </div>
             <div className="identity">
               <div className="identity-card">
-                <p className="eyebrow">Brand and place</p>
+                <p className="eyebrow">{t.brandPlace}</p>
                 <h3>AUMARA</h3>
-                <p>Geodesic eco houses and hosted gatherings in Benidoleig, Marina Alta.</p>
+                <p>{t.brandP}</p>
                 <div className="identity-row">
-                  <strong>El Cid</strong>
+                  <strong>{t.rowElcid}</strong>
                   <span>
                     <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-                      Restaurant & country club · elcidspain.com
+                      {t.rowElcidV}
                     </a>
                   </span>
                 </div>
                 <div className="identity-row">
-                  <strong>Direct booking</strong>
+                  <strong>{t.rowBook}</strong>
                   <span>
                     <a href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-                      Beds24 property 324882
+                      {t.rowBookV}
                     </a>
                   </span>
                 </div>
                 <div className="identity-row">
-                  <strong>House formats</strong>
-                  <span>Chalet and Superior Chalet</span>
+                  <strong>{t.rowFmt}</strong>
+                  <span>{t.rowFmtV}</span>
                 </div>
                 <div className="identity-row">
-                  <strong>On-site walk</strong>
-                  <span>Eight video points from the recorded route</span>
+                  <strong>{t.rowWalk}</strong>
+                  <span>{t.rowWalkV}</span>
                 </div>
               </div>
               <div className="identity-card">
-                <p className="eyebrow">Legal operator</p>
+                <p className="eyebrow">{t.legalEyebrow}</p>
                 <h3>EL CID VENTURES BENIDOLEIG S.L.</h3>
                 <p>
-                  The company responsible for the accommodation operation. Same firm as{" "}
+                  {t.legalP}{" "}
                   <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-                    El Cid restaurant & country club
+                    El Cid
                   </a>
                   .
                 </p>
                 <div className="identity-row">
-                  <strong>CIF</strong>
+                  <strong>{t.rowCif}</strong>
                   <span>B53816989</span>
                 </div>
                 <div className="identity-row">
-                  <strong>Address</strong>
-                  <span>Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante</span>
+                  <strong>{t.rowAddr}</strong>
+                  <span>{t.addr}</span>
                 </div>
                 <div className="identity-row">
-                  <strong>Email</strong>
+                  <strong>{t.rowEmail}</strong>
                   <span>
                     <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a>
                   </span>
                 </div>
                 <div className="identity-row">
-                  <strong>Telephone</strong>
+                  <strong>{t.rowTel}</strong>
                   <span>
                     <a href="tel:+34966579970">+34 966 57 99 70</a>
                   </span>
@@ -517,18 +522,15 @@ export default function GuestHome() {
 
         <section className="section">
           <div className="wrap final">
-            <p className="eyebrow">Choose your way into AUMARA</p>
-            <h2>Walk it. Choose it. Book it.</h2>
-            <p>
-              Explore the recorded route, compare the two house formats, then continue to the
-              AUMARA Beds24 page for live availability and terms.
-            </p>
+            <p className="eyebrow">{t.finalEyebrow}</p>
+            <h2>{t.finalH2}</h2>
+            <p>{t.finalP}</p>
             <div className="actions">
               <a className="btn primary" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-                Book direct with Beds24
+                {t.ctaBookBeds}
               </a>
               <a className="btn secondary" href="#explore">
-                Walk the site again
+                {t.walkAgain}
               </a>
             </div>
           </div>
@@ -538,7 +540,7 @@ export default function GuestHome() {
       <footer>
         <div className="wrap footer">
           <div>
-            <strong>AUMARA</strong> · Operated by EL CID VENTURES BENIDOLEIG S.L. · CIF B53816989
+            <strong>AUMARA</strong> · {t.footerOp}
           </div>
           <div className="footer-links">
             <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
@@ -550,7 +552,7 @@ export default function GuestHome() {
       </footer>
 
       <a className="mobile-book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-        Book direct
+        {t.navBook}
       </a>
 
       <div
@@ -564,11 +566,11 @@ export default function GuestHome() {
         <div className="viewer-head">
           <div className="viewer-title">
             <small>
-              Point {node.id} of 08
+              {t.pointOf} {node.id} {t.of08}
             </small>
-            <strong id="viewerName">{node.title}</strong>
+            <strong id="viewerName">{nodeT.title}</strong>
           </div>
-          <button className="viewer-close" type="button" aria-label="Close" onClick={() => setOpen(false)}>
+          <button className="viewer-close" type="button" aria-label={t.close} onClick={() => setOpen(false)}>
             ×
           </button>
         </div>
@@ -579,7 +581,7 @@ export default function GuestHome() {
           <button
             className="viewer-arrow viewer-prev"
             type="button"
-            aria-label="Previous point"
+            aria-label={t.prev}
             onClick={() => setCurrent((i) => (i + WALK_NODES.length - 1) % WALK_NODES.length)}
           >
             ‹
@@ -587,14 +589,14 @@ export default function GuestHome() {
           <button
             className="viewer-arrow viewer-next"
             type="button"
-            aria-label="Next point"
+            aria-label={t.next}
             onClick={() => setCurrent((i) => (i + 1) % WALK_NODES.length)}
           >
             ›
           </button>
         </div>
         <div className="viewer-foot">
-          <div className="viewer-copy">{node.subtitle}</div>
+          <div className="viewer-copy">{nodeT.subtitle}</div>
           <button
             type="button"
             onClick={() => {
@@ -602,10 +604,10 @@ export default function GuestHome() {
               document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Back to map
+            {t.backMap}
           </button>
           <a href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-            Book direct
+            {t.navBook}
           </a>
         </div>
       </div>
