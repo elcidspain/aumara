@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SITE_URL } from "@/lib/guest";
+import { GA_MEASUREMENT_ID, isGaMeasurementId } from "@/lib/gtag";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -53,6 +55,8 @@ const jsonLd = {
   },
 };
 
+const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
@@ -61,6 +65,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {gaId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
+            </Script>
+          </>
+        ) : null}
         {children}
       </body>
     </html>

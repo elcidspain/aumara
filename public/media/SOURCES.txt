@@ -21,7 +21,11 @@ stills/chalet-bed.jpg           booking-3x2/bedroom-01.jpg
 stills/superior-living.jpg      booking-3x2/kitchen-02.jpg          (white sofa + stair — Superior)
 stills/dining-windows.jpg       booking-3x2/living-02.jpg
 stills/pines-sky.jpg            booking-3x2/kitchen-03.jpg          (exteriors under pines)
-logo.png                        booking-select/logo/aumara-logo.png
+logo.png                        gold horizontal lockup, transparent (no plate).
+                                Source: official brand sheet (Drive AUMARA_official_logo_horizontal_v01.png
+                                and aumara_logo 2.pdf). Header uses this file.
+logo-mark.png                   gold mark only, transparent. Ads asset-group logo if needed.
+                                Do not upload either file as Google Ads Business logo.
 
 site-plan.jpg
   existing live walkthrough plan, hosted locally so the guest page does not depend on Drive hotlinks.

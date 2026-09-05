@@ -168,7 +168,9 @@ Square:
 - https://www.aumara.me/media/stills/dining-windows.jpg
 - https://www.aumara.me/media/stills/inside-trees.jpg
 
-Logo (AUMARA mark only): https://www.aumara.me/media/logo.png
+Logo (site header, gold lockup, transparent): https://www.aumara.me/media/logo.png
+Mark only (asset-group logo if Ads UI needs a square mark): https://www.aumara.me/media/logo-mark.png
+Do not upload either file as Google Ads Business logo — that field stays empty.
 
 Video: upload https://www.aumara.me/media/flight/flight.mp4 to YouTube as unlisted `AUMARA Benidoleig flight`, then attach. Prefer this over Google auto-generated video.
 
@@ -180,7 +182,9 @@ Create before enabling PMax.
 2. Secondary, observe only — Click to Beds24 (`propid=324882`).
 3. Call asset: +34 966 57 99 70.
 
-Install the Google tag on www.aumara.me (Vercel project that serves the domain).
+Google tag is wired on the canon (`app/layout.tsx`) behind `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
+Set that env on Vercel project `aumara-path-cut` to a real `G-…` ID from the Ads/GA4 account.
+Do not invent an ID. Without it, no gtag ships. Then create the Book conversion.
 
 ## Launch order
 
