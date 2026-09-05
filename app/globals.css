@@ -1216,19 +1216,20 @@ img.brand-mark,
   line-height: 1;
 }
 .brand-name {
-  font-family: var(--font-brand), var(--font-display), "Cinzel", "Playfair Display", serif;
-  font-weight: 700;
+  font-family: var(--font-display), "Playfair Display", Georgia, serif;
+  font-weight: 600;
   font-size: 22px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   line-height: 1;
   color: #f6e2a8;
   text-shadow: 0 1px 0 #9a7428, 0 2px 0 #5c4414, 0 4px 10px rgba(0, 0, 0, 0.55);
 }
 .brand-tag {
-  font-family: var(--font-sans), Inter, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: #ead7a0;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
