@@ -1186,13 +1186,14 @@ input {
   }
 }
 
+img.brand-logo,
 .brand-logo {
   display: block;
   width: 190px;
-  height: auto;
-  max-height: 68px;
-  max-width: min(190px, 62vw);
-  object-fit: contain;
+  height: auto !important;
+  max-height: 72px;
+  max-width: min(190px, 64vw);
+  object-fit: contain !important;
   object-position: left center;
   background: transparent;
   border: 0;
@@ -1200,11 +1201,12 @@ input {
   flex-shrink: 0;
 }
 @media (max-width: 620px) {
+  img.brand-logo,
   .brand-logo {
     width: 150px;
-    height: auto;
-    max-height: 54px;
-    max-width: min(150px, 64vw);
+    height: auto !important;
+    max-height: 56px;
+    max-width: min(150px, 66vw);
   }
 }
 .header-tools {
