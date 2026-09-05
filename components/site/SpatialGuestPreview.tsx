@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BOOK_DIRECT, FLIGHT } from "@/lib/guest";
 import styles from "./SpatialGuestPreview.module.css";
 
-const CANONICAL_RUNTIME_URL = "https://elcidspain.github.io/aumara/#flight";
+const CANONICAL_RUNTIME_URL = "/spatial/#flight";
 
 const HOUSE_MEDIA = [
   ["A", "1kqkrNee01qgdmwpMVnVZtZbiDLF8k9td"],
