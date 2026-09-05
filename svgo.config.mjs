@@ -32,6 +32,7 @@ export default {
             currentColor: false,
             names2hex: true,
             rgb2hex: true,
+            convertCase: "lower",
             shorthex: true,
             shortname: false,
           },
