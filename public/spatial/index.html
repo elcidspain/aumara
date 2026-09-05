@@ -4,9 +4,9 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <base href="/spatial/"/>
-<title>AUMARA El Cid — Glamping Benidoleig</title>
-<meta name="description" content="AUMARA · casas privadas en Benidoleig, Costa Blanca. EL CID VENTURES BENIDOLEIG S.L. · CIF B53816989."/>
-<meta property="og:title" content="AUMARA El Cid — Glamping Benidoleig"/>
+<title>AUMARA — Spatial Experience · Benidoleig</title>
+<meta name="description" content="AUMARA · casas geodésicas en Benidoleig, Marina Alta."/>
+<meta property="og:title" content="AUMARA — Spatial Experience · Benidoleig"/>
 <meta property="og:image" content="https://lh3.googleusercontent.com/d/1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO=w1200"/>
 <style>
   :root{--ink:#0a1a14;--cream:#f3ecde;--gold:#c49a64;--line:rgba(255,255,255,.12)}
@@ -60,16 +60,16 @@
   </a>
   <div class="row">
     <a class="btn ghost" href="https://wa.me/34663592733">WhatsApp</a>
-    <a class="btn gold" href="https://www.booking.com/hotel/es/aumara.es.html" target="_blank" rel="noreferrer">Fechas</a>
+    <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
   </div>
 </header>
 <section class="hero">
   <img src="https://lh3.googleusercontent.com/d/1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO=w2200" alt="AUMARA · Benidoleig"/>
-  <p class="kicker">Glamping · Benidoleig</p>
-  <h1>Casas privadas en el interior tranquilo de la Costa Blanca.</h1>
-  <p class="lead">Seis casas. Un paisaje. El mundo 3D se abre solo si lo pides.</p>
+  <p class="kicker">Benidoleig · Marina Alta</p>
+  <h1>Geodesic houses on this land.</h1>
+  <p class="lead">Seis casas físicas. Un paisaje continuo.</p>
   <div class="row" style="margin-top:18px">
-    <a class="btn gold" href="https://www.booking.com/hotel/es/aumara.es.html" target="_blank" rel="noreferrer">Booking</a>
+    <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
     <button class="btn ghost" id="flight" type="button">3D tour / FLIGHT</button>
     <button class="btn ghost" id="ionbtn" type="button">Ion</button>
   </div>
@@ -89,7 +89,7 @@
   <div id="sheet"></div>
 </div>
 <script>
-const BOOK = "https://www.booking.com/hotel/es/aumara.es.html";
+const BOOK = "https://beds24.com/booking2.php?propid=324882";
 const CESIUM_JS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Cesium.js";
 const CESIUM_CSS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Widgets/widgets.css";
 const DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
@@ -114,7 +114,7 @@ function housePhoto(id) {
   return m ? pic(m.id) : pic("1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO");
 }
 function houseKind(h) { return h.diameterMetres === 9 ? "Superior" : "Chalet"; }
-function housePrice(h) { return h.diameterMetres === 9 ? "from €320 / noche" : "from €200 / noche"; }
+function housePrice(h) { return "AUMARA spatial house"; }
 Promise.all([
   fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => r.json()),
   fetch("./world/media-index.json").then((r) => r.json()).catch(() => ({ houses: {} })),
@@ -124,7 +124,7 @@ Promise.all([
     const a = document.createElement("a");
     a.className = "card"; a.href = BOOK; a.target = "_blank"; a.rel = "noreferrer";
     a.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt="Casa ${h.spatialId}"/><div>
-      <div class="meta">Ø${h.diameterMetres} · ${houseKind(h)} · bookable</div>
+      <div class="meta">Ø${h.diameterMetres} · ${houseKind(h)} · physical house</div>
       <h2>Casa ${h.spatialId}</h2><p>${housePrice(h)}</p></div>`;
     housesEl.appendChild(a);
   });
@@ -159,7 +159,7 @@ function openSheet(h) {
   sheet.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt=""/>
     <div style="flex:1"><h3>Casa ${h.spatialId}</h3>
     <p>${houseKind(h)} · Ø${h.diameterMetres} · ${housePrice(h)}</p>
-    <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Reservar</a></div>`;
+    <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Ver disponibilidad</a></div>`;
 }
 let started = false;
 document.getElementById("flight").onclick = () => startFlight();
