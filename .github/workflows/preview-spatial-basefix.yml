@@ -1,0 +1,41 @@
+name: Fix spatial base path
+
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-basefix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Keep vendored runtime relative assets under /spatial/
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('public/spatial/index.html')
+          s = p.read_text()
+          marker = '<meta name="viewport" content="width=device-width,initial-scale=1"/>'
+          base = '<base href="/spatial/"/>'
+          if base not in s:
+              if marker not in s:
+                  raise SystemExit('viewport marker not found')
+              s = s.replace(marker, marker + '\n' + base, 1)
+              p.write_text(s)
+          PY
+      - name: Commit surgical base fix
+        run: |
+          git config user.name "aumara-preview-bot"
+          git config user.email "elcidspain@gmail.com"
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "preview: fix spatial base path [skip ci]"
+          git push origin HEAD:preview/spatial-descent-integration-20260905
