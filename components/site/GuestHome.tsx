@@ -146,7 +146,7 @@ export default function GuestHome() {
     <>
       <header className="header">
         <a className="brand" href="#top" aria-label="AUMARA">
-          <img src="/media/logo.png?v=lockup" alt="AUMARA" className="brand-logo" />
+          <img src="/media/logo.png?v=clean" alt="AUMARA" className="brand-logo" />
         </a>
         <div className="header-tools">
           <nav className="nav">
@@ -206,11 +206,6 @@ export default function GuestHome() {
           />
           <div className="hero-inner">
             <div className="wrap">
-              <img
-                src="/media/logo.png?v=lockup"
-                alt="AUMARA"
-                className="hero-lockup hero-in hero-in-0"
-              />
               <p className="eyebrow hero-in hero-in-1">{t.eyebrow}</p>
               <h1 className="hero-title">
                 <span className="hero-line hero-line-1">{h1a}</span>
@@ -224,13 +219,6 @@ export default function GuestHome() {
                 <a className="btn secondary" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
                   {t.ctaBookBeds}
                 </a>
-              </div>
-              <div className="operator hero-in hero-in-5">
-                {t.operator}{" "}
-                <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-                  El Cid · elcidspain.com
-                </a>
-                .
               </div>
             </div>
           </div>

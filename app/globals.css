@@ -2,6 +2,7 @@
   --forest: #1e3024;
   --forest2: #314b38;
   --gold: #bf9257;
+  --gold-bright: #e8d5a4;
   --cream: #f2eadc;
   --paper: #fffaf1;
   --ink: #182019;
@@ -93,13 +94,13 @@ p {
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  padding: 18px 4vw 18px max(28px, env(safe-area-inset-left));
+  padding: 16px 4vw 16px max(22px, env(safe-area-inset-left));
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
   color: #f0ddb0;
-  background: linear-gradient(#0b150ef2, transparent);
+  background: linear-gradient(#0b150ecc, transparent);
   overflow: visible;
 }
 
@@ -168,15 +169,19 @@ video.hero-bg {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(8, 15, 10, 0.9), rgba(8, 15, 10, 0.48) 58%, rgba(8, 15, 10, 0.08)),
-    linear-gradient(0deg, rgba(7, 13, 9, 0.75), transparent 55%);
+  background: linear-gradient(
+    180deg,
+    rgba(8, 14, 9, 0.22) 0%,
+    rgba(8, 14, 9, 0.08) 38%,
+    rgba(8, 14, 9, 0.72) 100%
+  );
 }
 
 .hero-inner {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 168px 0 72px;
+  padding: 96px 0 48px;
 }
 
 .hero-lockup {
@@ -214,6 +219,7 @@ video.hero-bg {
 .hero-line-1 {
   font-style: italic;
   font-size: clamp(34px, 5.6vw, 76px);
+  color: var(--gold-bright);
   animation-delay: 0.55s;
   text-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
 }
@@ -1120,10 +1126,13 @@ input {
     padding: 14px 18px 14px max(18px, env(safe-area-inset-left));
   }
   .hero {
-    min-height: 82svh;
+    min-height: 92svh;
   }
   .hero-inner {
-    padding-top: 120px;
+    padding: 88px 0 92px;
+  }
+  .sound-btn {
+    bottom: 78px;
   }
   .quick-box {
     grid-template-columns: 1fr;
@@ -1179,10 +1188,10 @@ input {
 
 .brand-logo {
   display: block;
-  width: auto;
-  height: 48px;
-  max-height: 48px;
-  max-width: min(240px, 62vw);
+  width: 190px;
+  height: auto;
+  max-height: 68px;
+  max-width: min(190px, 62vw);
   object-fit: contain;
   object-position: left center;
   background: transparent;
@@ -1192,16 +1201,10 @@ input {
 }
 @media (max-width: 620px) {
   .brand-logo {
-    width: auto;
-    height: 42px;
-    max-height: 42px;
-    max-width: min(210px, 68vw);
-  }
-  .hero-lockup {
-    width: auto;
-    max-height: 56px;
-    max-width: min(300px, 86vw);
-    margin-bottom: 18px;
+    width: 150px;
+    height: auto;
+    max-height: 54px;
+    max-width: min(150px, 64vw);
   }
 }
 .header-tools {
