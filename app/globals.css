@@ -112,7 +112,7 @@ p {
   padding: 0;
   min-width: 0;
   overflow: visible;
-  background: url("/media/logo.png?v=path") left center / contain no-repeat;
+  background: url("/media/logo.svg") left center / contain no-repeat;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
 }
 .brand img {
