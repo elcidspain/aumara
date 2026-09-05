@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./preview.css";
 
 export const metadata: Metadata = {
   title: "AUMARA — Cinematic landing preview",
