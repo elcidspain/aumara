@@ -1,0 +1,39 @@
+{
+  "proof_id": "AUMARA_SPATIAL_PREVIEW_BROWSER_PROOF_20260905",
+  "status": "PASS_LOCAL_CONTINUITY_GLOBAL_CREDENTIAL_BLOCKED",
+  "branch": "preview/spatial-descent-integration-20260905",
+  "vercel_deployment": "dpl_Hrdg2vTrVTeKzmXKBz44tkp7h57z",
+  "runtime_path": "/spatial/#flight",
+  "waypoint_contract": {
+    "count": 28,
+    "meaning": "deterministic camera-path control points in the georeferenced derived local twin; not video frames and not SfM camera poses",
+    "reached": 27,
+    "flight_complete": true
+  },
+  "browser_proof": {
+    "local_twin_loaded": true,
+    "local_twin_visible_at_wp0": true,
+    "handoff_complete": true,
+    "continuous_camera": true,
+    "fatal_render_error": false,
+    "house_controls": 6,
+    "house_interaction": true,
+    "house_sheet_opened": true
+  },
+  "truth_lock_cleanup": {
+    "stale_price_claims": false,
+    "stale_bookable_claims": false,
+    "booking_dot_com_reference": false,
+    "generic_availability_target": "Beds24 property 324882"
+  },
+  "global_descent": {
+    "google_earth_stage_visible": false,
+    "google_parcel_approach_visible": false,
+    "blocker": "No already-authorized CESIUM_ION_TOKEN is present in the isolated proof browser profile. OpenAI API keys are not required and were not used."
+  },
+  "release": {
+    "production_changed": false,
+    "domains_changed": false,
+    "release_hold": true
+  }
+}
