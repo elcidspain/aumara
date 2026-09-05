@@ -1,0 +1,39 @@
+name: Wire vendored spatial runtime
+
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-wire.yml
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Point preview at same-origin spatial runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('components/site/SpatialGuestPreview.tsx')
+          s = p.read_text()
+          old = 'const CANONICAL_RUNTIME_URL = "https://elcidspain.github.io/aumara/#flight";'
+          new = 'const CANONICAL_RUNTIME_URL = "/spatial/#flight";'
+          if old not in s:
+              raise SystemExit('expected runtime URL not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit surgical preview wire
+        run: |
+          git config user.name "aumara-preview-bot"
+          git config user.email "elcidspain@gmail.com"
+          git add components/site/SpatialGuestPreview.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "preview: use same-origin spatial runtime [skip ci]"
+          git push origin HEAD:preview/spatial-descent-integration-20260905
