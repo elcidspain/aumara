@@ -58,8 +58,9 @@ h4 {
 }
 
 h1 {
-  font-size: clamp(46px, 8vw, 104px);
+  font-size: clamp(34px, 6.2vw, 86px);
   max-width: 1080px;
+  white-space: pre-line;
 }
 
 h2 {
