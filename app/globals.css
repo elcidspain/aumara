@@ -105,13 +105,13 @@ p {
 }
 
 .brand {
-  display: flex;
+  display: block;
   flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-  padding: 2px 0;
+  width: min(240px, 72vw);
+  height: 56px;
+  padding: 0;
   min-width: 0;
-  color: #f4de9c;
+  overflow: visible;
 }
 
 .mark {
@@ -1189,71 +1189,33 @@ input {
   }
 }
 
+a.brand img.brand-logo,
 img.brand-logo,
-.brand-logo,
-img.brand-mark,
-.brand-mark {
-  display: block;
-  width: 48px !important;
-  height: 48px !important;
-  max-width: 48px !important;
-  max-height: 48px !important;
+.brand-logo {
+  display: block !important;
+  width: auto !important;
+  height: 56px !important;
+  max-width: min(240px, 72vw) !important;
+  max-height: 56px !important;
   object-fit: contain !important;
-  object-position: center center !important;
+  object-position: left center !important;
   background: transparent;
   border: 0;
   border-radius: 0;
   flex-shrink: 0;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.65)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35))
-    drop-shadow(0 0 14px rgba(232, 197, 110, 0.45));
-}
-.brand-word {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  min-width: 0;
-  line-height: 1;
-}
-.brand-name {
-  font-family: var(--font-display), "Playfair Display", Georgia, serif;
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: 0.18em;
-  line-height: 1;
-  color: #f6e2a8;
-  text-shadow: 0 1px 0 #9a7428, 0 2px 0 #5c4414, 0 4px 10px rgba(0, 0, 0, 0.55);
-}
-.brand-tag {
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #ead7a0;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-  white-space: nowrap;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
 }
 @media (max-width: 620px) {
-  img.brand-logo,
-  .brand-logo,
-  img.brand-mark,
-  .brand-mark {
-    width: 40px !important;
-    height: 40px !important;
-    max-width: 40px !important;
-    max-height: 40px !important;
-  }
   .brand {
-    gap: 8px;
+    width: min(200px, 74vw);
+    height: 44px;
   }
-  .brand-name {
-    font-size: 16px;
-    letter-spacing: 0.16em;
-  }
-  .brand-tag {
-    font-size: 7px;
-    letter-spacing: 0.16em;
+  a.brand img.brand-logo,
+  img.brand-logo,
+  .brand-logo {
+    height: 44px !important;
+    max-width: min(200px, 74vw) !important;
+    max-height: 44px !important;
   }
 }
 .header-tools {
