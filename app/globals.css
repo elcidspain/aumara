@@ -1063,12 +1063,20 @@ input {
 }
 
 .brand-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 210px;
+  height: 42px;
+  max-width: min(210px, 48vw);
   object-fit: cover;
-  background: #fff;
-  border: 1px solid #ffffffb3;
+  object-position: center 52%;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+@media (max-width: 620px) {
+  .brand-logo {
+    width: 168px;
+    height: 34px;
+  }
 }
 .header-tools {
   display: flex;

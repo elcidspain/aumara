@@ -86,9 +86,8 @@ export default function GuestHome() {
   return (
     <>
       <header className="header">
-        <a className="brand" href="#top">
+        <a className="brand" href="#top" aria-label="AUMARA">
           <img src="/media/logo.png" alt="AUMARA" className="brand-logo" />
-          <span>AUMARA</span>
         </a>
         <div className="header-tools">
           <nav className="nav">
