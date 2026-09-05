@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Cinzel } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { SITE_URL } from "@/lib/guest";
@@ -16,6 +16,13 @@ const display = Playfair_Display({
   weight: ["500", "600"],
   style: ["normal", "italic"],
   variable: "--font-display",
+  display: "swap",
+});
+
+const brand = Cinzel({
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600", "700"],
+  variable: "--font-brand",
   display: "swap",
 });
 
@@ -68,7 +75,7 @@ const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} ${display.variable} ${inter.className}`}>
+      <body className={`${inter.variable} ${display.variable} ${brand.variable} ${inter.className}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

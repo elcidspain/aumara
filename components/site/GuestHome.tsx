@@ -146,7 +146,17 @@ export default function GuestHome() {
     <>
       <header className="header">
         <a className="brand" href="#top" aria-label="AUMARA">
-          <img src="/media/logo.png?v=one" alt="AUMARA" className="brand-logo" />
+          <img
+            src="/media/logo-mark.png?v=gold"
+            alt=""
+            className="brand-mark"
+            width={48}
+            height={48}
+          />
+          <span className="brand-word">
+            <span className="brand-name">AUMARA</span>
+            <span className="brand-tag">BY EL CID COUNTRY CLUB</span>
+          </span>
         </a>
         <div className="header-tools">
           <nav className="nav">
