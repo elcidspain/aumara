@@ -1,5 +1,5 @@
-import GuestHome from "@/components/site/GuestHome";
+import SpatialGuestPreview from "@/components/site/SpatialGuestPreview";
 
 export default function Home() {
-  return <GuestHome />;
+  return <SpatialGuestPreview />;
 }
