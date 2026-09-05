@@ -27,8 +27,10 @@ jobs:
           new = 'const CANONICAL_RUNTIME_URL = "/spatial/#flight";'
           if old in s:
               p.write_text(s.replace(old, new, 1))
-          elif new not in s:
-              raise SystemExit('expected runtime URL pattern not found')
+          elif new in s:
+              pass
+          else:
+              raise SystemExit('expected runtime URL not found')
           PY
       - name: Commit surgical preview wire
         run: |
