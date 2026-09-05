@@ -1,0 +1,54 @@
+name: Add satellite descent fallback
+on:
+  push:
+    branches: [preview/spatial-descent-integration-20260905]
+    paths: [.github/workflows/preview-spatial-satellite-fallback.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Patch credential-free global imagery fallback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/spatial/index.html'); s=p.read_text()
+          def rep(old,new):
+              global s
+              if old not in s: raise SystemExit('missing expected block: '+old[:80])
+              s=s.replace(old,new,1)
+          rep('let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";', 'let tilesOn = false, tileset = null, satelliteLayer = null, globalProvider = "NONE", firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";\n  async function enableSatelliteFallback() {\n    try {\n      const provider = new C.UrlTemplateImageryProvider({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maximumLevel: 19, credit: new C.Credit("Esri, Maxar, Earthstar Geographics, and the GIS User Community") });\n      satelliteLayer = viewer.imageryLayers.addImageryProvider(provider); satelliteLayer.show = true; viewer.scene.globe.show = true;\n      tilesOn = true; tilesStatus = "READY"; globalProvider = "ARCGIS_WORLD_IMAGERY"; emit("SATELLITE_FALLBACK_READY"); return true;\n    } catch (e) { tilesOn = false; tilesStatus = "FALLBACK_FAILED"; return false; }\n  }')
+          rep('  try {\n    tileset = await C.createGooglePhotorealistic3DTileset();','  if (sessionIon) try {\n    tileset = await C.createGooglePhotorealistic3DTileset();')
+          rep('    tilesOn = true;\n    tilesStatus = "LOADING";','    tilesOn = true; globalProvider = "GOOGLE_PHOTOREALISTIC_3D_TILES";\n    tilesStatus = "LOADING";')
+          rep('  } catch (e) {\n    tilesOn = false;\n    tileset = null;\n    tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";\n    viewer.scene.globe.show = false;\n  }\n  if (tilesOn) {','  } catch (e) { tilesOn = false; tileset = null; await enableSatelliteFallback(); } else { await enableSatelliteFallback(); }\n  if (tilesOn && tileset) {')
+          rep('      if (!sessionIon) tilesOn = false;','      if (!sessionIon) { tilesOn = false; await enableSatelliteFallback(); }')
+          rep('  let originH = tilesOn ? refMsl : 0;','  const globalReady = tilesOn && (firstGoogleTileRendered || globalProvider === "ARCGIS_WORLD_IMAGERY");\n  function globalVisible() { return tileset ? !!tileset.show : !!(satelliteLayer && satelliteLayer.show && viewer.scene.globe.show); }\n  function setGlobalVisible(v) { if (tileset) tileset.show = v; if (satelliteLayer) satelliteLayer.show = v; if (satelliteLayer) viewer.scene.globe.show = v; }\n  let originH = tilesOn ? refMsl : 0;')
+          rep('  if (tilesOn) {\n    try {\n      const originProbe = C.Cartographic.fromDegrees(lon, lat);','  if (tilesOn && tileset) {\n    try {\n      const originProbe = C.Cartographic.fromDegrees(lon, lat);')
+          rep('    globalTilesStatus: tilesOn && firstGoogleTileRendered ? "READY" : tilesStatus,\n    provider: "GOOGLE_PHOTOREALISTIC_3D_TILES",','    globalTilesStatus: globalReady ? "READY" : tilesStatus,\n    provider: globalProvider,')
+          rep('    GoogleEarthStageVisible: false, GoogleParcelApproachVisible: false,','    GoogleEarthStageVisible: false, GoogleParcelApproachVisible: false,\n    GlobalEarthStageVisible: false, GlobalParcelApproachVisible: false,')
+          rep('    verification_status: tilesOn && firstGoogleTileRendered ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",','    verification_status: globalReady ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",')
+          rep('        GoogleParcelApproachVisible: a.GoogleParcelApproachVisible,','        GoogleParcelApproachVisible: a.GoogleParcelApproachVisible,\n        GlobalEarthStageVisible: a.GlobalEarthStageVisible,\n        GlobalParcelApproachVisible: a.GlobalParcelApproachVisible,')
+          rep('    if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {\n      if (!tileset.show) tileset.show = true;\n    }','    if (tilesOn && (localAlt > 600 || elapsed < 4) && !globalVisible()) setGlobalVisible(true);')
+          rep('    if (st === "EARTH" && tileset && tileset.show) window.__AUMARA.GoogleEarthStageVisible = true;\n    if (st === "PARCEL_APPROACH" && tileset && tileset.show) window.__AUMARA.GoogleParcelApproachVisible = true;','    if (st === "EARTH" && globalVisible()) { window.__AUMARA.GlobalEarthStageVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleEarthStageVisible = true; }\n    if (st === "PARCEL_APPROACH" && globalVisible()) { window.__AUMARA.GlobalParcelApproachVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleParcelApproachVisible = true; }')
+          rep('    if (tileset && (mobileHide || deskHide || (tilesOn && elapsed >= intro))) tileset.show = false;\n    const googleHidden = !tileset || !tileset.show;','    if (mobileHide || deskHide || (tilesOn && elapsed >= intro)) setGlobalVisible(false);\n    const googleHidden = !globalVisible();')
+          rep('    if (localTwinVisible && tileset && tileset.show && localAlt > 140) {','    if (localTwinVisible && globalVisible() && localAlt > 140) {')
+          rep('    window.__AUMARA.globalTilesVisible = !!(tileset && tileset.show);','    window.__AUMARA.globalTilesVisible = globalVisible();')
+          rep('    const googleBlockingWp = !!(mobile && tilesOn && tileset && tileset.show);','    const googleBlockingWp = !!(mobile && tilesOn && globalVisible());')
+          p.write_text(s)
+          PY
+      - name: Verify patch markers
+        run: |
+          grep -q 'ARCGIS_WORLD_IMAGERY' public/spatial/index.html
+          grep -q 'GlobalParcelApproachVisible' public/spatial/index.html
+      - name: Commit preview patch
+        run: |
+          git config user.name aumara-preview-bot
+          git config user.email elcidspain@gmail.com
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'preview: credential-free Earth-to-parcel descent [skip ci]'
+          git push origin HEAD:preview/spatial-descent-integration-20260905
