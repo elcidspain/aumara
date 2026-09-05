@@ -235,8 +235,15 @@ async function runTwin() {
     events.push({ name, t: Date.now(), extra: extra || null });
     if (window.__AUMARA) window.__AUMARA.events = events;
   }
-  let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-  try {
+  let tilesOn = false, tileset = null, satelliteLayer = null, globalProvider = "NONE", firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
+  async function enableSatelliteFallback() {
+    try {
+      const provider = new C.UrlTemplateImageryProvider({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maximumLevel: 19, credit: new C.Credit("Esri, Maxar, Earthstar Geographics, and the GIS User Community") });
+      satelliteLayer = viewer.imageryLayers.addImageryProvider(provider); satelliteLayer.show = true; viewer.scene.globe.show = true;
+      tilesOn = true; tilesStatus = "READY"; globalProvider = "ARCGIS_WORLD_IMAGERY"; emit("SATELLITE_FALLBACK_READY"); return true;
+    } catch (e) { tilesOn = false; tilesStatus = "FALLBACK_FAILED"; return false; }
+  }
+  if (sessionIon) try {
     tileset = await C.createGooglePhotorealistic3DTileset();
     tileset.maximumScreenSpaceError = mobile ? 16 : 8;
     tileset.skipLevelOfDetail = true;
@@ -244,7 +251,7 @@ async function runTwin() {
     tileset.dynamicScreenSpaceError = true;
     if (tileset.cacheBytes !== undefined) tileset.cacheBytes = mobile ? 256 * 1024 * 1024 : 768 * 1024 * 1024;
     viewer.scene.primitives.add(tileset);
-    tilesOn = true;
+    tilesOn = true; globalProvider = "GOOGLE_PHOTOREALISTIC_3D_TILES";
     tilesStatus = "LOADING";
     const markTile = () => {
       if (firstGoogleTileRendered) return;
@@ -259,24 +266,22 @@ async function runTwin() {
     };
     tileset.tileVisible.addEventListener(markTile);
     if (tileset.initialTilesLoaded) tileset.initialTilesLoaded.addEventListener(markTile);
-  } catch (e) {
-    tilesOn = false;
-    tileset = null;
-    tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-    viewer.scene.globe.show = false;
-  }
-  if (tilesOn) {
+  } catch (e) { tilesOn = false; tileset = null; await enableSatelliteFallback(); } else { await enableSatelliteFallback(); }
+  if (tilesOn && tileset) {
     const waitUntil = Date.now() + 14000;
     while (!firstGoogleTileRendered && Date.now() < waitUntil) {
       await new Promise((r) => setTimeout(r, 200));
     }
     if (!firstGoogleTileRendered) {
       tilesStatus = sessionIon ? "LOADING" : "AWAITING_OWNER_RUNTIME_PROOF";
-      if (!sessionIon) tilesOn = false;
+      if (!sessionIon) { tilesOn = false; await enableSatelliteFallback(); }
     }
   }
+  const globalReady = tilesOn && (firstGoogleTileRendered || globalProvider === "ARCGIS_WORLD_IMAGERY");
+  function globalVisible() { return tileset ? !!tileset.show : !!(satelliteLayer && satelliteLayer.show && viewer.scene.globe.show); }
+  function setGlobalVisible(v) { if (tileset) tileset.show = v; if (satelliteLayer) satelliteLayer.show = v; if (satelliteLayer) viewer.scene.globe.show = v; }
   let originH = tilesOn ? refMsl : 0;
-  if (tilesOn) {
+  if (tilesOn && tileset) {
     try {
       const originProbe = C.Cartographic.fromDegrees(lon, lat);
       const sampled = await viewer.scene.sampleHeightMostDetailed([originProbe]);
@@ -411,8 +416,8 @@ async function runTwin() {
     user_agent: navigator.userAgent, glb_sha: null,
     firstFrameRendered: false, waypointReached: 0, twinLoaded: true,
     rawAgl, samples: [], consoleErrors: [], events,
-    globalTilesStatus: tilesOn && firstGoogleTileRendered ? "READY" : tilesStatus,
-    provider: "GOOGLE_PHOTOREALISTIC_3D_TILES",
+    globalTilesStatus: globalReady ? "READY" : tilesStatus,
+    provider: globalProvider,
     ionSessionToken: sessionIon,
     ionDefaultTokenPresent: ionPresent,
     firstGoogleTileRendered, attributionVisible: !!(creditsEl && creditsEl.offsetParent !== null || (creditsEl && creditsEl.childNodes.length)),
@@ -422,11 +427,12 @@ async function runTwin() {
     zFightingObserved: false, globalTilesVisible: tilesOn, handoffComplete: !tilesOn,
     mobileGoogleHiddenBeforeWP0: !mobile || !tilesOn, localTwinVisibleAtWP0: false,
     GoogleEarthStageVisible: false, GoogleParcelApproachVisible: false,
+    GlobalEarthStageVisible: false, GlobalParcelApproachVisible: false,
     clipSupported: clipSupported, renderError: null, fatalRenderError: false,
     ionQueryRemoved: !new URL(location.href).searchParams.has("ion"),
     flightComplete: false,
     stage: tilesOn ? "EARTH" : "LOCAL_FALLBACK",
-    verification_status: tilesOn && firstGoogleTileRendered ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",
+    verification_status: globalReady ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",
     required_events: ["GOOGLE_TILE_FIRST_RENDER","EARTH_STAGE","IBERIA_STAGE","COSTA_BLANCA_STAGE","PARCEL_APPROACH","GOOGLE_LOCAL_HANDOFF_START","GOOGLE_LOCAL_HANDOFF_COMPLETE","LOCAL_TWIN_VISIBLE","BLEND_COMPLETE","WP0","WP27"],
     ownerProof: function () {
       const a = window.__AUMARA;
@@ -449,6 +455,8 @@ async function runTwin() {
         localTwinVisibleAtWP0: a.localTwinVisibleAtWP0,
         GoogleEarthStageVisible: a.GoogleEarthStageVisible,
         GoogleParcelApproachVisible: a.GoogleParcelApproachVisible,
+        GlobalEarthStageVisible: a.GlobalEarthStageVisible,
+        GlobalParcelApproachVisible: a.GlobalParcelApproachVisible,
         zFightingObserved: a.zFightingObserved,
         clipSupported: a.clipSupported,
         renderError: a.renderError,
@@ -521,19 +529,17 @@ async function runTwin() {
     const enNow = lonLatToEn(lonX, latX, lon, lat);
     const horiz = Math.hypot(enNow.east, enNow.north);
     const localAlt = alt - originH;
-    if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {
-      if (!tileset.show) tileset.show = true;
-    }
-    if (st === "EARTH" && tileset && tileset.show) window.__AUMARA.GoogleEarthStageVisible = true;
-    if (st === "PARCEL_APPROACH" && tileset && tileset.show) window.__AUMARA.GoogleParcelApproachVisible = true;
+    if (tilesOn && (localAlt > 600 || elapsed < 4) && !globalVisible()) setGlobalVisible(true);
+    if (st === "EARTH" && globalVisible()) { window.__AUMARA.GlobalEarthStageVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleEarthStageVisible = true; }
+    if (st === "PARCEL_APPROACH" && globalVisible()) { window.__AUMARA.GlobalParcelApproachVisible = true; if (globalProvider === "GOOGLE_PHOTOREALISTIC_3D_TILES") window.__AUMARA.GoogleParcelApproachVisible = true; }
     if (tilesOn && !window.__AUMARA._handoffStart && horiz < 220 && localAlt < 120) {
       window.__AUMARA._handoffStart = true;
       emit("GOOGLE_LOCAL_HANDOFF_START");
     }
     const mobileHide = mobile && tilesOn && horiz < 180 && localAlt < 90;
     const deskHide = !mobile && tilesOn && horiz < 180 && localAlt < 70;
-    if (tileset && (mobileHide || deskHide || (tilesOn && elapsed >= intro))) tileset.show = false;
-    const googleHidden = !tileset || !tileset.show;
+    if (mobileHide || deskHide || (tilesOn && elapsed >= intro)) setGlobalVisible(false);
+    const googleHidden = !globalVisible();
     if (!glb.show && (!tilesOn || (googleHidden && localAlt < 140))) {
       glb.show = true;
       localTwinVisible = true;
@@ -541,7 +547,7 @@ async function runTwin() {
       window.__AUMARA.localTwinVisible = true;
       window.__AUMARA.localTwinLoaded = true;
     }
-    if (localTwinVisible && tileset && tileset.show && localAlt > 140) {
+    if (localTwinVisible && globalVisible() && localAlt > 140) {
       localTwinVisibleBeforeBlend = true;
       window.__AUMARA.localTwinVisibleBeforeBlend = true;
     }
@@ -553,9 +559,9 @@ async function runTwin() {
       emit("GOOGLE_LOCAL_HANDOFF_COMPLETE");
       emit("BLEND_COMPLETE");
     }
-    window.__AUMARA.globalTilesVisible = !!(tileset && tileset.show);
+    window.__AUMARA.globalTilesVisible = globalVisible();
     window.__AUMARA.localTwinVisible = !!glb.show;
-    const googleBlockingWp = !!(mobile && tilesOn && tileset && tileset.show);
+    const googleBlockingWp = !!(mobile && tilesOn && globalVisible());
     if (elapsed >= intro && !googleBlockingWp) {
       if (googleHidden) window.__AUMARA.mobileGoogleHiddenBeforeWP0 = true;
       if (glb.show) window.__AUMARA.localTwinVisibleAtWP0 = true;
