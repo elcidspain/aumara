@@ -1,0 +1,39 @@
+name: Google3D clipping hotfix v3
+on:
+  push:
+    branches:
+      - preview/spatial-descent-integration-20260905
+    paths:
+      - .github/workflows/preview-spatial-google3d-clipping-hotfix-v3.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Disable pre-handoff clipping
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('public/spatial/index.html')
+          s = p.read_text()
+          old = 'enabled: true,\n      });\n      parcelClippingActive = true;'
+          new = 'enabled: false,\n      });\n      parcelClippingActive = false;'
+          if s.count(old) != 1:
+              raise SystemExit(f'exact clipping block count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Verify and commit
+        shell: bash
+        run: |
+          grep -A3 'tileset.clippingPolygons' public/spatial/index.html | grep -q 'enabled: false'
+          git config user.name aumara-preview-bot
+          git config user.email elcidspain@gmail.com
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'preview: disable Google clipping before local handoff [skip ci]'
+          git push origin HEAD:preview/spatial-descent-integration-20260905
