@@ -297,9 +297,9 @@ async function runTwin() {
       const clipPos = ring.map((p) => C.Cartesian3.fromDegrees(p[0], p[1]));
       tileset.clippingPolygons = new C.ClippingPolygonCollection({
         polygons: [new C.ClippingPolygon({ positions: clipPos })],
-        enabled: true,
+        enabled: false,
       });
-      parcelClippingActive = true;
+      parcelClippingActive = false;
     } catch (e) { parcelClippingActive = false; }
   }
   const origin = C.Cartesian3.fromDegrees(lon, lat, originH);
