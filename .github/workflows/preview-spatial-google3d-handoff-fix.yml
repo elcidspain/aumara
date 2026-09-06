@@ -1,0 +1,46 @@
+name: Fix Google 3D pre-handoff clipping
+on:
+  push:
+    branches: [preview/spatial-descent-integration-20260905]
+    paths: [.github/workflows/preview-spatial-google3d-handoff-fix.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/spatial-descent-integration-20260905
+      - name: Disable clipping before local handoff
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/spatial/index.html')
+          s=p.read_text()
+          old='''      tileset.clippingPolygons = new C.ClippingPolygonCollection({
+                polygons: [new C.ClippingPolygon({ positions: clipPos })],
+                enabled: true,
+              });
+              parcelClippingActive = true;'''
+          new='''      tileset.clippingPolygons = new C.ClippingPolygonCollection({
+                polygons: [new C.ClippingPolygon({ positions: clipPos })],
+                enabled: false,
+              });
+              parcelClippingActive = false;'''
+          if old not in s:
+              raise SystemExit('expected clipping block missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Verify bounded visual fix
+        run: |
+          grep -q 'enabled: false' public/spatial/index.html
+          grep -q 'parcelClippingActive = false' public/spatial/index.html
+      - name: Commit preview runtime fix
+        run: |
+          git config user.name aumara-preview-bot
+          git config user.email elcidspain@gmail.com
+          git add public/spatial/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'preview: keep Google parcel intact until local handoff [skip ci]'
+          git push origin HEAD:preview/spatial-descent-integration-20260905
