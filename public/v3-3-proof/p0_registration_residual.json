@@ -1,0 +1,19 @@
+{
+  "schema": "aumara.v3-3.p0-registration-residual",
+  "role": "canonical_build_residual",
+  "computed_on": "daywalk_sfm_points_registered_wp0_wp10.ply",
+  "sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
+  "vertices": 25700,
+  "frames": 32,
+  "method": "PCA trajectory plane + 2D Umeyama; third PCA axis uses same similarity scale with fitted z offset",
+  "similarity_scale": 1.3680438143886808,
+  "translation_east_north": [40.45324232591506, -2.3760043882674635],
+  "z_offset": 4.131393333925985,
+  "xy_rms_m": 0.6557206037039944,
+  "z_rms_m": 0.5900406003892669,
+  "rms_3d_m": 0.8821096418414535,
+  "status": "REGISTERED_SANDBOX_NOT_SURVEY_GRADE",
+  "pass": false,
+  "independent_check_role": "VALIDATION_ONLY_NOT_BUILD_TRANSFORM",
+  "not_the_product": true
+}

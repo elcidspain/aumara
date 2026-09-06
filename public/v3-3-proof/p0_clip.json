@@ -1,0 +1,17 @@
+{
+  "schema": "aumara.v3-3.p0-clip",
+  "source": "daywalk_sfm_points_registered_wp0_wp10.ply",
+  "source_sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
+  "source_vertices": 25700,
+  "clip": {
+    "east": [20, 70],
+    "north": [-12, 20],
+    "z": [-8, 16],
+    "scope": "WP0-WP10 + A/B/C + margin"
+  },
+  "kept": 9451,
+  "quant_min": [20.0, -12.0, -8.0],
+  "quant_max": [70.0, 20.0, 16.0],
+  "densify": false,
+  "pass": false
+}
