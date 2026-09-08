@@ -27,10 +27,23 @@ const HOUSES = [
   { id: "C", x: 63.556, y: 13.969, z: -0.241, d: 7 },
 ];
 
-function decodePoints(b64: string): P[] {
-  const raw = atob(b64.replace(/\s/g, ""));
-  const bytes = Uint8Array.from(raw, (c) => c.charCodeAt(0));
-  const view = new DataView(bytes.buffer);
+function concatDecodedChunks(parts: string[]): Uint8Array {
+  const chunks = parts.map((b64) => {
+    const raw = atob(b64.replace(/\s/g, ""));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  });
+  const total = chunks.reduce((n, a) => n + a.length, 0);
+  const bytes = new Uint8Array(total);
+  let off = 0;
+  for (const a of chunks) {
+    bytes.set(a, off);
+    off += a.length;
+  }
+  return bytes;
+}
+
+function decodePoints(bytes: Uint8Array): P[] {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const pts: P[] = [];
   for (let i = 0; i + 8 < bytes.length; i += 9) {
     const qx = view.getUint16(i, true);
@@ -66,7 +79,7 @@ export default function V33Proof() {
         }),
       ),
     )
-      .then((parts) => setPoints(decodePoints(parts.join(""))))
+      .then((parts) => setPoints(decodePoints(concatDecodedChunks(parts))))
       .catch(console.error);
   }, []);
 
