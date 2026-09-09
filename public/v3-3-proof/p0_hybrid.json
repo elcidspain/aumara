@@ -1,0 +1,34 @@
+{
+  "schema": "aumara.v3-3.p0-hybrid",
+  "version": "1.0.0",
+  "base_branch": "sandbox/v3-3-p0-densified",
+  "base_sha": "2991c26433e2d5b68b564e442521fcaf0ecbd052",
+  "densify": {
+    "accepted": true,
+    "points": 37804,
+    "source_sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
+    "chunks": "p0-points-0..18.b64",
+    "chunks_untouched": true
+  },
+  "houses": {
+    "scope": ["A", "B", "C"],
+    "diameters_m": { "A": 7, "B": 9, "C": 7 },
+    "method": "geodesic latitude/longitude hemisphere shell (LAT_RINGS=6, LON_SEGS=16); height≈0.5×diameter; base z from HOUSES lock; outdoor flat fill/stroke (warm wood / earth / greenish); no photo posters",
+    "excluded": ["D", "E", "F"]
+  },
+  "path": {
+    "scope": "WP0-WP10",
+    "method": "volumetric extruded ribbon ~1.5 m wide (halfW=0.75) with side walls height 0.35 m + stone-border top edge lines; depth-sorted quads",
+    "not": "single thin stroke"
+  },
+  "constraints": {
+    "no_photo_posters": true,
+    "no_interior_stretch": true,
+    "no_sfm_rerun": true,
+    "no_vggt_gpu": true,
+    "no_live_promote": true,
+    "no_dns": true
+  },
+  "pass": false,
+  "status": "OWNER_QA_PARTIAL · densify ACCEPTED · hybrid volume pending owner visual QA"
+}

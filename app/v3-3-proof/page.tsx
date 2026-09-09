@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./proof.module.css";
 
 type P = { x: number; y: number; z: number; r: number; g: number; b: number };
 type V3 = { x: number; y: number; z: number };
+type Proj = { sx: number; sy: number; depth: number };
+type Facet = { a: V3; b: V3; c: V3; fill: string; stroke: string; depth: number };
 
 const MIN = [20, -12, -8];
 const MAX = [70, 20, 16];
@@ -21,11 +23,19 @@ const WPS: V3[] = [
   { x: 54.78, y: -0.116, z: 3.618 },
   { x: 56.995, y: 2.843, z: 3.475 },
 ];
+
+/** Plan-lock A/B/C only (WP0–WP10 envelope). Outdoor flat materials — never photos. */
 const HOUSES = [
-  { id: "A", x: 35.254, y: 0.845, z: 0.505, d: 7 },
-  { id: "B", x: 52.215, y: 4.961, z: -0.046, d: 9 },
-  { id: "C", x: 63.556, y: 13.969, z: -0.241, d: 7 },
-];
+  { id: "A", x: 35.254, y: 0.845, z: 0.505, d: 7, fill: "rgba(196,120,72,.34)", stroke: "rgba(214,156,108,.92)", label: "#e8b887" },
+  { id: "B", x: 52.215, y: 4.961, z: -0.046, d: 9, fill: "rgba(196,168,118,.32)", stroke: "rgba(214,188,140,.92)", label: "#e6d2a8" },
+  { id: "C", x: 63.556, y: 13.969, z: -0.241, d: 7, fill: "rgba(90,143,74,.32)", stroke: "rgba(122,176,108,.92)", label: "#a8d492" },
+] as const;
+
+const PATH_HALF_W = 0.75; // ~1.5 m ribbon
+const PATH_WALL_H = 0.35;
+const DOME_H_RATIO = 0.5; // hemisphere-ish height = 0.5 × diameter
+const LAT_RINGS = 6;
+const LON_SEGS = 16;
 
 function concatDecodedChunks(parts: string[]): Uint8Array {
   const chunks = parts.map((b64) => {
@@ -61,6 +71,81 @@ function decodePoints(bytes: Uint8Array): P[] {
   return pts;
 }
 
+function domePoint(hse: (typeof HOUSES)[number], lat: number, lon: number): V3 {
+  const R = hse.d / 2;
+  const H = hse.d * DOME_H_RATIO;
+  // lat 0 = base ring, lat 1 = apex; radius shrinks with cos(lat * π/2)
+  const phi = lat * (Math.PI / 2);
+  const rr = R * Math.cos(phi);
+  const zz = hse.z + H * Math.sin(phi);
+  return {
+    x: hse.x + Math.cos(lon) * rr,
+    y: hse.y + Math.sin(lon) * rr,
+    z: zz,
+  };
+}
+
+function buildHouseFacets(): Facet[] {
+  const out: Facet[] = [];
+  for (const hse of HOUSES) {
+    for (let i = 0; i < LAT_RINGS; i++) {
+      const lat0 = i / LAT_RINGS;
+      const lat1 = (i + 1) / LAT_RINGS;
+      for (let j = 0; j < LON_SEGS; j++) {
+        const lon0 = (j / LON_SEGS) * Math.PI * 2;
+        const lon1 = ((j + 1) / LON_SEGS) * Math.PI * 2;
+        const p00 = domePoint(hse, lat0, lon0);
+        const p01 = domePoint(hse, lat0, lon1);
+        const p10 = domePoint(hse, lat1, lon0);
+        const p11 = domePoint(hse, lat1, lon1);
+        if (i + 1 === LAT_RINGS) {
+          // apex triangles
+          const apex = domePoint(hse, 1, 0);
+          out.push({
+            a: p00,
+            b: p01,
+            c: apex,
+            fill: hse.fill,
+            stroke: hse.stroke,
+            depth: 0,
+          });
+        } else {
+          out.push({ a: p00, b: p01, c: p11, fill: hse.fill, stroke: hse.stroke, depth: 0 });
+          out.push({ a: p00, b: p11, c: p10, fill: hse.fill, stroke: hse.stroke, depth: 0 });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** Lateral offsets for volumetric ribbon along WP polyline. */
+function pathOffsets(pts: V3[], halfW: number): { left: V3[]; right: V3[]; topL: V3[]; topR: V3[] } {
+  const left: V3[] = [];
+  const right: V3[] = [];
+  const topL: V3[] = [];
+  const topR: V3[] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const prev = pts[Math.max(0, i - 1)];
+    const next = pts[Math.min(pts.length - 1, i + 1)];
+    let dx = next.x - prev.x;
+    let dy = next.y - prev.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len;
+    dy /= len;
+    const nx = -dy;
+    const ny = dx;
+    const p = pts[i];
+    // Ground ribbon slightly below camera z (path sits on terrain-ish)
+    const gz = Math.min(p.z - 2.8, p.z * 0.15 + 0.2);
+    left.push({ x: p.x + nx * halfW, y: p.y + ny * halfW, z: gz });
+    right.push({ x: p.x - nx * halfW, y: p.y - ny * halfW, z: gz });
+    topL.push({ x: p.x + nx * halfW, y: p.y + ny * halfW, z: gz + PATH_WALL_H });
+    topR.push({ x: p.x - nx * halfW, y: p.y - ny * halfW, z: gz + PATH_WALL_H });
+  }
+  return { left, right, topL, topR };
+}
+
 export default function V33Proof() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [points, setPoints] = useState<P[]>([]);
@@ -69,6 +154,8 @@ export default function V33Proof() {
   const [zoom, setZoom] = useState(1);
   const [auto, setAuto] = useState(true);
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number } | null>(null);
+  const houseFacets = useMemo(() => buildHouseFacets(), []);
+  const pathMesh = useMemo(() => pathOffsets(WPS, PATH_HALF_W), []);
 
   useEffect(() => {
     Promise.all(
@@ -117,7 +204,7 @@ export default function V33Proof() {
     const cp = Math.cos(pitch);
     const sp = Math.sin(pitch);
     const scale = Math.min(w / 52, h / 34) * zoom;
-    const project = (p: V3) => {
+    const project = (p: V3): Proj => {
       const x = p.x - centre.x;
       const y = p.y - centre.y;
       const z = p.z - centre.z;
@@ -127,6 +214,8 @@ export default function V33Proof() {
       const zz = sp * ry + cp * z;
       return { sx: w / 2 + rx * scale, sy: h / 2 - yy * scale, depth: zz };
     };
+
+    // Ground grid
     ctx.strokeStyle = "rgba(196,154,100,.08)";
     ctx.lineWidth = 1;
     for (let gx = 20; gx <= 70; gx += 5) {
@@ -145,6 +234,52 @@ export default function V33Proof() {
       ctx.lineTo(b.sx, b.sy);
       ctx.stroke();
     }
+
+    // --- Path volume (stone-border ribbon): deck + side walls + edge lines ---
+    const { left, right, topL, topR } = pathMesh;
+    type Quad = { pts: V3[]; fill: string; stroke: string; depth: number };
+    const quads: Quad[] = [];
+    for (let i = 0; i < left.length - 1; i++) {
+      const deck: V3[] = [left[i], left[i + 1], right[i + 1], right[i]];
+      const wallL: V3[] = [left[i], left[i + 1], topL[i + 1], topL[i]];
+      const wallR: V3[] = [right[i], right[i + 1], topR[i + 1], topR[i]];
+      const mid = (arr: V3[]) => {
+        const s = arr.map(project);
+        return s.reduce((n, p) => n + p.depth, 0) / s.length;
+      };
+      quads.push({ pts: deck, fill: "rgba(168,148,118,.38)", stroke: "rgba(210,190,150,.55)", depth: mid(deck) });
+      quads.push({ pts: wallL, fill: "rgba(120,108,88,.42)", stroke: "rgba(190,170,130,.7)", depth: mid(wallL) });
+      quads.push({ pts: wallR, fill: "rgba(120,108,88,.42)", stroke: "rgba(190,170,130,.7)", depth: mid(wallR) });
+    }
+    quads.sort((a, b) => a.depth - b.depth);
+    for (const q of quads) {
+      const s = q.pts.map(project);
+      ctx.beginPath();
+      s.forEach((p, i) => (i ? ctx.lineTo(p.sx, p.sy) : ctx.moveTo(p.sx, p.sy)));
+      ctx.closePath();
+      ctx.fillStyle = q.fill;
+      ctx.fill();
+      ctx.strokeStyle = q.stroke;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    // Top edge lines (stone border feel)
+    ctx.strokeStyle = "rgba(232,210,170,.85)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    topL.forEach((p, i) => {
+      const s = project(p);
+      i ? ctx.lineTo(s.sx, s.sy) : ctx.moveTo(s.sx, s.sy);
+    });
+    ctx.stroke();
+    ctx.beginPath();
+    topR.forEach((p, i) => {
+      const s = project(p);
+      i ? ctx.lineTo(s.sx, s.sy) : ctx.moveTo(s.sx, s.sy);
+    });
+    ctx.stroke();
+
+    // --- Densified RGB points (unchanged load) ---
     const drawn = points.map((p) => ({ p, s: project(p) })).sort((a, b) => a.s.depth - b.s.depth);
     for (const { p, s } of drawn) {
       if (s.sx < -8 || s.sx > w + 8 || s.sy < -8 || s.sy > h + 8) continue;
@@ -153,17 +288,45 @@ export default function V33Proof() {
       ctx.arc(s.sx, s.sy, Math.max(0.85, 1.65 * zoom), 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.strokeStyle = "#d8ae76";
-    ctx.lineWidth = 3;
-    ctx.shadowColor = "rgba(216,174,118,.45)";
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    WPS.forEach((p, i) => {
-      const s = project(p);
-      i ? ctx.lineTo(s.sx, s.sy) : ctx.moveTo(s.sx, s.sy);
+
+    // --- House geodesic shells (translucent volume + wire silhouette) ---
+    const facets = houseFacets.map((f) => {
+      const pa = project(f.a);
+      const pb = project(f.b);
+      const pc = project(f.c);
+      return { ...f, pa, pb, pc, depth: (pa.depth + pb.depth + pc.depth) / 3 };
     });
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    facets.sort((a, b) => a.depth - b.depth);
+    ctx.lineWidth = 0.9;
+    for (const f of facets) {
+      ctx.beginPath();
+      ctx.moveTo(f.pa.sx, f.pa.sy);
+      ctx.lineTo(f.pb.sx, f.pb.sy);
+      ctx.lineTo(f.pc.sx, f.pc.sy);
+      ctx.closePath();
+      ctx.fillStyle = f.fill;
+      ctx.fill();
+      ctx.strokeStyle = f.stroke;
+      ctx.stroke();
+    }
+    // Base ring + label
+    for (const hse of HOUSES) {
+      ctx.beginPath();
+      for (let i = 0; i <= LON_SEGS; i++) {
+        const lon = (i / LON_SEGS) * Math.PI * 2;
+        const s = project(domePoint(hse, 0, lon));
+        i ? ctx.lineTo(s.sx, s.sy) : ctx.moveTo(s.sx, s.sy);
+      }
+      ctx.strokeStyle = hse.stroke;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      const apex = project(domePoint(hse, 1, 0));
+      ctx.fillStyle = hse.label;
+      ctx.font = "700 13px system-ui";
+      ctx.fillText(hse.id, apex.sx + 6, apex.sy - 6);
+    }
+
+    // WP markers on path centreline (camera heights)
     [0, 5, 10].forEach((i) => {
       const s = project(WPS[i]);
       ctx.fillStyle = "#f4dfbd";
@@ -173,30 +336,7 @@ export default function V33Proof() {
       ctx.font = "600 11px ui-monospace,monospace";
       ctx.fillText(`WP${i}`, s.sx + 7, s.sy - 7);
     });
-    ctx.strokeStyle = "rgba(104,215,156,.9)";
-    ctx.fillStyle = "rgba(104,215,156,.08)";
-    ctx.lineWidth = 2;
-    for (const hse of HOUSES) {
-      ctx.beginPath();
-      for (let i = 0; i <= 40; i++) {
-        const a = (i / 40) * Math.PI * 2;
-        const s = project({
-          x: hse.x + (Math.cos(a) * hse.d) / 2,
-          y: hse.y + (Math.sin(a) * hse.d) / 2,
-          z: hse.z,
-        });
-        i ? ctx.lineTo(s.sx, s.sy) : ctx.moveTo(s.sx, s.sy);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      const s = project({ x: hse.x, y: hse.y, z: hse.z + 1 });
-      ctx.fillStyle = "#8fe4b2";
-      ctx.font = "700 13px system-ui";
-      ctx.fillText(hse.id, s.sx + 5, s.sy - 5);
-      ctx.fillStyle = "rgba(104,215,156,.08)";
-    }
-  }, [points, yaw, pitch, zoom]);
+  }, [points, yaw, pitch, zoom, houseFacets, pathMesh]);
 
   const down = (e: React.PointerEvent) => {
     setAuto(false);
@@ -216,11 +356,14 @@ export default function V33Proof() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <div className={styles.kicker}>AUMARA · V3.3 P0 DENSIFIED HYBRID</div>
-          <h1>Densified source geometry from MASTER_C</h1>
-          <p>P0 32-frame / 25,700 registered cloud, clipped + classical densify. Hybrid = RGB points + gold WP route + A/B/C plan shells. Sandbox only.</p>
+          <div className={styles.kicker}>AUMARA · V3.3 P0 HYBRID VOLUME</div>
+          <h1>Densified source + plan-true house &amp; path volumes</h1>
+          <p>
+            Hybrid = densified RGB source points + geodesic A/B/C house shells (plan diameters 7/9/7 m) + volumetric
+            WP0–WP10 path ribbon. Sandbox only · NOT_PASS / owner QA.
+          </p>
         </div>
-        <span className={styles.badge}>SANDBOX · OWNER QA</span>
+        <span className={styles.badge}>SANDBOX · OWNER QA · NOT_PASS</span>
       </header>
       <section className={styles.stageCard}>
         <div className={styles.stageTop}>
@@ -232,9 +375,9 @@ export default function V33Proof() {
             <span className={styles.dotSource} />
             densified source
             <span className={styles.dotRoute} />
-            WP0–WP10
+            path volume WP0–WP10
             <span className={styles.dotHouse} />
-            A/B/C footprints
+            A/B/C house volumes
           </div>
         </div>
         <canvas
@@ -260,18 +403,21 @@ export default function V33Proof() {
           <button onClick={() => setAuto((v) => !v)}>{auto ? "PAUSE" : "ORBIT"}</button>
           <button onClick={() => setZoom((v) => Math.min(2.1, v + 0.15))}>+</button>
         </div>
-        <div className={styles.hint}>Drag to rotate · zoom with − / +</div>
+        <div className={styles.hint}>Drag to rotate · zoom with − / + · shells read as volume when orbiting</div>
       </section>
       <section className={styles.metrics}>
         <article>
           <span>SOURCE</span>
           <strong>MASTER_C · 8.00 s · 32 frames</strong>
-          <p>P0 SPARSE_SFM_PASS (not 40). SHA fe9b2536…116452. 25,700 registered vertices.</p>
+          <p>P0 SPARSE_SFM_PASS (not 40). SHA fe9b2536…116452. 25,700 registered vertices. Densified chunks untouched.</p>
         </article>
         <article>
-          <span>DENSIFY</span>
-          <strong>9,451 → 37,804 points (~4.0×)</strong>
-          <p>Classical CPU kNN midpoint + voxel fill; floaters rejected. No SfM rerun / VGGT / GPU. Cap for viewer.</p>
+          <span>HOUSES + PATH</span>
+          <strong>A/B/C geodesic shells · ribbon ~1.5 m</strong>
+          <p>
+            Plan-lock centres; height ≈ 0.5×diameter hemisphere. Path = extruded stone-border ribbon with side walls.
+            Outdoor flat colours only — no photo posters.
+          </p>
         </article>
         <article>
           <span>REGISTRATION</span>
@@ -280,8 +426,9 @@ export default function V33Proof() {
         </article>
       </section>
       <section className={styles.note}>
-        <strong>What you are looking at:</strong> hybrid visible layer — densified source RGB points + gold WP0–WP10
-        route + plan-true A/B/C footprint shells (no photo posters/interiors). Sandbox densify proof; NOT_PASS until owner visual QA. Not survey-grade.
+        <strong>What you are looking at:</strong> hybrid volume layer — densified source RGB points (37,804) +
+        plan-true geodesic house volumes A/B/C + volumetric WP0–WP10 path ribbon. Not footprints-only. Sandbox densify
+        + volume proof; NOT_PASS until owner visual QA. No SfM rerun / VGGT / GPU. Live freeze stands.
       </section>
     </main>
   );
