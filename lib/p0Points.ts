@@ -61,7 +61,7 @@ export function decodePoints(bytes: Uint8Array): P0Point[] {
 
 export function loadP0Points(): Promise<P0Point[]> {
   return Promise.all(
-    Array.from({ length: 8 }, (_, i) =>
+    Array.from({ length: 19 }, (_, i) =>
       fetch(`/v3-3-proof/p0-points-${i}.b64`).then((r) => {
         if (!r.ok) throw new Error(`p0 chunk ${i}: ${r.status}`);
         return r.text();

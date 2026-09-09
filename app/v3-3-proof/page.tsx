@@ -72,7 +72,7 @@ export default function V33Proof() {
 
   useEffect(() => {
     Promise.all(
-      Array.from({ length: 8 }, (_, i) =>
+      Array.from({ length: 19 }, (_, i) =>
         fetch(`/v3-3-proof/p0-points-${i}.b64`).then((r) => {
           if (!r.ok) throw new Error(`p0 chunk ${i}: ${r.status}`);
           return r.text();
@@ -216,9 +216,9 @@ export default function V33Proof() {
     <main className={styles.page}>
       <header className={styles.header}>
         <div>
-          <div className={styles.kicker}>AUMARA · V3.3 P0 REGISTERED SOURCE</div>
-          <h1>Registered geometry from MASTER_C</h1>
-          <p>P0 32-frame / 25,700 cloud, clipped to WP0–WP10. Sandbox only — not the historical 40-frame page.</p>
+          <div className={styles.kicker}>AUMARA · V3.3 P0 DENSIFIED HYBRID</div>
+          <h1>Densified source geometry from MASTER_C</h1>
+          <p>P0 32-frame / 25,700 registered cloud, clipped + classical densify. Hybrid = RGB points + gold WP route + A/B/C plan shells. Sandbox only.</p>
         </div>
         <span className={styles.badge}>SANDBOX · OWNER QA</span>
       </header>
@@ -226,11 +226,11 @@ export default function V33Proof() {
         <div className={styles.stageTop}>
           <div>
             <strong>{points.length || "…"}</strong>
-            <span>clipped RGB source points</span>
+            <span>densified RGB source points</span>
           </div>
           <div className={styles.legend}>
             <span className={styles.dotSource} />
-            source clip
+            densified source
             <span className={styles.dotRoute} />
             WP0–WP10
             <span className={styles.dotHouse} />
@@ -266,22 +266,22 @@ export default function V33Proof() {
         <article>
           <span>SOURCE</span>
           <strong>MASTER_C · 8.00 s · 32 frames</strong>
-          <p>P0 SPARSE_SFM_PASS. SHA fe9b2536…116452. 25,700 registered vertices.</p>
+          <p>P0 SPARSE_SFM_PASS (not 40). SHA fe9b2536…116452. 25,700 registered vertices.</p>
         </article>
         <article>
-          <span>CLIP</span>
-          <strong>25,700 → 9,451 points</strong>
-          <p>Envelope WP0–WP10 + A/B/C. Densify not applied. Independent check-transform not applied.</p>
+          <span>DENSIFY</span>
+          <strong>9,451 → 37,804 points (~4.0×)</strong>
+          <p>Classical CPU kNN midpoint + voxel fill; floaters rejected. No SfM rerun / VGGT / GPU. Cap for viewer.</p>
         </article>
         <article>
           <span>REGISTRATION</span>
-          <strong>WP0 → WP10 · XY 0.656 / Z 0.590 / 3D 0.882 m</strong>
-          <p>PCA + 2D Umeyama, c=1.368. Sandbox only; not survey-grade.</p>
+          <strong>WP0 → WP10 · RMS ≈ 0.88 m</strong>
+          <p>XY 0.656 / Z 0.590 / 3D 0.882 m. Sandbox-not-survey. Independent check-transform not applied.</p>
         </article>
       </section>
       <section className={styles.note}>
-        <strong>What you are looking at:</strong> clipped registered source points in canonical local metres;
-        gold is the guest route; green rings are plan-true A/B/C envelopes, not house shells. NOT_PASS until owner visual QA.
+        <strong>What you are looking at:</strong> hybrid visible layer — densified source RGB points + gold WP0–WP10
+        route + plan-true A/B/C footprint shells (no photo posters/interiors). Sandbox densify proof; NOT_PASS until owner visual QA. Not survey-grade.
       </section>
     </main>
   );
