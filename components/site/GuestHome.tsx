@@ -214,6 +214,9 @@ export default function GuestHome() {
                 <a className="btn primary" href="#explore">
                   {t.ctaWalk}
                 </a>
+                <a className="btn secondary" href="/spatial/#flight">
+                  3D tour
+                </a>
                 <a className="btn secondary" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
                   {t.ctaBookBeds}
                 </a>
