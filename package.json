@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",
+    "@vercel/speed-insights": "latest",
     "@react-three/fiber": "^8.17.10",
     "next": "14.2.35",
     "react": "^18.3.1",
