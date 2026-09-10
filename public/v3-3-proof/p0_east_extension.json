@@ -1,0 +1,26 @@
+{
+  "schema": "aumara.v3-3.p0-east-extension",
+  "west_lock_points": 37804,
+  "west_chunks": "p0-points-0..18.b64 byte-identical",
+  "east_source_box": { "x": "(70,95]", "y": [-12, 20], "z": [-8, 16] },
+  "east_source_extracted": 2375,
+  "floater_removed": 105,
+  "east_source_kept": 2270,
+  "east_working_points": 9080,
+  "densify_mult_target": 4.0,
+  "quant_envelope": { "MIN": [70.0, -12.0, -8.0], "MAX": [95.0, 20.0, 16.0] },
+  "chunks": [
+    { "file": "p0-east-0.b64", "points": 2000, "bytes": 18000, "b64_len": 24000 },
+    { "file": "p0-east-1.b64", "points": 2000, "bytes": 18000, "b64_len": 24000 },
+    { "file": "p0-east-2.b64", "points": 2000, "bytes": 18000, "b64_len": 24000 },
+    { "file": "p0-east-3.b64", "points": 2000, "bytes": 18000, "b64_len": 24000 },
+    { "file": "p0-east-4.b64", "points": 1080, "bytes": 9720, "b64_len": 12960 }
+  ],
+  "decode": "independent from west; merge in local metres after decode",
+  "source_sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
+  "sfm": false,
+  "vggt": false,
+  "gpu": false,
+  "pass": false,
+  "qa_gate": "prove west+east combined cloud holds A-F without seam gap at x~70; inspect F z-noise; no surface yet"
+}
