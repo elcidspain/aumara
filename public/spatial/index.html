@@ -71,8 +71,7 @@
   <div class="row" style="margin-top:18px">
     <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
     <button class="btn ghost" id="flight" type="button">3D tour / FLIGHT</button>
-    <button class="btn ghost" id="ionbtn" type="button">Ion</button>
-  </div>
+    </div>
 </section>
 <section class="grid" id="houses"></section>
 <section class="foot">
@@ -84,7 +83,7 @@
 <div id="stage">
   <div id="c"></div>
   <div id="overlay"></div>
-  <div id="hud">Earth…</div>
+  <div id="hud" class="on">3D local · ion off</div>
   <button class="btn gold" id="close" type="button">Cerrar</button>
   <div id="sheet"></div>
 </div>
@@ -164,11 +163,6 @@ function openSheet(h) {
 let started = false;
 document.getElementById("flight").onclick = () => startFlight();
 document.getElementById("close").onclick = () => { document.getElementById("stage").classList.remove("on"); sheet.className = ""; };
-document.getElementById("ionbtn").onclick = () => {
-  const next = prompt("Cesium ion token", "");
-  if (!next) return;
-  try { localStorage.setItem("CESIUM_ION_TOKEN", next.trim()); } catch (e) {}
-};
 if (location.hash === "#flight") startFlight();
 async function startFlight() {
   document.getElementById("stage").classList.add("on");
@@ -177,14 +171,20 @@ async function startFlight() {
   loadCss(CESIUM_CSS);
   hud.textContent = "Loading Earth…";
   try { await loadScript(CESIUM_JS); await runTwin(); }
-  catch (e) { hud.classList.add("on"); hud.textContent = String(e && e.message ? e.message : e); }
+  catch (e) {
+    hud.classList.add("on");
+    hud.textContent = "3D local unavailable — retry or return to AUMARA";
+    console.error("AUMARA spatial startup failed", e);
+  }
 }
 async function runTwin() {
   const C = window.Cesium;
   window.CESIUM_BASE_URL = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/";
   if (window.AUMARA_ION) window.AUMARA_ION.apply(C);
-  const ionPresent = !!(C.Ion && C.Ion.defaultAccessToken);
-  const sessionIon = !!(window.AUMARA_ION && window.AUMARA_ION.resolve && window.AUMARA_ION.resolve());
+  const ionStatus = await fetch("/api/ion", { cache: "no-store" }).then((r) => r.ok ? r.json() : { ok: false, ion: false }).catch(() => ({ ok: false, ion: false }));
+  const ionPresent = Boolean(ionStatus.ion);
+  const sessionIon = false;
+  hud.textContent = ionPresent ? "3D local · ion available" : "3D local · ion off";
   const [geo, flight, hm] = await Promise.all([
     GEO ? Promise.resolve(GEO) : fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => r.json()),
     fetch("./world/flight-path.json").then((r) => r.json()),
@@ -235,8 +235,10 @@ async function runTwin() {
     events.push({ name, t: Date.now(), extra: extra || null });
     if (window.__AUMARA) window.__AUMARA.events = events;
   }
-  let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-  try {
+  let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "LOCAL_ONLY";
+  // The default Ion token remains server-only; use the local twin until a client-safe session-token broker exists.
+  const canUseGoogle = false;
+  if (canUseGoogle) try {
     tileset = await C.createGooglePhotorealistic3DTileset();
     tileset.maximumScreenSpaceError = mobile ? 16 : 8;
     tileset.skipLevelOfDetail = true;
@@ -298,13 +300,15 @@ async function runTwin() {
     } catch (e) { parcelClippingActive = false; }
   }
   const origin = C.Cartesian3.fromDegrees(lon, lat, originH);
+  const modelMatrix = C.Transforms.eastNorthUpToFixedFrame(origin);
+  C.Matrix4.multiplyByMatrix3(modelMatrix, C.Matrix3.fromRotationX(C.Math.toRadians(90)), modelMatrix);
   const glb = await C.Model.fromGltfAsync({
     url: "./world/aumara-site-v2_1.glb",
-    modelMatrix: C.Transforms.eastNorthUpToFixedFrame(origin),
+    modelMatrix,
     scale: 1.0, incrementallyLoadTextures: true, backFaceCulling: true,
   });
   viewer.scene.primitives.add(glb);
-  glb.show = false;
+  glb.show = !tilesOn;
   const arNodes = geo.houses.map((h) => {
     const el = document.createElement("button");
     el.className = "ar"; el.type = "button"; el.textContent = h.spatialId;
