@@ -1,0 +1,59 @@
+name: AUMARA live runtime smoke
+
+on:
+  pull_request:
+    paths:
+      - 'components/site/GuestHome.tsx'
+      - 'lib/openingPad.ts'
+      - 'public/spatial/**'
+      - 'scripts/copy-spatial-three.mjs'
+      - 'scripts/live-runtime-smoke.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/live-runtime-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/site/GuestHome.tsx'
+      - 'lib/openingPad.ts'
+      - 'public/spatial/**'
+      - 'scripts/copy-spatial-three.mjs'
+      - 'scripts/live-runtime-smoke.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/live-runtime-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Production build
+        run: npm run build
+      - name: Verify local Three asset
+        run: |
+          test -s public/spatial/vendor/three.module.min.js
+          test -s public/spatial/vendor/three.vendor.json
+          grep -Fq 'three.module.min.js' public/spatial/local-twin.mjs
+      - name: Start production server
+        run: |
+          npm run start -- -p 3000 > /tmp/aumara-next.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:3000/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/aumara-next.log
+          exit 1
+      - name: Browser sound + flight smoke
+        run: node scripts/live-runtime-smoke.mjs
