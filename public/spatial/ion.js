@@ -1,34 +1,43 @@
-/* Cesium ion — Google Photorealistic 3D Tiles
- * Dashboard: https://ion.cesium.com/tokens
- * Production token: dedicated AUMARA application token, minimum public scopes.
- * Allowed URLs (restrict the token to these only):
- *   https://elcidspain.github.io/aumara/
- *   https://aumara.me/
- * Runtime only: CESIUM_ION_TOKEN from localStorage. Ignore ?ion= completely.
- * Never print the token. Never pass it through a public page URL.
- * Asset: 2275207 Google Photorealistic 3D Tiles
+/* AUMARA spatial bootstrap.
+ * Cesium Ion remains debug-only; the guest flight is local Three.js.
+ * Never print or commit Ion tokens.
  */
 (function () {
+  var autoFlight = location.hash === "#flight";
+  if (autoFlight) {
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  }
+  window.__AUMARA_AUTO_FLIGHT = autoFlight;
+
   try {
     var u = new URL(location.href);
     if (u.searchParams.has("ion")) {
       u.searchParams.delete("ion");
-      history.replaceState(null, "", u.pathname + (u.search || "") + (u.hash || ""));
+      history.replaceState(null, "", u.pathname + (u.search || ""));
     }
   } catch (e) {}
+
+  window.addEventListener("DOMContentLoaded", function () {
+    if (document.querySelector('script[data-aumara-local-flight="1"]')) return;
+    var script = document.createElement("script");
+    script.src = "./flight-runtime.js";
+    script.defer = true;
+    script.dataset.aumaraLocalFlight = "1";
+    script.onerror = function () {
+      document.documentElement.dataset.aumaraFlightRuntime = "load-error";
+    };
+    document.body.appendChild(script);
+  }, { once: true });
 })();
+
 window.AUMARA_ION = {
   asset: 2275207,
-  pages: [
-    "https://elcidspain.github.io/aumara/",
-    "https://aumara.me/",
-  ],
   resolve: function () {
     try { return localStorage.getItem("CESIUM_ION_TOKEN") || ""; } catch (e) { return ""; }
   },
   apply: function (C) {
     var token = this.resolve();
-    if (token) C.Ion.defaultAccessToken = token;
-    return !!(token || (C.Ion && C.Ion.defaultAccessToken));
+    if (token && C && C.Ion) C.Ion.defaultAccessToken = token;
+    return !!(token && C && C.Ion);
   },
 };
