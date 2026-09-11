@@ -6,6 +6,7 @@ on:
       - 'components/site/GuestHome.tsx'
       - 'lib/openingPad.ts'
       - 'public/spatial/**'
+      - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
       - 'package.json'
@@ -17,6 +18,7 @@ on:
       - 'components/site/GuestHome.tsx'
       - 'lib/openingPad.ts'
       - 'public/spatial/**'
+      - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
       - 'package.json'
@@ -29,7 +31,7 @@ permissions:
 jobs:
   live-runtime-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,4 +58,31 @@ jobs:
           cat /tmp/aumara-next.log
           exit 1
       - name: Browser sound + flight smoke
+        run: node scripts/live-runtime-smoke.mjs
+
+      - name: Wait for public AUMARA runtime
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready=0
+          for i in $(seq 1 90); do
+            if curl --fail --silent --show-error --max-time 15 \
+              https://www.aumara.me/spatial/flight-runtime.js \
+              | grep -Fq 'AUMARA_START_LOCAL_FLIGHT'; then
+              ready=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ready" = 1
+          curl --fail --silent --show-error --max-time 20 \
+            https://www.aumara.me/spatial/vendor/three.module.min.js \
+            -o /tmp/aumara-three.module.min.js
+          test -s /tmp/aumara-three.module.min.js
+
+      - name: Public production sound + flight smoke
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          AUMARA_SMOKE_BASE: https://www.aumara.me
         run: node scripts/live-runtime-smoke.mjs
