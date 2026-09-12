@@ -32,6 +32,12 @@
     return !!(ion && typeof ion.resolve === "function" && ion.resolve());
   }
 
+  async function waitForIonRuntimeConfig() {
+    const ion = window.AUMARA_ION;
+    if (!ion || !ion.ready || typeof ion.ready.then !== "function") return;
+    try { await ion.ready; } catch (error) {}
+  }
+
   async function startLocalFlight() {
     const stage = document.getElementById("stage");
     if (stage) stage.classList.add("on");
@@ -72,7 +78,9 @@
   }
 
   async function startCesiumFlight() {
-    if (!cesiumStart || !ionSessionPresent()) return false;
+    if (!cesiumStart) return false;
+    await waitForIonRuntimeConfig();
+    if (!ionSessionPresent()) return false;
     root.dataset.aumaraFlight = "ion-starting";
     try {
       await cesiumStart();
