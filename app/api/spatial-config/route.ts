@@ -8,19 +8,21 @@ const PUBLIC_TOKEN_KEYS = [
   "CESIUM_ION_PUBLIC_TOKEN",
   "NEXT_PUBLIC_CESIUM_ION_TOKEN",
 ] as const;
+const GOOGLE_MAPS_KEY = "VITE_GOOGLE_MAPS_API_KEY";
 const PUBLIC_SCOPES = new Set(["assets:read", "geocode"]);
-const ASSET_ENDPOINT = "https://api.cesium.com/v1/assets/2275207/endpoint";
+const ION_ASSET_ENDPOINT = "https://api.cesium.com/v1/assets/2275207/endpoint";
+const GOOGLE_TILES_ROOT = "https://tile.googleapis.com/v1/3dtiles/root.json";
 
 async function assessPrivateRuntimeToken(token: string) {
   const auth = { Authorization: `Bearer ${token}` };
   try {
     const [meResponse, allowedResponse, foreignResponse] = await Promise.all([
       fetch("https://api.cesium.com/v1/me", { headers: auth, cache: "no-store" }),
-      fetch(ASSET_ENDPOINT, {
+      fetch(ION_ASSET_ENDPOINT, {
         headers: { ...auth, Referer: "https://www.aumara.me/" },
         cache: "no-store",
       }),
-      fetch(ASSET_ENDPOINT, {
+      fetch(ION_ASSET_ENDPOINT, {
         headers: { ...auth, Referer: "https://example.invalid/" },
         cache: "no-store",
       }),
@@ -49,6 +51,25 @@ async function assessPrivateRuntimeToken(token: string) {
   }
 }
 
+async function assessGoogleMapsRuntimeKey(key: string) {
+  const endpoint = `${GOOGLE_TILES_ROOT}?key=${encodeURIComponent(key)}`;
+  try {
+    const [allowedResponse, foreignResponse] = await Promise.all([
+      fetch(endpoint, { headers: { Referer: "https://www.aumara.me/" }, cache: "no-store" }),
+      fetch(endpoint, { headers: { Referer: "https://example.invalid/" }, cache: "no-store" }),
+    ]);
+    const originRestricted = allowedResponse.ok && !foreignResponse.ok;
+    return {
+      usable: originRestricted,
+      originRestricted,
+      allowedStatus: allowedResponse.status,
+      foreignStatus: foreignResponse.status,
+    };
+  } catch {
+    return { usable: false, originRestricted: false, allowedStatus: 0, foreignStatus: 0 };
+  }
+}
+
 export async function GET(request: NextRequest) {
   const publicKey = PUBLIC_TOKEN_KEYS.find((key) => Boolean(process.env[key]?.trim())) ?? null;
   const explicitPublicToken = publicKey ? process.env[publicKey]?.trim() ?? "" : "";
@@ -56,6 +77,10 @@ export async function GET(request: NextRequest) {
   const privateAssessment = privateToken ? await assessPrivateRuntimeToken(privateToken) : null;
   const promotedPrivateToken = privateAssessment?.usable ? privateToken : "";
   const runtimeToken = explicitPublicToken || promotedPrivateToken;
+
+  const googleMapsKey = process.env[GOOGLE_MAPS_KEY]?.trim() ?? "";
+  const googleAssessment = googleMapsKey ? await assessGoogleMapsRuntimeKey(googleMapsKey) : null;
+  const runtimeGoogleMapsKey = googleAssessment?.usable ? googleMapsKey : "";
   const probeOnly = request.nextUrl.searchParams.get("probe") === "1";
 
   return NextResponse.json(
@@ -75,6 +100,18 @@ export async function GET(request: NextRequest) {
             configured: Boolean(runtimeToken),
             token: runtimeToken || null,
             privateConfigured: Boolean(privateToken),
+          },
+      googleMaps: probeOnly
+        ? {
+            configured: Boolean(runtimeGoogleMapsKey),
+            envPresent: Boolean(googleMapsKey),
+            originRestricted: Boolean(googleAssessment?.originRestricted),
+            allowedStatus: googleAssessment?.allowedStatus ?? null,
+            foreignStatus: googleAssessment?.foreignStatus ?? null,
+          }
+        : {
+            configured: Boolean(runtimeGoogleMapsKey),
+            key: runtimeGoogleMapsKey || null,
           },
     },
     {
