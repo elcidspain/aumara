@@ -77,7 +77,16 @@
     while (Date.now() < deadline) {
       const state = window.__AUMARA;
       if (state && state.fatalRenderError) return null;
-      if (state && state.firstFrameRendered && window.__AUMARA_GOOGLE_TILE_VISIBLE === true) return state;
+      const googlePathStillActive = !!(
+        state &&
+        state.stage !== "LOCAL_FALLBACK" &&
+        state.globalTilesVisible === true
+      );
+      if (
+        googlePathStillActive &&
+        state.firstFrameRendered &&
+        window.__AUMARA_GOOGLE_TILE_VISIBLE === true
+      ) return state;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     return null;
@@ -131,7 +140,7 @@
     try {
       await withTimeout(cesiumStart(), 18000, "cesium-start-timeout");
       const state = await waitForCesiumState(5000);
-      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-tile");
+      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile");
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     } catch (error) {
