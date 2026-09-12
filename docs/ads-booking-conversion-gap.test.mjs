@@ -7,6 +7,9 @@ const root = new URL("..", import.meta.url);
 const gapDoc = JSON.parse(
   readFileSync(new URL("docs/ads-booking-conversion-gap.json", root), "utf8"),
 );
+const beds24Contract = JSON.parse(
+  readFileSync(new URL("docs/beds24-completion-signal-contract.json", root), "utf8"),
+);
 const layoutSource = readFileSync(new URL("app/layout.tsx", root), "utf8");
 const pmaxSource = readFileSync(new URL("docs/ADS_PMAX_INSTALL.md", root), "utf8");
 const brandCanonSource = readFileSync(new URL("docs/BRAND_CANON.md", root), "utf8");
@@ -17,12 +20,25 @@ test("machine-readable blocker doc lists exact remaining external actions", () =
   assert.equal(gapDoc.site_side_verified.coverage, "next_guest_pages_only");
   assert.deepEqual(gapDoc.site_side_verified.events, ["booking_click", "spatial_flight_open"]);
   assert.match(gapDoc.cannot_measure_yet.join(" "), /standalone \/spatial\//);
-  assert.equal(gapDoc.completion_receiver.status, "not_implemented");
-  assert.match(gapDoc.completion_receiver.reason, /No authenticated Beds24-supported/);
+  assert.equal(gapDoc.completion_receiver.status, "supported_paths_verified_not_configured");
+  assert.equal(gapDoc.completion_receiver.verified_supported_paths.length, 2);
   assert.equal(gapDoc.completion_receiver.implementation_gate.length, 3);
+  assert.equal(gapDoc.google_ads_snapshot.website_purchase_or_booking_action_found, false);
   assert.ok(Array.isArray(gapDoc.external_blockers));
   assert.equal(gapDoc.external_blockers.length, 4);
   assert.ok(gapDoc.external_blockers.some((blocker) => blocker.key === "spatial_click_coverage"));
+});
+
+test("Beds24 contract keeps browser attribution separate from server validation", () => {
+  assert.equal(beds24Contract.status, "supported_mechanisms_verified_configuration_pending");
+  assert.equal(beds24Contract.supported_mechanisms.length, 2);
+  assert.equal(beds24Contract.supported_mechanisms[0].key, "booking_return_url");
+  assert.equal(beds24Contract.supported_mechanisms[0].role, "browser_attribution");
+  assert.equal(beds24Contract.supported_mechanisms[1].key, "auto_action_webhook");
+  assert.equal(beds24Contract.supported_mechanisms[1].role, "server_validation_reconciliation");
+  assert.equal(beds24Contract.recommended_contract.dedupe_key, "booking_id");
+  assert.equal(beds24Contract.google_ads_snapshot.website_purchase_or_booking_action_found, false);
+  assert.equal(beds24Contract.release_gate.length, 3);
 });
 
 test("canonical ads docs never treat an outbound Beds24 visit as Purchase/Book", () => {
