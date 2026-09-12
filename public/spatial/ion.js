@@ -30,9 +30,33 @@
   }, { once: true });
 })();
 
+var aumaraRuntimeIonToken = "";
+
+async function loadAumaraIonRuntimeConfig() {
+  try {
+    var response = await fetch("/api/spatial-config", { cache: "no-store" });
+    if (!response.ok) return false;
+    var data = await response.json();
+    var ion = data && data.cesiumIon ? data.cesiumIon : null;
+    if (ion && ion.configured && typeof ion.token === "string" && ion.token.trim()) {
+      aumaraRuntimeIonToken = ion.token.trim();
+    }
+    window.__AUMARA_ION_STATUS = {
+      publicConfigured: Boolean(ion && ion.configured),
+      privateConfigured: Boolean(ion && ion.privateConfigured),
+    };
+    return Boolean(aumaraRuntimeIonToken);
+  } catch (e) {
+    window.__AUMARA_ION_STATUS = { publicConfigured: false, privateConfigured: false };
+    return false;
+  }
+}
+
 window.AUMARA_ION = {
   asset: 2275207,
+  ready: loadAumaraIonRuntimeConfig(),
   resolve: function () {
+    if (aumaraRuntimeIonToken) return aumaraRuntimeIonToken;
     try { return localStorage.getItem("CESIUM_ION_TOKEN") || ""; } catch (e) { return ""; }
   },
   apply: function (C) {
