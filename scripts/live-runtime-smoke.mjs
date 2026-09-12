@@ -38,20 +38,31 @@ async function waitFor(fn, timeout = 20000, label = "condition") {
 }
 
 async function readRuntimeExpectation() {
+  let response;
   try {
-    const response = await fetch(base + "/api/spatial-config?probe=1", { cache: "no-store" });
-    if (!response.ok) return { requireGoogle: forceRequireGoogle, probeAvailable: false };
-    const data = await response.json();
-    const publicCredentialConfigured = Boolean(data?.cesiumIon?.configured || data?.googleMaps?.configured);
-    return {
-      requireGoogle: forceRequireGoogle || publicCredentialConfigured,
-      probeAvailable: true,
-      publicCredentialConfigured,
-      privateIonConfigured: Boolean(data?.cesiumIon?.privateConfigured),
-    };
-  } catch {
-    return { requireGoogle: forceRequireGoogle, probeAvailable: false };
+    response = await fetch(base + "/api/spatial-config?probe=1", { cache: "no-store" });
+  } catch (error) {
+    throw new Error(`runtime credential probe unavailable: ${String(error)}`);
   }
+  if (!response.ok) {
+    throw new Error(`runtime credential probe failed: HTTP ${response.status}`);
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error(`runtime credential probe invalid JSON: ${String(error)}`);
+  }
+  if (!data || typeof data !== "object" || !data.cesiumIon || !data.googleMaps) {
+    throw new Error("runtime credential probe missing provider state");
+  }
+  const publicCredentialConfigured = Boolean(data.cesiumIon.configured || data.googleMaps.configured);
+  return {
+    requireGoogle: forceRequireGoogle || publicCredentialConfigured,
+    probeAvailable: true,
+    publicCredentialConfigured,
+    privateIonConfigured: Boolean(data.cesiumIon.privateConfigured),
+  };
 }
 
 let ws;
