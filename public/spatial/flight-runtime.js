@@ -40,12 +40,22 @@
     return ionToken || !!status.googleMapsConfigured;
   }
 
+  function withTimeout(promise, timeoutMs, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(label || "timeout")), timeoutMs);
+      Promise.resolve(promise).then(
+        (value) => { clearTimeout(timer); resolve(value); },
+        (error) => { clearTimeout(timer); reject(error); },
+      );
+    });
+  }
+
   async function waitForCesiumState(timeoutMs) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       const state = window.__AUMARA;
       if (state && state.fatalRenderError) return null;
-      if (state && state.firstFrameRendered) return state;
+      if (state && state.firstFrameRendered && window.__AUMARA_GOOGLE_TILE_VISIBLE === true) return state;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     return null;
@@ -95,11 +105,12 @@
     await waitForIonRuntimeConfig();
     if (!runtimeCredentialPresent()) return false;
     root.dataset.aumaraFlight = "cesium-starting";
+    window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
     try {
-      await cesiumStart();
-      const state = await waitForCesiumState(6000);
+      await withTimeout(cesiumStart(), 18000, "cesium-start-timeout");
+      const state = await waitForCesiumState(5000);
       if (!state) return false;
-      root.dataset.aumaraFlight = state.firstGoogleTileRendered ? "cesium-rendered" : "cesium-initialized";
+      root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     } catch (error) {
       return false;
