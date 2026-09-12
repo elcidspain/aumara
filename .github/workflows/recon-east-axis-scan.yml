@@ -1,0 +1,138 @@
+name: Recon east whole-anchor axis scan
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-axis-scan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Generate best recovery baseline
+        run: >-
+          python scripts/recover-p0-east.py
+          --repo .
+          --frame-count 56
+          --pair-window 6
+          --orb-features 6000
+          --voxel 0.05
+      - name: Scan whole-east rigid anchor axes without writing artifacts
+        run: |
+          python - <<'PY'
+          import base64, json, math, struct
+          from pathlib import Path
+          import numpy as np
+
+          proof = Path('public/v3-3-proof')
+          WEST_MIN = np.array([20.0, -12.0, -8.0])
+          WEST_MAX = np.array([70.0, 20.0, 16.0])
+          EAST_MIN = np.array([70.0, -12.0, -8.0])
+          EAST_MAX = np.array([95.0, 20.0, 16.0])
+
+          def decode(path, minv, maxv):
+              raw = base64.b64decode(Path(path).read_text().strip())
+              rows = []
+              span = maxv - minv
+              for i in range(0, len(raw) - 8, 9):
+                  qx, qy, qz, r, g, b = struct.unpack('<HHHBBB', raw[i:i+9])
+                  xyz = minv + span * np.array([qx, qy, qz]) / 65535.0
+                  rows.append([*xyz, r, g, b])
+              return np.asarray(rows, dtype=np.float64)
+
+          def nn(source, target):
+              if len(source) == 0 or len(target) == 0:
+                  return None
+              vals = []
+              dst = target[:, :3]
+              for start in range(0, len(source), 128):
+                  block = source[start:start+128, :3]
+                  d2 = ((block[:, None, :] - dst[None, :, :]) ** 2).sum(axis=2)
+                  vals.extend(np.sqrt(d2.min(axis=1)).tolist())
+              vals = np.asarray(vals)
+              return float(vals.mean()), float(np.percentile(vals, 95))
+
+          west = np.vstack([decode(proof / f'p0-points-{i}.b64', WEST_MIN, WEST_MAX) for i in range(19)])
+          east = np.vstack([decode(proof / f'p0-east-{i}.b64', EAST_MIN, EAST_MAX) for i in range(5)])
+          west_ref = west[(west[:,0] >= 69.0) & (west[:,0] <= 70.0)]
+          west_prev = west[(west[:,0] >= 68.0) & (west[:,0] <= 69.0)]
+          base_mean, base_p95 = nn(west_prev, west_ref)
+          houses = {h['id']: h for h in json.loads((proof / 'houses_af.json').read_text())}
+
+          def support(points, hid, radius=3.8):
+              h = houses[hid]
+              center = np.array([h['east'], h['north']])
+              return int((np.linalg.norm(points[:,:2] - center, axis=1) <= radius).sum())
+
+          base_E = support(east, 'E')
+          base_F = support(east, 'F')
+          origin = np.array([70.0, 0.0])
+
+          def evaluate(label, value, moved):
+              band = moved[(moved[:,0] >= 70.0) & (moved[:,0] <= 71.0)]
+              metric = nn(west_ref, band)
+              if metric is None:
+                  return None
+              mean, p95 = metric
+              E = support(moved, 'E')
+              F = support(moved, 'F')
+              support_ok = E >= int(base_E * 0.9) and F >= int(base_F * 0.9)
+              return {
+                  'axis': label,
+                  'value': float(value),
+                  'mean_ratio': mean / base_mean,
+                  'p95_ratio': p95 / base_p95,
+                  'seam_band_points': int(len(band)),
+                  'E_points': E,
+                  'F_points': F,
+                  'support_ok': support_ok,
+                  'pass': mean <= base_mean and p95 <= base_p95 and support_ok,
+                  'score': max(mean / base_mean, p95 / base_p95),
+              }
+
+          candidates = []
+          for dx in np.round(np.arange(-1.0, 1.01, 0.1), 2):
+              moved = east.copy(); moved[:,0] += dx
+              row = evaluate('dx_m', dx, moved)
+              if row: candidates.append(row)
+          for dy in np.round(np.arange(-1.0, 1.01, 0.1), 2):
+              moved = east.copy(); moved[:,1] += dy
+              row = evaluate('dy_m', dy, moved)
+              if row: candidates.append(row)
+          for dz in np.round(np.arange(-0.6, 0.61, 0.1), 2):
+              moved = east.copy(); moved[:,2] += dz
+              row = evaluate('dz_m', dz, moved)
+              if row: candidates.append(row)
+          for deg in np.round(np.arange(-3.0, 3.01, 0.25), 2):
+              rad = math.radians(float(deg))
+              c, s = math.cos(rad), math.sin(rad)
+              moved = east.copy()
+              xy = moved[:,:2] - origin
+              moved[:,:2] = xy @ np.array([[c, -s], [s, c]]).T + origin
+              row = evaluate('yaw_deg', deg, moved)
+              if row: candidates.append(row)
+
+          candidates.sort(key=lambda r: (not r['pass'], r['score'], r['mean_ratio'], r['p95_ratio']))
+          print('AUMARA_AXIS_BASE', json.dumps({'mean':base_mean,'p95':base_p95,'E_points':base_E,'F_points':base_F,'east_points':int(len(east))}, sort_keys=True))
+          for row in candidates[:20]:
+              print('AUMARA_AXIS_CANDIDATE', json.dumps(row, sort_keys=True))
+          passing = [r for r in candidates if r['pass']]
+          print('AUMARA_AXIS_PASS_COUNT', len(passing))
+          if passing:
+              print('AUMARA_AXIS_BEST_PASS', json.dumps(passing[0], sort_keys=True))
+          else:
+              print('AUMARA_AXIS_RESULT HOLD_NO_SINGLE_AXIS_PASS')
+          PY
