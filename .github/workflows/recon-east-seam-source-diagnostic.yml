@@ -1,0 +1,102 @@
+name: Recon east seam source diagnostic
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-seam-source-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reconstruction dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Generate best recovery baseline
+        run: >-
+          python scripts/recover-p0-east.py
+          --repo .
+          --frame-count 56
+          --pair-window 6
+          --orb-features 6000
+          --voxel 0.05
+      - name: Decompose seam error by source
+        run: |
+          python - <<'PY'
+          import base64, json, struct
+          from pathlib import Path
+          import numpy as np
+
+          proof = Path('public/v3-3-proof')
+          WEST_MIN = np.array([20.0, -12.0, -8.0])
+          WEST_MAX = np.array([70.0, 20.0, 16.0])
+          EAST_MIN = np.array([70.0, -12.0, -8.0])
+          EAST_MAX = np.array([95.0, 20.0, 16.0])
+
+          def decode(path, minv, maxv):
+              raw = base64.b64decode(Path(path).read_text().strip())
+              rows = []
+              span = maxv - minv
+              for i in range(0, len(raw) - 8, 9):
+                  qx, qy, qz, r, g, b = struct.unpack('<HHHBBB', raw[i:i+9])
+                  xyz = minv + span * np.array([qx, qy, qz]) / 65535.0
+                  rows.append([*xyz, r, g, b])
+              return np.asarray(rows, dtype=np.float64)
+
+          def nearest_metrics(source, target):
+              if len(source) == 0 or len(target) == 0:
+                  return {'samples': int(len(source)), 'mean': None, 'p95': None}
+              vals = []
+              dst = target[:, :3]
+              for start in range(0, len(source), 128):
+                  block = source[start:start+128, :3]
+                  d2 = ((block[:, None, :] - dst[None, :, :]) ** 2).sum(axis=2)
+                  vals.extend(np.sqrt(d2.min(axis=1)).tolist())
+              vals = np.asarray(vals)
+              return {'samples': int(len(vals)), 'mean': float(vals.mean()), 'p95': float(np.percentile(vals, 95))}
+
+          west = np.vstack([decode(proof / f'p0-points-{i}.b64', WEST_MIN, WEST_MAX) for i in range(19)])
+          survivor_parts = [decode(proof / 'p0-east-0.b64', EAST_MIN, EAST_MAX), decode(proof / 'p0-east-4.b64', EAST_MIN, EAST_MAX)]
+          recovered_parts = [decode(proof / f'p0-east-{i}.b64', EAST_MIN, EAST_MAX) for i in (1,2,3)]
+          survivors = np.vstack(survivor_parts)
+          recovered = np.vstack(recovered_parts)
+          east = np.vstack([survivors, recovered])
+
+          west_69_70 = west[(west[:,0] >= 69.0) & (west[:,0] <= 70.0)]
+          west_68_69 = west[(west[:,0] >= 68.0) & (west[:,0] <= 69.0)]
+          baseline = nearest_metrics(west_68_69, west_69_70)
+
+          def east_band(points):
+              return points[(points[:,0] >= 70.0) & (points[:,0] <= 71.0)]
+
+          rows = {
+              'west_internal': baseline,
+              'east_all': nearest_metrics(west_69_70, east_band(east)),
+              'east_survivors_only': nearest_metrics(west_69_70, east_band(survivors)),
+              'east_recovered_only': nearest_metrics(west_69_70, east_band(recovered)),
+              'counts': {
+                  'east0_decoded': int(len(survivor_parts[0])),
+                  'east4_decoded': int(len(survivor_parts[1])),
+                  'survivors_total': int(len(survivors)),
+                  'recovered_total': int(len(recovered)),
+                  'east_total': int(len(east)),
+                  'survivor_seam_band': int(len(east_band(survivors))),
+                  'recovered_seam_band': int(len(east_band(recovered))),
+              },
+          }
+          for key in ('east_all','east_survivors_only','east_recovered_only'):
+              row = rows[key]
+              row['mean_ratio_vs_west'] = None if row['mean'] is None else row['mean'] / baseline['mean']
+              row['p95_ratio_vs_west'] = None if row['p95'] is None else row['p95'] / baseline['p95']
+          print('AUMARA_SEAM_SOURCE', json.dumps(rows, sort_keys=True))
+          PY
