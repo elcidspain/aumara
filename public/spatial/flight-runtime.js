@@ -27,6 +27,28 @@
     return false;
   }
 
+  function consumeCleanLocalFallback() {
+    try {
+      if (sessionStorage.getItem("AUMARA_FORCE_LOCAL_ONCE") !== "1") return false;
+      sessionStorage.removeItem("AUMARA_FORCE_LOCAL_ONCE");
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function reloadIntoCleanLocalFallback(reason) {
+    root.dataset.aumaraFlight = "local-reload";
+    root.dataset.aumaraCesiumFailure = String(reason || "cesium-failed").slice(0, 80);
+    try {
+      sessionStorage.setItem("AUMARA_FORCE_LOCAL_ONCE", "1");
+      location.replace(location.pathname + location.search);
+      return new Promise(() => {});
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
   async function waitForIonRuntimeConfig() {
     const ion = window.AUMARA_ION;
     if (!ion || !ion.ready || typeof ion.ready.then !== "function") return;
@@ -109,11 +131,11 @@
     try {
       await withTimeout(cesiumStart(), 18000, "cesium-start-timeout");
       const state = await waitForCesiumState(5000);
-      if (!state) return false;
+      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-tile");
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     } catch (error) {
-      return false;
+      return reloadIntoCleanLocalFallback(error && error.message ? error.message : "cesium-start-failed");
     }
   }
 
@@ -142,7 +164,13 @@
   root.dataset.aumaraFlightRuntime = "local-ready";
   root.dataset.aumaraFlightMode = "cesium-first-local-fallback";
 
+  const forceCleanLocal = consumeCleanLocalFallback();
   const pendingFlight = !!window.__AUMARA_PENDING_FLIGHT;
   window.__AUMARA_PENDING_FLIGHT = false;
-  if (window.__AUMARA_AUTO_FLIGHT || pendingFlight) startHybridFlight();
+  if (forceCleanLocal) {
+    root.dataset.aumaraFlight = "local-clean-fallback";
+    startLocalFlight();
+  } else if (window.__AUMARA_AUTO_FLIGHT || pendingFlight) {
+    startHybridFlight();
+  }
 })();
