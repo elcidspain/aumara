@@ -177,7 +177,7 @@
         root.dataset.aumaraFlight = "cesium-rendered";
         return true;
       }
-      const state = await waitForCesiumState(5000, generation);
+      const state = await waitForCesiumState(20000, generation);
       if (!isAttemptActive(generation)) return false;
       if (state || establishedCesiumState()) {
         cesiumValidated = true;
