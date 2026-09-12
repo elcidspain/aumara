@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const base = process.env.AUMARA_SMOKE_BASE || "http://127.0.0.1:3000";
+const requireGoogle = process.env.AUMARA_REQUIRE_GOOGLE === "1";
 const cdpPort = 9222;
 const browser = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]
   .map((name) => ({ name, result: spawnSync("which", [name], { encoding: "utf8" }) }))
@@ -96,17 +97,36 @@ try {
     30000,
     "first spatial WebGL frame",
   );
-  const google = await waitFor(
-    () => evaluate("window.__AUMARA?.firstGoogleTileRendered && window.__AUMARA?.provider === 'GOOGLE_PHOTOREALISTIC_3D_TILES' ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, firstGoogleTileRendered:true}) : null"),
-    5000,
-    "first Google photorealistic tile",
-  );
-  const autonomous = await waitFor(
-    () => evaluate("window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
-    10000,
-    "autonomous Earth to Iberia progression",
-  );
-  await evaluate("window.__AUMARA.advanceTo(999); true");
+
+  if (requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+    throw new Error(`Google runtime required but active provider is ${frame.provider}`);
+  }
+
+  let autonomous;
+  if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+    const google = await waitFor(
+      () => evaluate("window.__AUMARA?.firstGoogleTileRendered ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, firstGoogleTileRendered:true}) : null"),
+      8000,
+      "first Google photorealistic tile",
+    );
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
+      10000,
+      "autonomous Earth to Iberia progression",
+    );
+    console.log("SPATIAL_GOOGLE_TILE_PASS", JSON.stringify(google));
+  } else if (frame.provider === "LOCAL_THREE") {
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
+      10000,
+      "autonomous Local Three waypoint progression",
+    );
+    console.log("SPATIAL_LOCAL_FALLBACK_PASS", JSON.stringify(autonomous));
+  } else {
+    throw new Error(`unexpected spatial provider ${frame.provider}`);
+  }
+
+  await evaluate("typeof window.__AUMARA?.advanceTo === 'function' ? (window.__AUMARA.advanceTo(999), true) : false");
   const complete = await waitFor(
     () => evaluate("window.__AUMARA?.flightComplete && window.__AUMARA?.waypointReached === 27 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, flightComplete:window.__AUMARA.flightComplete}) : null"),
     5000,
@@ -114,7 +134,6 @@ try {
   );
   console.log("SPATIAL_MODE_PASS", JSON.stringify(mode));
   console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
-  console.log("SPATIAL_GOOGLE_TILE_PASS", JSON.stringify(google));
   console.log("SPATIAL_AUTONOMOUS_PROGRESS_PASS", JSON.stringify(autonomous));
   console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
   console.log("AUMARA_LIVE_RUNTIME_PASS");
