@@ -15,18 +15,27 @@
   "cannot_measure_yet": [
     "Completed direct Beds24 booking conversion"
   ],
+  "completion_receiver": {
+    "status": "not_implemented",
+    "reason": "No authenticated Beds24-supported successful-booking signal contract has been verified yet, so implementing a receiver now would invent an external contract.",
+    "implementation_gate": [
+      "Verify a Beds24-supported signal that fires only after successful booking completion.",
+      "Define authentication, idempotency/deduplication, booking identity, timestamp, currency/value availability, and retry semantics from that verified signal.",
+      "Map the verified completion event to an existing Google Ads conversion action or an already-linked GA4 key event."
+    ]
+  },
   "external_blockers": [
     {
       "key": "beds24_completion_signal",
-      "required_action": "Configure Beds24 to send a deterministic post-booking completion signal to a URL under aumara.me (return URL/callback/webhook) that can only occur after successful booking completion."
+      "required_action": "Verify the exact Beds24-supported post-booking mechanism and payload before creating any AUMARA receiver endpoint."
     },
     {
       "key": "google_ads_conversion_mapping",
-      "required_action": "Provide the existing Google Ads completed-booking conversion action mapping (conversion label and intended event contract) or route through an already-linked GA4 purchase/booking-complete event."
+      "required_action": "Resolve the existing Google Ads completed-booking conversion action mapping (conversion label and event contract), or use a verified linked GA4 completion event."
     },
     {
       "key": "attribution_link_verification",
-      "required_action": "If GA4 is used, verify GA4↔Google Ads linking and import settings for the completed booking event before campaign optimization changes."
+      "required_action": "If GA4 is chosen, verify the GA4 property, GA4-to-Google-Ads link, and import settings before campaign optimization changes."
     }
   ]
 }
