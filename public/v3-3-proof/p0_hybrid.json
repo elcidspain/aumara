@@ -132,5 +132,6 @@
     "densified_chunks_byte_identical": true
   },
   "pass": false,
-  "status": "OWNER_QA \u00b7 houseCount===6 \u00b7 densify ACCEPTED \u00b7 chunks untouched \u00b7 NOT_PASS until owner visual QA"
+  "status": "OWNER_QA \u00b7 east extension staged, seam alignment join pending",
+  "east_extension_alignment_joined": false
 }
