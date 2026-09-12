@@ -1,3 +1,8 @@
+import {
+  isGaMeasurementId as validateGaMeasurementId,
+  isGoogleAdsTagId as validateGoogleAdsTagId,
+} from "./google-tag-ids.mjs";
+
 /** GA4 measurement ID from Vercel env. Empty = no GA4 tag shipped. Do not invent an ID. */
 export const GA_MEASUREMENT_ID = (process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "").trim();
 
@@ -5,11 +10,11 @@ export const GA_MEASUREMENT_ID = (process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "
 export const GOOGLE_ADS_TAG_ID = (process.env.NEXT_PUBLIC_GOOGLE_ADS_TAG_ID ?? "AW-11392880991").trim();
 
 export function isGaMeasurementId(id: string): boolean {
-  return /^G-[A-Z0-9]{6,12}$/.test(id);
+  return validateGaMeasurementId(id);
 }
 
 export function isGoogleAdsTagId(id: string): boolean {
-  return /^AW-\d{6,15}$/.test(id);
+  return validateGoogleAdsTagId(id);
 }
 
 export function trackEvent(name: string, params: Record<string, unknown> = {}): void {
