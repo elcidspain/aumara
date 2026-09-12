@@ -92,7 +92,7 @@ try {
   );
   console.log("SPATIAL_CESIUM_PRIMARY_PASS", JSON.stringify(primary));
 
-  await navigate(base + "/spatial/?renderer=local#flight");
+  await navigate(base + "/spatial/index.html?renderer=local#flight");
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "local fallback runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
