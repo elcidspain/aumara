@@ -1,0 +1,124 @@
+name: Recon east registration evaluation
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-registration-eval.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reconstruction dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Generate best parameter-sweep baseline
+        run: >-
+          python scripts/recover-p0-east.py
+          --repo .
+          --frame-count 56
+          --pair-window 6
+          --orb-features 6000
+          --voxel 0.05
+      - name: Evaluate bounded Y/Z residual registration without writing artifacts
+        run: |
+          python - <<'PY'
+          import base64, json, struct
+          from pathlib import Path
+          import numpy as np
+
+          proof = Path('public/v3-3-proof')
+          WEST_MIN = np.array([20.0, -12.0, -8.0])
+          WEST_MAX = np.array([70.0, 20.0, 16.0])
+          EAST_MIN = np.array([70.0, -12.0, -8.0])
+          EAST_MAX = np.array([95.0, 20.0, 16.0])
+
+          def decode(path, minv, maxv):
+              raw = base64.b64decode(Path(path).read_text().strip())
+              rows = []
+              span = maxv - minv
+              for i in range(0, len(raw) - 8, 9):
+                  qx, qy, qz, r, g, b = struct.unpack('<HHHBBB', raw[i:i+9])
+                  xyz = minv + span * np.array([qx, qy, qz]) / 65535.0
+                  rows.append([*xyz, r, g, b])
+              return np.asarray(rows, dtype=np.float64)
+
+          def nearest_metrics(source, target):
+              src = source[:, :3]
+              dst = target[:, :3]
+              vals = []
+              for start in range(0, len(src), 128):
+                  block = src[start:start+128]
+                  d2 = ((block[:, None, :] - dst[None, :, :]) ** 2).sum(axis=2)
+                  vals.extend(np.sqrt(d2.min(axis=1)).tolist())
+              vals = np.asarray(vals)
+              return float(vals.mean()), float(np.percentile(vals, 95))
+
+          west = np.vstack([decode(proof / f'p0-points-{i}.b64', WEST_MIN, WEST_MAX) for i in range(19)])
+          survivors = np.vstack([
+              decode(proof / 'p0-east-0.b64', EAST_MIN, EAST_MAX),
+              decode(proof / 'p0-east-4.b64', EAST_MIN, EAST_MAX),
+          ])
+          recovered = np.vstack([
+              decode(proof / 'p0-east-1.b64', EAST_MIN, EAST_MAX),
+              decode(proof / 'p0-east-2.b64', EAST_MIN, EAST_MAX),
+              decode(proof / 'p0-east-3.b64', EAST_MIN, EAST_MAX),
+          ])
+
+          west_69_70 = west[(west[:,0] >= 69.0) & (west[:,0] <= 70.0)]
+          west_68_69 = west[(west[:,0] >= 68.0) & (west[:,0] <= 69.0)]
+          base_mean, base_p95 = nearest_metrics(west_68_69, west_69_70)
+
+          houses = {h['id']: h for h in json.loads((proof / 'houses_af.json').read_text())}
+          def support(points, hid, radius=3.8):
+              h = houses[hid]
+              center = np.array([h['center']['east'], h['center']['north']])
+              return int((np.linalg.norm(points[:,:2] - center, axis=1) <= radius).sum())
+
+          base_east = np.vstack([survivors, recovered])
+          base_E = support(base_east, 'E')
+          base_F = support(base_east, 'F')
+          results = []
+          for dy in np.round(np.arange(-0.6, 0.61, 0.1), 2):
+              for dz in np.round(np.arange(-0.4, 0.41, 0.1), 2):
+                  moved = recovered.copy()
+                  moved[:,1] += dy
+                  moved[:,2] += dz
+                  east = np.vstack([survivors, moved])
+                  band = east[(east[:,0] >= 70.0) & (east[:,0] <= 71.0)]
+                  mean, p95 = nearest_metrics(west_69_70, band)
+                  mean_ratio = mean / base_mean
+                  p95_ratio = p95 / base_p95
+                  E = support(east, 'E')
+                  F = support(east, 'F')
+                  support_ok = E >= int(base_E * 0.9) and F >= int(base_F * 0.9)
+                  passed = mean_ratio <= 1.0 and p95_ratio <= 1.0 and support_ok
+                  results.append({
+                      'dy': float(dy), 'dz': float(dz),
+                      'mean_ratio': mean_ratio, 'p95_ratio': p95_ratio,
+                      'E_points': E, 'F_points': F,
+                      'support_ok': support_ok, 'pass': passed,
+                      'score': max(mean_ratio, p95_ratio),
+                  })
+
+          results.sort(key=lambda r: (not r['pass'], r['score'], r['mean_ratio'], r['p95_ratio']))
+          print('AUMARA_REG_BASE', json.dumps({'E_points': base_E, 'F_points': base_F, 'west_baseline_mean': base_mean, 'west_baseline_p95': base_p95}, sort_keys=True))
+          for row in results[:12]:
+              print('AUMARA_REG_CANDIDATE', json.dumps(row, sort_keys=True))
+          passing = [r for r in results if r['pass']]
+          print('AUMARA_REG_PASS_COUNT', len(passing))
+          if passing:
+              print('AUMARA_REG_BEST_PASS', json.dumps(passing[0], sort_keys=True))
+          else:
+              print('AUMARA_REG_RESULT HOLD_NO_BOUNDED_YZ_PASS')
+          PY
