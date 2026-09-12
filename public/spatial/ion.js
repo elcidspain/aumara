@@ -70,6 +70,22 @@ async function loadAumaraIonRuntimeConfig() {
   }
 }
 
+function instrumentVisibleTileset(tileset) {
+  try {
+    if (tileset && tileset.tileVisible && typeof tileset.tileVisible.addEventListener === "function") {
+      tileset.tileVisible.addEventListener(function () {
+        window.__AUMARA_GOOGLE_TILE_VISIBLE = true;
+        if (window.__AUMARA) {
+          window.__AUMARA.firstGoogleTileRendered = true;
+          window.__AUMARA.googleTileVisibleObserved = true;
+          window.__AUMARA.globalTilesStatus = "READY";
+        }
+      });
+    }
+  } catch (e) {}
+  return tileset;
+}
+
 window.AUMARA_ION = {
   asset: 2275207,
   ready: loadAumaraIonRuntimeConfig(),
@@ -79,17 +95,37 @@ window.AUMARA_ION = {
   },
   apply: function (C) {
     var token = this.resolve();
-    if (token && C && C.Ion) C.Ion.defaultAccessToken = token;
-    if (aumaraGoogleMapsKey && C && C.GoogleMaps) {
-      C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
-      return true;
+    var assetId = this.asset;
+    var hasGoogleKey = !!(aumaraGoogleMapsKey && C && C.GoogleMaps);
+    var hasIon = !!(token && C && C.Ion);
+    if (hasIon) C.Ion.defaultAccessToken = token;
+    if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
+
+    if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
+      var directGoogleFactory = typeof C.createGooglePhotorealistic3DTileset === "function"
+        ? C.createGooglePhotorealistic3DTileset.bind(C)
+        : null;
+      var ionFactory = C.Cesium3DTileset && typeof C.Cesium3DTileset.fromIonAssetId === "function"
+        ? C.Cesium3DTileset.fromIonAssetId.bind(C.Cesium3DTileset)
+        : null;
+
+      if (hasGoogleKey && directGoogleFactory) {
+        C.createGooglePhotorealistic3DTileset = async function () {
+          try {
+            return instrumentVisibleTileset(await directGoogleFactory.apply(null, arguments));
+          } catch (error) {
+            if (hasIon && ionFactory) return instrumentVisibleTileset(await ionFactory(assetId));
+            throw error;
+          }
+        };
+        C.__AUMARA_GOOGLE_FACTORY_WRAPPED = true;
+      } else if (hasIon && ionFactory) {
+        C.createGooglePhotorealistic3DTileset = async function () {
+          return instrumentVisibleTileset(await ionFactory(assetId));
+        };
+        C.__AUMARA_GOOGLE_FACTORY_WRAPPED = true;
+      }
     }
-    if (C && C.Cesium3DTileset && C.Cesium3DTileset.fromIonAssetId) {
-      var assetId = this.asset;
-      C.createGooglePhotorealistic3DTileset = function () {
-        return C.Cesium3DTileset.fromIonAssetId(assetId);
-      };
-    }
-    return !!(token && C && C.Ion);
+    return hasGoogleKey || hasIon;
   },
 };
