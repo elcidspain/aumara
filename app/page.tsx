@@ -1,11 +1,11 @@
-import GuestActivation from "@/components/site/GuestActivation";
+import FlightLaunch from "@/components/site/FlightLaunch";
 import GuestHome from "@/components/site/GuestHome";
 
 export default function Home() {
   return (
     <>
       <GuestHome />
-      <GuestActivation />
+      <FlightLaunch />
     </>
   );
 }

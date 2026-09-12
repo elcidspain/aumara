@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import GuestActivation from "@/components/site/GuestActivation";
 import { SITE_URL } from "@/lib/guest";
 import {
   GA_MEASUREMENT_ID,
@@ -72,7 +73,10 @@ const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
 const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
 const googleTagIds = Array.from(new Set([gaId, adsId].filter(Boolean)));
 const googleTagLoaderId = googleTagIds[0] ?? "";
-const googleTagConfigs = googleTagIds.map((id) => `gtag('config','${id}');`).join("");
+const googleTagConfigs = [
+  gaId ? `window.gtag('config','${gaId}',{send_page_view:false});` : "",
+  adsId ? `window.gtag('config','${adsId}');` : "",
+].join("");
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -85,17 +89,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {googleTagLoaderId ? (
           <>
             <Script id="google-consent-default" strategy="beforeInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
+            {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
             </Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
               strategy="afterInteractive"
             />
             <Script id="google-tags" strategy="afterInteractive">
-              {`gtag('js',new Date());${googleTagConfigs}`}
+              {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('js',new Date());${googleTagConfigs}`}
             </Script>
           </>
         ) : null}
+        <GuestActivation />
         {children}
       </body>
     </html>
