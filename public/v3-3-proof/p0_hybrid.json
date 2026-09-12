@@ -10,7 +10,7 @@
     "source_sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
     "chunks": "p0-points-0..18.b64",
     "chunks_untouched": true,
-    "quant_envelope_locked": {
+    "west_quant_envelope_locked": {
       "MIN": [
         20,
         -12,
@@ -18,6 +18,30 @@
       ],
       "MAX": [
         70,
+        20,
+        16
+      ]
+    },
+    "east_extension_quant_envelope": {
+      "MIN": [
+        70,
+        -12,
+        -8
+      ],
+      "MAX": [
+        95,
+        20,
+        16
+      ]
+    },
+    "combined_quant_envelope": {
+      "MIN": [
+        20,
+        -12,
+        -8
+      ],
+      "MAX": [
+        95,
         20,
         16
       ]
