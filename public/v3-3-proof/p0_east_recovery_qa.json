@@ -139,6 +139,10 @@
     "ratio_vs_baseline": {
       "mean_ratio": 1.1323217274536281,
       "p95_ratio": 0.9889899846199004
+    },
+    "pass_gate": {
+      "max_mean_ratio": 1.0,
+      "max_p95_ratio": 1.0
     }
   },
   "ef_support": [
@@ -160,8 +164,8 @@
     }
   ],
   "west_chunks_byte_identical": true,
-  "integration_pass": true,
-  "status": "SEAM_CONTINUOUS",
+  "integration_pass": false,
+  "status": "SEAM_PENDING_ALIGNMENT",
   "recovered_chunks": [
     {
       "file": "p0-east-1.b64",

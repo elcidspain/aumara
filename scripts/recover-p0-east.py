@@ -335,7 +335,12 @@ def main() -> None:
         "p95_ratio": seam_nn["p95_nn_m"] / baseline_nn["p95_nn_m"],
     }
 
-    integration_pass = bool(seam_ratio["mean_ratio"] <= 1.35 and seam_ratio["p95_ratio"] <= 1.25)
+    # Strict machine-QA seam gate: seam density should not exceed adjacent west internal density.
+    seam_gate = {"max_mean_ratio": 1.0, "max_p95_ratio": 1.0}
+    integration_pass = bool(
+        seam_ratio["mean_ratio"] <= seam_gate["max_mean_ratio"]
+        and seam_ratio["p95_ratio"] <= seam_gate["max_p95_ratio"]
+    )
 
     houses = {h["id"]: h for h in json.loads((proof / "houses_af.json").read_text())}
 
@@ -409,6 +414,7 @@ def main() -> None:
                 **baseline_nn,
             },
             "ratio_vs_baseline": seam_ratio,
+            "pass_gate": seam_gate,
         },
         "ef_support": [house_support("E"), house_support("F")],
         "west_chunks_byte_identical": west_unchanged,
@@ -436,6 +442,7 @@ def main() -> None:
     ext["west_chunks_byte_identical"] = west_unchanged
     ext["east_working_points"] = 9080
     ext["seam_ratio_vs_baseline"] = seam_ratio
+    ext["seam_pass_gate"] = seam_gate
     ext["pass"] = integration_pass
     ext["qa_gate"] = (
         "PASS: seam continuity within baseline ratio and west hashes locked"

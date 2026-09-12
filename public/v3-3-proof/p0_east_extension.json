@@ -35,8 +35,8 @@
   "sfm": false,
   "vggt": false,
   "gpu": false,
-  "pass": true,
-  "qa_gate": "PASS: seam continuity within baseline ratio and west hashes locked",
+  "pass": false,
+  "qa_gate": "HOLD: seam ratio above threshold; keep integration_pass=false",
   "chunks_surviving": [
     {
       "file": "p0-east-0.b64",
@@ -156,5 +156,9 @@
   "seam_ratio_vs_baseline": {
     "mean_ratio": 1.1323217274536281,
     "p95_ratio": 0.9889899846199004
+  },
+  "seam_pass_gate": {
+    "max_mean_ratio": 1.0,
+    "max_p95_ratio": 1.0
   }
 }

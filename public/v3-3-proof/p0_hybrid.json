@@ -134,6 +134,6 @@
     "densified_chunks_byte_identical": true
   },
   "pass": false,
-  "status": "OWNER_QA \u00b7 east extension staged and machine-QA seam PASS",
-  "east_extension_alignment_joined": true
+  "status": "OWNER_QA \u00b7 east extension staged, seam alignment join pending",
+  "east_extension_alignment_joined": false
 }
