@@ -13,7 +13,7 @@ const PUBLIC_SCOPES = new Set(["assets:read", "geocode"]);
 const ION_ASSET_ENDPOINT = "https://api.cesium.com/v1/assets/2275207/endpoint";
 const GOOGLE_TILES_ROOT = "https://tile.googleapis.com/v1/3dtiles/root.json";
 
-async function assessPrivateRuntimeToken(token: string) {
+async function assessIonRuntimeToken(token: string) {
   const auth = { Authorization: `Bearer ${token}` };
   try {
     const [meResponse, allowedResponse, foreignResponse] = await Promise.all([
@@ -35,7 +35,6 @@ async function assessPrivateRuntimeToken(token: string) {
       usable: publicScopesOnly && originRestricted,
       publicScopesOnly,
       originRestricted,
-      scopes,
       allowedStatus: allowedResponse.status,
       foreignStatus: foreignResponse.status,
     };
@@ -44,7 +43,6 @@ async function assessPrivateRuntimeToken(token: string) {
       usable: false,
       publicScopesOnly: false,
       originRestricted: false,
-      scopes: [] as string[],
       allowedStatus: 0,
       foreignStatus: 0,
     };
@@ -74,9 +72,9 @@ export async function GET(request: NextRequest) {
   const publicKey = PUBLIC_TOKEN_KEYS.find((key) => Boolean(process.env[key]?.trim())) ?? null;
   const explicitPublicToken = publicKey ? process.env[publicKey]?.trim() ?? "" : "";
   const privateToken = process.env.CESIUM_ION_TOKEN?.trim() ?? "";
-  const privateAssessment = privateToken ? await assessPrivateRuntimeToken(privateToken) : null;
-  const promotedPrivateToken = privateAssessment?.usable ? privateToken : "";
-  const runtimeToken = explicitPublicToken || promotedPrivateToken;
+  const ionCandidate = explicitPublicToken || privateToken;
+  const ionAssessment = ionCandidate ? await assessIonRuntimeToken(ionCandidate) : null;
+  const runtimeToken = ionAssessment?.usable ? ionCandidate : "";
 
   const googleMapsKey = process.env[GOOGLE_MAPS_KEY]?.trim() ?? "";
   const googleAssessment = googleMapsKey ? await assessGoogleMapsRuntimeKey(googleMapsKey) : null;
@@ -88,18 +86,17 @@ export async function GET(request: NextRequest) {
       cesiumIon: probeOnly
         ? {
             configured: Boolean(runtimeToken),
+            explicitPublicConfigured: Boolean(explicitPublicToken),
             privateConfigured: Boolean(privateToken),
-            privateSafeForPublicRuntime: Boolean(privateAssessment?.usable),
-            publicScopesOnly: Boolean(privateAssessment?.publicScopesOnly),
-            originRestricted: Boolean(privateAssessment?.originRestricted),
-            scopes: privateAssessment?.scopes ?? [],
-            allowedStatus: privateAssessment?.allowedStatus ?? null,
-            foreignStatus: privateAssessment?.foreignStatus ?? null,
+            browserSafe: Boolean(ionAssessment?.usable),
+            publicScopesOnly: Boolean(ionAssessment?.publicScopesOnly),
+            originRestricted: Boolean(ionAssessment?.originRestricted),
+            allowedStatus: ionAssessment?.allowedStatus ?? null,
+            foreignStatus: ionAssessment?.foreignStatus ?? null,
           }
         : {
             configured: Boolean(runtimeToken),
             token: runtimeToken || null,
-            privateConfigured: Boolean(privateToken),
           },
       googleMaps: probeOnly
         ? {
