@@ -106,8 +106,8 @@ function boundRuntimeHeightProbe(C) {
       var scene = this;
       return Promise.race([
         Promise.resolve(sampleHeightMostDetailed.call(scene, cartographics)),
-        new Promise(function (resolve) {
-          setTimeout(function () { resolve(cartographics); }, 2500);
+        new Promise(function (_, reject) {
+          setTimeout(function () { reject(new Error("aumara-height-probe-timeout")); }, 2500);
         }),
       ]);
     };
