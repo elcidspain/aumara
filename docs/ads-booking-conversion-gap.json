@@ -4,16 +4,18 @@
   "site_side_verified": {
     "google_ads_tag_id": "AW-11392880991",
     "consent_default_denied": true,
+    "coverage": "next_guest_pages_only",
     "events": [
       "booking_click",
       "spatial_flight_open"
     ]
   },
   "can_measure_now": [
-    "Guest click intent to Beds24 booking flow (booking_click)"
+    "Guest click intent to Beds24 from Next-rendered AUMARA guest pages (booking_click)"
   ],
   "cannot_measure_yet": [
-    "Completed direct Beds24 booking conversion"
+    "Completed direct Beds24 booking conversion",
+    "Beds24 click intent originating inside the standalone /spatial/ static experience"
   ],
   "completion_receiver": {
     "status": "not_implemented",
@@ -36,6 +38,10 @@
     {
       "key": "attribution_link_verification",
       "required_action": "If GA4 is chosen, verify the GA4 property, GA4-to-Google-Ads link, and import settings before campaign optimization changes."
+    },
+    {
+      "key": "spatial_click_coverage",
+      "required_action": "Instrument Beds24 outbound clicks inside the standalone /spatial/ static experience before claiming booking_click coverage for the full guest funnel."
     }
   ]
 }
