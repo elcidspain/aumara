@@ -1,0 +1,46 @@
+{
+  "schema": "aumara.v3-3.p0-east-recovery-provenance",
+  "script": "scripts/recover-p0-east.py",
+  "command": "python scripts/recover-p0-east.py --repo /home/runner/work/aumara/aumara --frame-count 42 --pair-window 5 --orb-features 4500 --voxel 0.05",
+  "source_files": {
+    "flight_mp4": "public/media/flight/flight.mp4",
+    "flight_mp4_sha256": "f8d75426d6b702364dd079658044718f823e1e34a7ed38be4c46a72ccc2969b6",
+    "flight_path": "public/spatial/world/flight-path.json",
+    "flight_path_sha256": "4ca36d97b9ec91fdf011dda8ce54ef26d3b0e61ce1bc18fc1b51c56a623e33e4",
+    "surviving_chunks": {
+      "p0-east-0.b64": {
+        "sha256": "f0524719998806f490b82d55c91151f8d37828de94d8d6a809bfbbdc1893f89f"
+      },
+      "p0-east-4.b64": {
+        "sha256": "bd2966d7426c4e01d15eab7c73d6b97c648ef80b811274364eb7a168bdaa2789"
+      }
+    },
+    "west_chunks_sha256": {
+      "p0-points-0.b64": "824dc1b63c82df69d8756979838d246c96cad166d7b8c5ce7ab42bdeac370731",
+      "p0-points-1.b64": "0e84347ca5e38e064de6a7beb4e428ac138d5582ccf5d508d596a49d1c7a2f6d",
+      "p0-points-2.b64": "267c762369f4eb271edef867ab50b3fc0de7ececcde332ef91045715745d6d68",
+      "p0-points-3.b64": "8c49653d6c7a32d359322a604aab1b5bfa400039c9ffc89deabfb0e41c69047f",
+      "p0-points-4.b64": "247684715ee605e811d4a80d4993c6e2de5e8be03521fa38fb8ca0178fd01706",
+      "p0-points-5.b64": "4db06eed469283971c5ebde3410ff98ce83eb73fe8580b10dec50e360ca5b547",
+      "p0-points-6.b64": "7ecde3ae9c929a3a96caa9dfae306608f7899110fd97a365c9013fe8b5303158",
+      "p0-points-7.b64": "4ba6c6cb416af3017fa8196c31c721be7fbae1256d639fe1a0d2d6cb946e4a5e",
+      "p0-points-8.b64": "b5312fa4af309da38950c7fb99a3a1ed36fe11b585736780315f7ef61a4a9fbd",
+      "p0-points-9.b64": "9636a636b005b0363b6b96379eac520dfec323ef9818c8731c86887efcd1d852",
+      "p0-points-10.b64": "c07a93aa626d8355537812148f8289d8d5c34db19fabe977b282781921746081",
+      "p0-points-11.b64": "ffd4ac5e073bc09e7dfe368f6a8eb9143f3147f6427124267bb266c8ac2bf040",
+      "p0-points-12.b64": "2384080a7faa520603fe17022200639e08115998549028a692b2ceb2c2dbdfd4",
+      "p0-points-13.b64": "7a7e78c851b56a27b09ae6ab51eeac76f156bea08d26f5c639f796ebe797fe4f",
+      "p0-points-14.b64": "f6175c64ec66df3f24a7aaa40901739dd11ad12baa13c59e202ad43c1e091cae",
+      "p0-points-15.b64": "2d351d18976865bb62e3c395f9404971916a63bcebcf8c3b6bd80a92b7bfcf8c",
+      "p0-points-16.b64": "3f8397bf267ef0fc82885d3c487118eed2ada3d16ce34bae463030a7eff598f3",
+      "p0-points-17.b64": "6fe7838bee27156daf7d32239ff5ccfb2eaa0330d3151690783bc5c9e6c875c8",
+      "p0-points-18.b64": "3f4393abebb9dbf69a6a89bbf16e0f90224e904c673e44f863b1b665c5d3de7e"
+    }
+  },
+  "no_synthetic_geometry": true,
+  "notes": [
+    "Recovered chunks 1..3 are generated only from authoritative flight media bytes and canonical flight-path anchors.",
+    "No DEM backfill, no random point generation, no interpolation-based infill was used in this script.",
+    "West chunk files are hash-checked before and after recovery to prove byte identity lock."
+  ]
+}
