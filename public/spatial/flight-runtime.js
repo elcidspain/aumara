@@ -33,6 +33,24 @@
     try { await ion.ready; } catch (error) {}
   }
 
+  function runtimeCredentialPresent() {
+    const ion = window.AUMARA_ION;
+    const ionToken = !!(ion && typeof ion.resolve === "function" && ion.resolve());
+    const status = window.__AUMARA_ION_STATUS || {};
+    return ionToken || !!status.googleMapsConfigured;
+  }
+
+  async function waitForCesiumState(timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const state = window.__AUMARA;
+      if (state && state.fatalRenderError) return null;
+      if (state && state.firstFrameRendered) return state;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return null;
+  }
+
   async function startLocalFlight() {
     const stage = document.getElementById("stage");
     if (stage) stage.classList.add("on");
@@ -75,12 +93,13 @@
   async function startCesiumFlight() {
     if (!cesiumStart) return false;
     await waitForIonRuntimeConfig();
+    if (!runtimeCredentialPresent()) return false;
     root.dataset.aumaraFlight = "cesium-starting";
     try {
       await cesiumStart();
-      const state = window.__AUMARA;
-      if (state && state.fatalRenderError) return false;
-      root.dataset.aumaraFlight = state && state.firstGoogleTileRendered ? "cesium-rendered" : "cesium-initialized";
+      const state = await waitForCesiumState(6000);
+      if (!state) return false;
+      root.dataset.aumaraFlight = state.firstGoogleTileRendered ? "cesium-rendered" : "cesium-initialized";
       return true;
     } catch (error) {
       return false;
@@ -112,5 +131,7 @@
   root.dataset.aumaraFlightRuntime = "local-ready";
   root.dataset.aumaraFlightMode = "cesium-first-local-fallback";
 
-  if (window.__AUMARA_AUTO_FLIGHT) startHybridFlight();
+  const pendingFlight = !!window.__AUMARA_PENDING_FLIGHT;
+  window.__AUMARA_PENDING_FLIGHT = false;
+  if (window.__AUMARA_AUTO_FLIGHT || pendingFlight) startHybridFlight();
 })();
