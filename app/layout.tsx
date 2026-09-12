@@ -74,8 +74,8 @@ const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
 const googleTagIds = Array.from(new Set([gaId, adsId].filter(Boolean)));
 const googleTagLoaderId = googleTagIds[0] ?? "";
 const googleTagConfigs = [
-  gaId ? `gtag('config','${gaId}',{send_page_view:false});` : "",
-  adsId ? `gtag('config','${adsId}');` : "",
+  gaId ? `window.gtag('config','${gaId}',{send_page_view:false});` : "",
+  adsId ? `window.gtag('config','${adsId}');` : "",
 ].join("");
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -89,14 +89,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {googleTagLoaderId ? (
           <>
             <Script id="google-consent-default" strategy="beforeInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
+            {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
             </Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
               strategy="afterInteractive"
             />
             <Script id="google-tags" strategy="afterInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());${googleTagConfigs}`}
+              {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('js',new Date());${googleTagConfigs}`}
             </Script>
           </>
         ) : null}

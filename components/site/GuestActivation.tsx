@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { getGuestActivationEvent } from "@/lib/guest-activation";
+import { getGuestActivationEvent } from "@/lib/guest-activation.mjs";
 import { trackEvent } from "@/lib/gtag";
 
 export default function GuestActivation() {
