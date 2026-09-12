@@ -18,6 +18,12 @@
   } catch (e) {}
 
   window.addEventListener("DOMContentLoaded", function () {
+    var flightButton = document.getElementById("flight");
+    if (flightButton) {
+      flightButton.onclick = function () {
+        window.__AUMARA_PENDING_FLIGHT = true;
+      };
+    }
     if (document.querySelector('script[data-aumara-local-flight="1"]')) return;
     var script = document.createElement("script");
     script.src = "./flight-runtime.js";
@@ -34,8 +40,13 @@ var aumaraRuntimeIonToken = "";
 var aumaraGoogleMapsKey = "";
 
 async function loadAumaraIonRuntimeConfig() {
+  var controller = typeof AbortController === "function" ? new AbortController() : null;
+  var timer = controller ? setTimeout(function () { controller.abort(); }, 4000) : null;
   try {
-    var response = await fetch("/api/spatial-config", { cache: "no-store" });
+    var response = await fetch("/api/spatial-config", {
+      cache: "no-store",
+      signal: controller ? controller.signal : undefined,
+    });
     if (!response.ok) return false;
     var data = await response.json();
     var ion = data && data.cesiumIon ? data.cesiumIon : null;
@@ -54,6 +65,8 @@ async function loadAumaraIonRuntimeConfig() {
   } catch (e) {
     window.__AUMARA_ION_STATUS = { ionConfigured: false, googleMapsConfigured: false };
     return false;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
