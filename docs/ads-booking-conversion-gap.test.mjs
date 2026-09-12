@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { buildGoogleTagScripts, GOOGLE_CONSENT_DEFAULT } from "../lib/google-tag-scripts.mjs";
 
 const root = new URL("..", import.meta.url);
 const gapDoc = JSON.parse(
@@ -17,8 +18,33 @@ test("machine-readable blocker doc lists exact remaining external actions", () =
 });
 
 test("layout keeps Google tag loader and consent-safe defaults", () => {
-  assert.match(layoutSource, /https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=\$\{googleTagLoaderId\}/);
-  assert.match(layoutSource, /window\.gtag\('consent','default',\{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'\}\)/);
-  assert.match(layoutSource, /gaId \? `window\.gtag\('config','\$\{gaId\}',\{send_page_view:false\}\);` : ""/);
-  assert.match(layoutSource, /adsId \? `window\.gtag\('config','\$\{adsId\}'\);` : ""/);
+  assert.equal(GOOGLE_CONSENT_DEFAULT.ad_storage, "denied");
+  assert.equal(GOOGLE_CONSENT_DEFAULT.analytics_storage, "denied");
+  assert.equal(GOOGLE_CONSENT_DEFAULT.ad_user_data, "denied");
+  assert.equal(GOOGLE_CONSENT_DEFAULT.ad_personalization, "denied");
+
+  const scripts = buildGoogleTagScripts({ gaId: "G-TEST123", adsId: "AW-11392880991" });
+  assert.equal(scripts.googleTagLoaderId, "G-TEST123");
+  assert.match(scripts.googleConsentDefaultScript, /window\.gtag\('consent','default'/);
+  assert.match(scripts.googleConsentDefaultScript, /ad_storage:'denied'/);
+  assert.match(scripts.googleTagInitScript, /window\.gtag\('config','G-TEST123',\{send_page_view:false\}\);/);
+  assert.match(scripts.googleTagInitScript, /window\.gtag\('config','AW-11392880991'\);/);
+  assert.equal(buildGoogleTagScripts({ adsId: "AW-11392880991" }).googleTagLoaderId, "AW-11392880991");
+  assert.equal(
+    buildGoogleTagScripts({ gaId: "AW-11392880991", adsId: "AW-11392880991" }).googleTagLoaderId,
+    "AW-11392880991",
+  );
+  const rejected = buildGoogleTagScripts({ gaId: "G-TE'ST\\123", adsId: "AW-12'3" });
+  assert.equal(rejected.googleTagLoaderId, "");
+  assert.equal(
+    rejected.googleTagInitScript,
+    "window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('js',new Date());",
+  );
+});
+
+test("layout wires helper-generated scripts into the DOM", () => {
+  assert.match(layoutSource, /<Script id="google-consent-default" strategy="beforeInteractive">/);
+  assert.match(layoutSource, /\{googleConsentDefaultScript\}/);
+  assert.match(layoutSource, /<Script id="google-tags" strategy="afterInteractive">/);
+  assert.match(layoutSource, /\{googleTagInitScript\}/);
 });

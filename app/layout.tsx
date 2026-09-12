@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import GuestActivation from "@/components/site/GuestActivation";
 import { SITE_URL } from "@/lib/guest";
+import { buildGoogleTagScripts } from "@/lib/google-tag-scripts.mjs";
 import {
   GA_MEASUREMENT_ID,
   GOOGLE_ADS_TAG_ID,
@@ -71,12 +72,10 @@ const jsonLd = {
 
 const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
 const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
-const googleTagIds = Array.from(new Set([gaId, adsId].filter(Boolean)));
-const googleTagLoaderId = googleTagIds[0] ?? "";
-const googleTagConfigs = [
-  gaId ? `window.gtag('config','${gaId}',{send_page_view:false});` : "",
-  adsId ? `window.gtag('config','${adsId}');` : "",
-].join("");
+const { googleTagLoaderId, googleConsentDefaultScript, googleTagInitScript } = buildGoogleTagScripts({
+  gaId,
+  adsId,
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -89,14 +88,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {googleTagLoaderId ? (
           <>
             <Script id="google-consent-default" strategy="beforeInteractive">
-            {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
+              {googleConsentDefaultScript}
             </Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
               strategy="afterInteractive"
             />
             <Script id="google-tags" strategy="afterInteractive">
-              {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('js',new Date());${googleTagConfigs}`}
+              {googleTagInitScript}
             </Script>
           </>
         ) : null}
