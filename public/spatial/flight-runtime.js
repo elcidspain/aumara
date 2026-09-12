@@ -166,7 +166,7 @@
     if (!isAttemptActive(generation)) return false;
     if (!runtimeCredentialPresent()) return false;
     root.dataset.aumaraFlight = "cesium-starting";
-    if (cesiumValidated) {
+    if (cesiumValidated && establishedCesiumState()) {
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     }
@@ -199,6 +199,8 @@
     flightCancelled = false;
     const generation = ++attemptGeneration;
     hybridPromise = (async () => {
+      // A local twin already running owns the stage, so reopening must not start Cesium behind it.
+      if (localPromise) return startLocalFlight();
       if (await startCesiumFlight(generation)) return true;
       if (!isAttemptActive(generation)) return false;
       root.dataset.aumaraFlight = "local-fallback";
