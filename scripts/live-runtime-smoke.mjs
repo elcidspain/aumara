@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const base = process.env.AUMARA_SMOKE_BASE || "http://127.0.0.1:3000";
+const forceRequireGoogle = process.env.AUMARA_REQUIRE_GOOGLE === "1";
 const cdpPort = 9222;
 const browser = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]
   .map((name) => ({ name, result: spawnSync("which", [name], { encoding: "utf8" }) }))
@@ -36,6 +37,41 @@ async function waitFor(fn, timeout = 20000, label = "condition") {
   throw new Error(`timeout waiting for ${label}: ${JSON.stringify(last)}`);
 }
 
+async function readRuntimeExpectation() {
+  let response;
+  try {
+    response = await fetch(base + "/api/spatial-config?probe=1", { cache: "no-store" });
+  } catch (error) {
+    throw new Error(`runtime credential probe unavailable: ${String(error)}`);
+  }
+  if (!response.ok) {
+    throw new Error(`runtime credential probe failed: HTTP ${response.status}`);
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error(`runtime credential probe invalid JSON: ${String(error)}`);
+  }
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !data.cesiumIon ||
+    !data.googleMaps ||
+    typeof data.cesiumIon.configured !== "boolean" ||
+    typeof data.googleMaps.configured !== "boolean"
+  ) {
+    throw new Error("runtime credential probe missing or invalid provider state");
+  }
+  const publicCredentialConfigured = data.cesiumIon.configured || data.googleMaps.configured;
+  return {
+    requireGoogle: forceRequireGoogle || publicCredentialConfigured,
+    probeAvailable: true,
+    publicCredentialConfigured,
+    privateIonConfigured: Boolean(data.cesiumIon.privateConfigured),
+  };
+}
+
 let ws;
 let nextId = 1;
 const pending = new Map();
@@ -58,6 +94,9 @@ async function navigate(url) {
 
 try {
   await waitFor(async () => (await fetch(`http://127.0.0.1:${cdpPort}/json/version`)).ok, 15000, "Chrome CDP");
+  const runtimeExpectation = await readRuntimeExpectation();
+  console.log("SPATIAL_RUNTIME_EXPECTATION", JSON.stringify(runtimeExpectation));
+
   const tab = await (await fetch(`http://127.0.0.1:${cdpPort}/json/new?${encodeURIComponent(base + "/")}`, { method: "PUT" })).json();
   ws = new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => { ws.addEventListener("open", resolve, { once: true }); ws.addEventListener("error", reject, { once: true }); });
@@ -86,17 +125,47 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'ion-primary-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'cesium-first-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
-    "hybrid flight mode",
+    "Cesium-first flight mode",
   );
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
-    () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
-    20000,
+    () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
+    55000,
     "first spatial WebGL frame",
   );
-  await evaluate("window.__AUMARA.advanceTo(999); true");
+
+  if (runtimeExpectation.requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+    throw new Error(`Public Cesium/Google credential is configured but active provider is ${frame.provider}`);
+  }
+
+  let autonomous;
+  if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+    const google = await waitFor(
+      () => evaluate("window.__AUMARA_GOOGLE_TILE_VISIBLE === true && window.__AUMARA?.firstGoogleTileRendered && window.__AUMARA?.stage !== 'LOCAL_FALLBACK' && window.__AUMARA?.globalTilesVisible === true ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,globalTilesStatus:window.__AUMARA.globalTilesStatus,globalTilesVisible:true,tileVisible:true}) : null"),
+      8000,
+      "visible active Google photorealistic tile",
+    );
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.stage !== 'LOCAL_FALLBACK' && window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
+      10000,
+      "autonomous Earth to Iberia progression",
+    );
+    console.log("SPATIAL_GOOGLE_TILE_PASS", JSON.stringify(google));
+  } else if (frame.provider === "LOCAL_THREE") {
+    if (runtimeExpectation.requireGoogle) throw new Error("Local fallback is not acceptable while a public Cesium/Google credential is configured");
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
+      10000,
+      "autonomous Local Three waypoint progression",
+    );
+    console.log("SPATIAL_LOCAL_FALLBACK_PASS", JSON.stringify(autonomous));
+  } else {
+    throw new Error(`unexpected spatial provider ${frame.provider}`);
+  }
+
+  await evaluate("typeof window.__AUMARA?.advanceTo === 'function' ? (window.__AUMARA.advanceTo(999), true) : false");
   const complete = await waitFor(
     () => evaluate("window.__AUMARA?.flightComplete && window.__AUMARA?.waypointReached === 27 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, flightComplete:window.__AUMARA.flightComplete}) : null"),
     5000,
@@ -104,6 +173,7 @@ try {
   );
   console.log("SPATIAL_MODE_PASS", JSON.stringify(mode));
   console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
+  console.log("SPATIAL_AUTONOMOUS_PROGRESS_PASS", JSON.stringify(autonomous));
   console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
   console.log("AUMARA_LIVE_RUNTIME_PASS");
 } finally {

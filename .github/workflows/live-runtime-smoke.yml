@@ -9,6 +9,8 @@ on:
       - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
+      - 'scripts/flight-restart-smoke.mjs'
+      - 'scripts/flight-runtime-regression.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/live-runtime-smoke.yml'
@@ -21,6 +23,8 @@ on:
       - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
+      - 'scripts/flight-restart-smoke.mjs'
+      - 'scripts/flight-runtime-regression.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/live-runtime-smoke.yml'
@@ -48,6 +52,10 @@ jobs:
           test -s public/spatial/vendor/three.module.min.js
           test -s public/spatial/vendor/three.vendor.json
           grep -Fq 'three.module.min.js' public/spatial/local-twin.mjs
+      - name: Flight runtime close/reopen regression
+        run: npm run test:flight-runtime
+      - name: Flight close/reopen browser smoke
+        run: node scripts/flight-restart-smoke.mjs
       - name: Start production server
         run: |
           npm run start -- -p 3000 > /tmp/aumara-next.log 2>&1 &

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "assert-copy": "node scripts/assert-guest-copy.mjs",
+    "test:flight-runtime": "node scripts/flight-runtime-regression.mjs",
     "spatial:vendor": "node scripts/copy-spatial-three.mjs",
     "svg:optimize": "npx --yes svgo@4.1.0 -f public --recursive --exclude node_modules --config svgo.config.mjs",
     "svg:check": "npm run svg:optimize && git diff --exit-code -- '*.svg'",
