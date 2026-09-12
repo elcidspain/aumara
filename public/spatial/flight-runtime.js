@@ -27,11 +27,6 @@
     return false;
   }
 
-  function ionSessionPresent() {
-    const ion = window.AUMARA_ION;
-    return !!(ion && typeof ion.resolve === "function" && ion.resolve());
-  }
-
   async function waitForIonRuntimeConfig() {
     const ion = window.AUMARA_ION;
     if (!ion || !ion.ready || typeof ion.ready.then !== "function") return;
@@ -80,13 +75,12 @@
   async function startCesiumFlight() {
     if (!cesiumStart) return false;
     await waitForIonRuntimeConfig();
-    if (!ionSessionPresent()) return false;
-    root.dataset.aumaraFlight = "ion-starting";
+    root.dataset.aumaraFlight = "cesium-starting";
     try {
       await cesiumStart();
       const state = window.__AUMARA;
       if (state && state.fatalRenderError) return false;
-      root.dataset.aumaraFlight = state && state.firstGoogleTileRendered ? "ion-rendered" : "ion-initialized";
+      root.dataset.aumaraFlight = state && state.firstGoogleTileRendered ? "cesium-rendered" : "cesium-initialized";
       return true;
     } catch (error) {
       return false;
@@ -116,7 +110,7 @@
   const ionButton = document.getElementById("ionbtn");
   if (ionButton && new URL(location.href).searchParams.get("debug") !== "1") ionButton.style.display = "none";
   root.dataset.aumaraFlightRuntime = "local-ready";
-  root.dataset.aumaraFlightMode = "ion-primary-local-fallback";
+  root.dataset.aumaraFlightMode = "cesium-first-local-fallback";
 
   if (window.__AUMARA_AUTO_FLIGHT) startHybridFlight();
 })();
