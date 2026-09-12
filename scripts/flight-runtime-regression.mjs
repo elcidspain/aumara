@@ -73,6 +73,8 @@ vm.runInNewContext(source, {
 });
 
 const firstAttempt = flight.onclick();
+await Promise.resolve();
+assert.equal(cesiumStarts, 1, "Cesium startup should be in flight before close");
 close.onclick({});
 const resumedAttempt = flight.onclick();
 
