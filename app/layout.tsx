@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import GuestActivation from "@/components/site/GuestActivation";
 import { SITE_URL } from "@/lib/guest";
 import {
   GA_MEASUREMENT_ID,
@@ -95,10 +96,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               strategy="afterInteractive"
             />
             <Script id="google-tags" strategy="afterInteractive">
-              {`gtag('js',new Date());${googleTagConfigs}`}
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());${googleTagConfigs}`}
             </Script>
           </>
         ) : null}
+        <GuestActivation />
         {children}
       </body>
     </html>
