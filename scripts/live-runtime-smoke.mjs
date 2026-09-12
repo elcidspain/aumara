@@ -53,10 +53,17 @@ async function readRuntimeExpectation() {
   } catch (error) {
     throw new Error(`runtime credential probe invalid JSON: ${String(error)}`);
   }
-  if (!data || typeof data !== "object" || !data.cesiumIon || !data.googleMaps) {
-    throw new Error("runtime credential probe missing provider state");
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !data.cesiumIon ||
+    !data.googleMaps ||
+    typeof data.cesiumIon.configured !== "boolean" ||
+    typeof data.googleMaps.configured !== "boolean"
+  ) {
+    throw new Error("runtime credential probe missing or invalid provider state");
   }
-  const publicCredentialConfigured = Boolean(data.cesiumIon.configured || data.googleMaps.configured);
+  const publicCredentialConfigured = data.cesiumIon.configured || data.googleMaps.configured;
   return {
     requireGoogle: forceRequireGoogle || publicCredentialConfigured,
     probeAvailable: true,
