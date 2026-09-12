@@ -82,7 +82,7 @@ jobs:
           houses = {h['id']: h for h in json.loads((proof / 'houses_af.json').read_text())}
           def support(points, hid, radius=3.8):
               h = houses[hid]
-              center = np.array([h['center']['east'], h['center']['north']])
+              center = np.array([h['east'], h['north']])
               return int((np.linalg.norm(points[:,:2] - center, axis=1) <= radius).sum())
 
           base_east = np.vstack([survivors, recovered])
