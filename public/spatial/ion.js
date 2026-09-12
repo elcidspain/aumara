@@ -38,6 +38,12 @@ window.AUMARA_ION = {
   apply: function (C) {
     var token = this.resolve();
     if (token && C && C.Ion) C.Ion.defaultAccessToken = token;
+    if (C && C.Cesium3DTileset && C.Cesium3DTileset.fromIonAssetId) {
+      var assetId = this.asset;
+      C.createGooglePhotorealistic3DTileset = function () {
+        return C.Cesium3DTileset.fromIonAssetId(assetId);
+      };
+    }
     return !!(token && C && C.Ion);
   },
 };
