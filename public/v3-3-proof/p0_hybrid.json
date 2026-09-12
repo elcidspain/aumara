@@ -113,6 +113,8 @@
     "canon": [
       "houses_af.json",
       "georef.json",
+      "p0_east_extension.json",
+      "p0_east_recovery_qa.json",
       "PR#13"
     ],
     "qa_scope": "owner-proof-only"
