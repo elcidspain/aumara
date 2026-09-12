@@ -13,10 +13,10 @@ Top queries: `costa blanca` (31), `holiday rental costa blanca` (5).
 ## Blockers before enable
 
 1. Billing: Visa •••• 6608 declined 1 Sep 2026. Update card or PMax will not serve.
-2. Conversions: none configured (Google email 3 Sep 2026). Create Book action before Maximize conversions.
+2. Conversions: no verified completed-booking signal is feeding Google Ads. Do not optimize PMax to outbound Beds24 clicks.
 3. Gift sitelink: wait for PR #10 merge. Live site does not yet have `#gift` or six-house copy.
 
-There is no Google Ads API connector on this workspace. This file is the paste pack for ads.google.com.
+There is no write path here for creating a completed-booking conversion automatically. This file is the operator install pack for ads.google.com.
 
 ## Campaign
 
@@ -30,14 +30,14 @@ There is no Google Ads API connector on this workspace. This file is the paste p
 - Languages: Spanish + English
 - Geo: United Kingdom, Netherlands, Germany, Spain — presence: people in or regularly in
 - Daily budget: €5.00
-- Bidding: Maximize conversions (fallback after 7 days with zero conversions: Maximize clicks, €0.40 cap)
+- Bidding: Maximize conversions only after a real completed-booking conversion is verified end-to-end. Until then keep PMax PAUSED; do not substitute outbound booking clicks as the primary conversion.
 - Final URL expansion: OFF
 - Brand / URL exclusions: aumara.es, aumara.xyz, aumara.com (other brands). Do not send PMax final URL to elcidspain.com.
 
 UTM final URL for asset group:
 `https://www.aumara.me/?utm_source=google&utm_medium=pmax&utm_campaign=aumara_direct`
 
-Do not use Beds24 as the campaign Final URL. Beds24 is the booking / conversion destination.
+Do not use Beds24 as the campaign Final URL. Beds24 is the booking destination.
 
 ## Asset group `AG_DirectStay`
 
@@ -177,21 +177,20 @@ Video: upload https://www.aumara.me/media/flight/flight.mp4 to YouTube as unlist
 
 ## Conversions
 
-Create before enabling PMax.
+Create the primary action only after a real successful booking signal exists.
 
-1. Primary — Book / Purchase. Destination URL contains `beds24.com/booking2.php`. If Beds24 thank-you URL is available, use that as the exact conversion page.
-2. Secondary, observe only — Click to Beds24 (`propid=324882`).
-3. Call asset: +34 966 57 99 70.
+1. Primary — Book / Purchase: trigger only from a verified successful Beds24 booking completion signal or an already-linked GA4 completion event. Never use a destination rule that merely matches the Beds24 booking page or an outbound click.
+2. Secondary, observe only — click intent to Beds24 from instrumented AUMARA pages (`booking_click`). The standalone `/spatial/` experience is not yet covered and must not be counted as full-funnel click coverage.
+3. Call asset: +34 966 57 99 70. Observe only; do not bid to calls.
 
-Google tag is wired on the canon (`app/layout.tsx`) behind `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
-Set that env on Vercel project `aumara-path-cut` to a real `G-…` ID from the Ads/GA4 account.
-Do not invent an ID. Without it, no gtag ships. Then create the Book conversion.
+The production site already ships the Google Ads tag. GA4 ships only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` contains a real `G-…` property ID.
+Do not invent a GA4 ID or a conversion label. Verify the Beds24 completion contract and the Ads/GA4 mapping first.
 
 ## Launch order
 
 1. Billing → replace Visa 6608.
-2. Goals → new conversion Book.
-3. Campaigns → + → Performance Max → paste this pack.
-4. Enable only after 1 and 2. If the card is still declined, leave PAUSED.
-5. Do not pause `Aumara_Booking_Search`.
+2. Verify a successful Beds24 completion signal and map it to a real Book/Purchase conversion action.
+3. Prove one completed direct booking reaches the conversion action end-to-end.
+4. Campaigns → + → Performance Max → paste this pack.
+5. Enable only after steps 1–3. Keep `Aumara_Booking_Search` running unless a separate spend decision explicitly changes it.
 6. After PR #10 merge, add gift sitelink `#gift` and the six-house headline.
