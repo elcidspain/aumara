@@ -96,6 +96,25 @@ function instrumentVisibleTileset(tileset) {
   return tileset;
 }
 
+function boundRuntimeHeightProbe(C) {
+  try {
+    var proto = C && C.Scene && C.Scene.prototype;
+    if (!proto || proto.__AUMARA_HEIGHT_PROBE_BOUNDED) return;
+    var sampleHeightMostDetailed = proto.sampleHeightMostDetailed;
+    if (typeof sampleHeightMostDetailed !== "function") return;
+    proto.sampleHeightMostDetailed = function (cartographics) {
+      var scene = this;
+      return Promise.race([
+        Promise.resolve(sampleHeightMostDetailed.call(scene, cartographics)),
+        new Promise(function (resolve) {
+          setTimeout(function () { resolve(cartographics); }, 2500);
+        }),
+      ]);
+    };
+    proto.__AUMARA_HEIGHT_PROBE_BOUNDED = true;
+  } catch (e) {}
+}
+
 window.AUMARA_ION = {
   asset: 2275207,
   ready: loadAumaraIonRuntimeConfig(),
@@ -110,6 +129,7 @@ window.AUMARA_ION = {
     var hasIon = !!(token && C && C.Ion);
     if (hasIon) C.Ion.defaultAccessToken = token;
     if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
+    boundRuntimeHeightProbe(C);
 
     if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
       var directGoogleFactory = typeof C.createGooglePhotorealistic3DTileset === "function"
