@@ -1,6 +1,6 @@
 /* AUMARA spatial bootstrap.
  * Loads the hybrid flight runtime after the page Cesium path is defined.
- * Never print or commit Ion tokens.
+ * Never print or commit runtime credentials.
  */
 (function () {
   var autoFlight = location.hash === "#flight";
@@ -31,6 +31,7 @@
 })();
 
 var aumaraRuntimeIonToken = "";
+var aumaraGoogleMapsKey = "";
 
 async function loadAumaraIonRuntimeConfig() {
   try {
@@ -38,16 +39,20 @@ async function loadAumaraIonRuntimeConfig() {
     if (!response.ok) return false;
     var data = await response.json();
     var ion = data && data.cesiumIon ? data.cesiumIon : null;
+    var googleMaps = data && data.googleMaps ? data.googleMaps : null;
     if (ion && ion.configured && typeof ion.token === "string" && ion.token.trim()) {
       aumaraRuntimeIonToken = ion.token.trim();
     }
+    if (googleMaps && googleMaps.configured && typeof googleMaps.key === "string" && googleMaps.key.trim()) {
+      aumaraGoogleMapsKey = googleMaps.key.trim();
+    }
     window.__AUMARA_ION_STATUS = {
-      publicConfigured: Boolean(ion && ion.configured),
-      privateConfigured: Boolean(ion && ion.privateConfigured),
+      ionConfigured: Boolean(aumaraRuntimeIonToken),
+      googleMapsConfigured: Boolean(aumaraGoogleMapsKey),
     };
-    return Boolean(aumaraRuntimeIonToken);
+    return Boolean(aumaraRuntimeIonToken || aumaraGoogleMapsKey);
   } catch (e) {
-    window.__AUMARA_ION_STATUS = { publicConfigured: false, privateConfigured: false };
+    window.__AUMARA_ION_STATUS = { ionConfigured: false, googleMapsConfigured: false };
     return false;
   }
 }
@@ -62,6 +67,10 @@ window.AUMARA_ION = {
   apply: function (C) {
     var token = this.resolve();
     if (token && C && C.Ion) C.Ion.defaultAccessToken = token;
+    if (aumaraGoogleMapsKey && C && C.GoogleMaps) {
+      C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
+      return true;
+    }
     if (C && C.Cesium3DTileset && C.Cesium3DTileset.fromIonAssetId) {
       var assetId = this.asset;
       C.createGooglePhotorealistic3DTileset = function () {
