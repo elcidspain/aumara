@@ -1,14 +1,9 @@
 /* AUMARA spatial bootstrap.
- * Cesium owns the default guest flight. Local Three.js is an explicit fallback.
+ * Loads the hybrid flight runtime after the page Cesium path is defined.
  * Never print or commit Ion tokens.
  */
 (function () {
-  var localFallback = false;
-  try {
-    localFallback = new URL(location.href).searchParams.get("renderer") === "local";
-  } catch (e) {}
-
-  var autoFlight = localFallback && location.hash === "#flight";
+  var autoFlight = location.hash === "#flight";
   if (autoFlight) {
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
@@ -18,14 +13,9 @@
     var u = new URL(location.href);
     if (u.searchParams.has("ion")) {
       u.searchParams.delete("ion");
-      history.replaceState(null, "", u.pathname + (u.search || "") + (u.hash || ""));
+      history.replaceState(null, "", u.pathname + (u.search || ""));
     }
   } catch (e) {}
-
-  if (!localFallback) {
-    document.documentElement.dataset.aumaraFlightRuntime = "cesium-primary";
-    return;
-  }
 
   window.addEventListener("DOMContentLoaded", function () {
     if (document.querySelector('script[data-aumara-local-flight="1"]')) return;
