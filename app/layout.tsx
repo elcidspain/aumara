@@ -72,7 +72,10 @@ const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
 const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
 const googleTagIds = Array.from(new Set([gaId, adsId].filter(Boolean)));
 const googleTagLoaderId = googleTagIds[0] ?? "";
-const googleTagConfigs = googleTagIds.map((id) => `gtag('config','${id}');`).join("");
+const googleTagConfigs = [
+  gaId ? `gtag('config','${gaId}',{send_page_view:false});` : "",
+  adsId ? `gtag('config','${adsId}');` : "",
+].join("");
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
