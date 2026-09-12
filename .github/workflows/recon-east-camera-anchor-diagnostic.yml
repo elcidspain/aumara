@@ -1,0 +1,165 @@
+name: Recon east camera-anchor diagnostic
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-camera-anchor-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Diagnose visual camera-path registration drift
+        run: |
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          import cv2
+          import numpy as np
+
+          repo = Path('.')
+          video = repo / 'public/media/flight/flight.mp4'
+          flight = json.loads((repo / 'public/spatial/world/flight-path.json').read_text())
+          wps = flight['waypoints']
+          frame_count = 56
+          orb_features = 6000
+
+          cap = cv2.VideoCapture(str(video))
+          if not cap.isOpened():
+              raise SystemExit('cannot open flight.mp4')
+          total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+          width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+          height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+          ids = np.linspace(0, max(total - 1, 0), frame_count).astype(int)
+          frames = []
+          for fi in ids:
+              cap.set(cv2.CAP_PROP_POS_FRAMES, int(fi))
+              ok, fr = cap.read()
+              if ok:
+                  frames.append(cv2.cvtColor(fr, cv2.COLOR_BGR2GRAY))
+          cap.release()
+          if len(frames) < 8:
+              raise SystemExit('not enough frames')
+
+          fx = fy = 1000.0
+          K = np.array([[fx,0,width/2.0],[0,fy,height/2.0],[0,0,1]], dtype=np.float64)
+          orb = cv2.ORB_create(nfeatures=orb_features)
+          bf = cv2.BFMatcher(cv2.NORM_HAMMING)
+          feats = [orb.detectAndCompute(gray, None) for gray in frames]
+
+          poses = [(np.eye(3), np.zeros((3,1), dtype=np.float64))]
+          centers = [np.zeros(3, dtype=np.float64)]
+          quality = []
+          sampled_wps = []
+          for i in range(len(frames)):
+              wi = int(round(i * (len(wps)-1) / (len(frames)-1)))
+              wp = wps[wi]
+              sampled_wps.append(np.array([
+                  wp['local']['east'],
+                  wp['local']['north'],
+                  wp['camera_height_msl_proxy'],
+              ], dtype=np.float64))
+
+          for i in range(len(frames)-1):
+              kp1, d1 = feats[i]
+              kp2, d2 = feats[i+1]
+              if d1 is None or d2 is None:
+                  poses.append(poses[-1]); centers.append(centers[-1]); quality.append({'i':i,'good':0,'inliers':0}); continue
+              knn = bf.knnMatch(d1, d2, k=2)
+              good = [m for m,n in knn if m.distance < 0.85*n.distance]
+              if len(good) < 50:
+                  poses.append(poses[-1]); centers.append(centers[-1]); quality.append({'i':i,'good':len(good),'inliers':0}); continue
+              p1 = np.float32([kp1[m.queryIdx].pt for m in good])
+              p2 = np.float32([kp2[m.trainIdx].pt for m in good])
+              E, mask = cv2.findEssentialMat(p1, p2, K, method=cv2.RANSAC, prob=0.999, threshold=3.0)
+              if E is None:
+                  poses.append(poses[-1]); centers.append(centers[-1]); quality.append({'i':i,'good':len(good),'inliers':0}); continue
+              inliers, Rrel, trel, _ = cv2.recoverPose(E, p1, p2, K)
+              Rprev, tprev = poses[-1]
+              step = float(np.linalg.norm(sampled_wps[i+1] - sampled_wps[i]))
+              Rnew = Rrel @ Rprev
+              tnew = Rrel @ tprev + trel * step
+              poses.append((Rnew,tnew))
+              centers.append((-Rnew.T @ tnew).reshape(-1))
+              quality.append({'i':i,'good':len(good),'inliers':int(inliers)})
+
+          centers = np.asarray(centers)
+          truth = np.asarray(sampled_wps)
+
+          def umeyama(src, dst):
+              ms = src.mean(axis=0); md = dst.mean(axis=0)
+              X = src-ms; Y = dst-md
+              cov = (Y.T @ X)/len(src)
+              U,S,Vt = np.linalg.svd(cov)
+              R = U @ Vt
+              if np.linalg.det(R) < 0:
+                  U[:,-1] *= -1; R = U @ Vt
+              var = (X**2).sum()/len(src)
+              scale = float(S.sum()/var)
+              t = md - scale*(R@ms)
+              return R, scale, t
+
+          def fit_report(name, idx):
+              R,s,t = umeyama(centers[idx], truth[idx])
+              pred = (s*(R @ centers.T)).T + t
+              residual = np.linalg.norm(pred-truth, axis=1)
+              axis = pred-truth
+              selected = residual[idx]
+              return {
+                  'name': name,
+                  'fit_count': int(len(idx)),
+                  'scale': s,
+                  'fit_rms_m': float(np.sqrt(np.mean(selected**2))),
+                  'fit_p95_m': float(np.percentile(selected,95)),
+                  'all_rms_m': float(np.sqrt(np.mean(residual**2))),
+                  'all_p95_m': float(np.percentile(residual,95)),
+                  'late_rms_m': float(np.sqrt(np.mean(residual[len(residual)//2:]**2))),
+                  'late_p95_m': float(np.percentile(residual[len(residual)//2:],95)),
+                  'late_axis_bias_m': np.mean(axis[len(axis)//2:], axis=0).round(6).tolist(),
+                  'rotation_deg': float(math.degrees(math.acos(max(-1.0,min(1.0,(np.trace(R)-1.0)/2.0))))),
+                  'translation_m': t.round(6).tolist(),
+              }
+
+          n = len(centers)
+          all_idx = np.arange(n)
+          early_idx = np.arange(0, max(8, n//2))
+          late_idx = np.arange(n//2, n)
+          reports = [fit_report('global',all_idx), fit_report('early_half',early_idx), fit_report('late_half',late_idx)]
+
+          global_R, global_s, global_t = umeyama(centers, truth)
+          pred = (global_s*(global_R@centers.T)).T + global_t
+          residual = np.linalg.norm(pred-truth,axis=1)
+          rows = []
+          for i in range(n):
+              rows.append({
+                  'sample': i,
+                  'canonical_east_m': float(truth[i,0]),
+                  'residual_m': float(residual[i]),
+                  'visual_step_matches': quality[i-1] if i > 0 and i-1 < len(quality) else None,
+              })
+
+          print('AUMARA_CAMERA_ANCHOR_REPORT', json.dumps(reports, sort_keys=True))
+          print('AUMARA_CAMERA_ANCHOR_WORST', json.dumps(sorted(rows,key=lambda r:r['residual_m'],reverse=True)[:12], sort_keys=True))
+          early_rms = reports[1]['fit_rms_m']
+          late_rms = reports[2]['fit_rms_m']
+          global_late = reports[0]['late_rms_m']
+          print('AUMARA_CAMERA_ANCHOR_DIAG', json.dumps({
+              'global_late_rms_m': global_late,
+              'late_piecewise_fit_rms_m': late_rms,
+              'early_piecewise_fit_rms_m': early_rms,
+              'piecewise_improvement_ratio': None if global_late == 0 else late_rms/global_late,
+          }, sort_keys=True))
+          PY
