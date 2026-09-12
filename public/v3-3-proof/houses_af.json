@@ -1,0 +1,56 @@
+[
+  {
+    "id": "A",
+    "diameter_m": 7,
+    "east": 35.254,
+    "north": 0.845,
+    "utm_e": 758819.5935,
+    "utm_n": 4298084.2755,
+    "bookable": true
+  },
+  {
+    "id": "B",
+    "diameter_m": 9,
+    "east": 52.215,
+    "north": 4.961,
+    "utm_e": 758836.555,
+    "utm_n": 4298088.3909,
+    "bookable": true
+  },
+  {
+    "id": "C",
+    "diameter_m": 7,
+    "east": 63.556,
+    "north": 13.969,
+    "utm_e": 758847.896,
+    "utm_n": 4298097.3989,
+    "bookable": true
+  },
+  {
+    "id": "D",
+    "diameter_m": 9,
+    "east": 67.204,
+    "north": 0.633,
+    "utm_e": 758851.5435,
+    "utm_n": 4298084.063,
+    "bookable": true
+  },
+  {
+    "id": "E",
+    "diameter_m": 7,
+    "east": 76.68,
+    "north": 9.566,
+    "utm_e": 758861.0196,
+    "utm_n": 4298092.9962,
+    "bookable": true
+  },
+  {
+    "id": "F",
+    "diameter_m": 7,
+    "east": 84.133,
+    "north": 0.755,
+    "utm_e": 758868.4732,
+    "utm_n": 4298084.1848,
+    "bookable": true
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "schema": "aumara.v3-3.p0-hybrid",
+  "version": "1.1.0-af6",
+  "branch": "sandbox/v3-3-p0-houses-af6",
+  "base_branch": "sandbox/v3-3-p0-hybrid-volume",
+  "base_sha": "5133b829bf50bd63e3fac963e10622c52890dd18",
+  "densify": {
+    "accepted": true,
+    "points": 37804,
+    "source_sha256": "fe9b2536fab2d94d2c7d48213d12bfe99e1d10de4099b18bd972009b0c116452",
+    "chunks": "p0-points-0..18.b64",
+    "chunks_untouched": true,
+    "quant_envelope_locked": { "MIN": [20, -12, -8], "MAX": [70, 20, 16] }
+  },
+  "houses": {
+    "houseCount": 6,
+    "scope": ["A", "B", "C", "D", "E", "F"],
+    "excluded": [],
+    "diameters_m": { "A": 7, "B": 9, "C": 7, "D": 9, "E": 7, "F": 7 },
+    "origin_utm30n_epsg25830": { "easting": 758784.34, "northing": 4298083.43 },
+    "locals_delta_utm_m": {
+      "A": { "east": 35.254, "north": 0.845 },
+      "B": { "east": 52.215, "north": 4.961 },
+      "C": { "east": 63.556, "north": 13.969 },
+      "D": { "east": 67.204, "north": 0.633 },
+      "E": { "east": 76.68, "north": 9.566 },
+      "F": { "east": 84.133, "north": 0.755 }
+    },
+    "z_base_m": 0.3,
+    "method": "frequency wireframe geodesic dome (FREQ=2, LAT_RINGS=8, LON_SEGS=10) + meridional/parallel/diagonal struts + platform/deck rings; B/D superior 9m with outer circular deck hint; height≈0.5×diameter; outdoor flat fill/stroke only; no photo posters / interiors; not smooth hemisphere fake ball",
+    "view": {
+      "centre_local_m": { "east": 58.5, "north": 5.0, "z": 3.2 },
+      "scale_divisor": { "w": 96, "h": 52 },
+      "note": "Expanded so A–F (east 35→84) fit; points may remain clipped to old quant envelope"
+    },
+    "bookable": true,
+    "canon": ["houses_af.json", "georef.json", "PR#13"]
+  },
+  "path": {
+    "scope": "WP0-WP10",
+    "method": "volumetric extruded ribbon ~1.5 m wide (halfW=0.75) with side walls height 0.35 m + stone-border top edge lines; depth-sorted quads",
+    "kept": true
+  },
+  "constraints": {
+    "no_photo_posters": true,
+    "no_interior_stretch": true,
+    "no_sfm_rerun": true,
+    "no_vggt_gpu": true,
+    "no_live_promote": true,
+    "no_dns": true,
+    "densified_chunks_byte_identical": true
+  },
+  "pass": false,
+  "status": "OWNER_QA · houseCount===6 · densify ACCEPTED · chunks untouched · NOT_PASS until owner visual QA"
+}

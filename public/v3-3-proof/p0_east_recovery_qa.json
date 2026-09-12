@@ -1,0 +1,111 @@
+{
+  "schema": "aumara.v3-3.p0-east-recovery-qa",
+  "method": "colorized east reconstruction from authoritative flight.mp4 + canonical local georef and heightmap (no synthetic house geometry)",
+  "inputs": {
+    "flight_mp4": "public/media/flight/flight.mp4",
+    "flight_path": "public/spatial/world/flight-path.json",
+    "heightmap": "public/spatial/world/heightmap.json",
+    "west_chunks": "public/v3-3-proof/p0-points-0..18.b64"
+  },
+  "counts": {
+    "west_preserved_points": 37804,
+    "east_existing_survivors_points": 3080,
+    "east_recovered_points": 6000,
+    "east_total_points": 9080,
+    "combined_points": 46884
+  },
+  "bounds": {
+    "west": {
+      "min": [
+        27.680629,
+        -11.992676,
+        -7.657954
+      ],
+      "max": [
+        69.991608,
+        19.98584,
+        15.999634
+      ]
+    },
+    "east": {
+      "min": [
+        70.009918,
+        -11.950195,
+        0.47425
+      ],
+      "max": [
+        93.649958,
+        8.450019,
+        2.297642
+      ]
+    },
+    "combined": {
+      "min": [
+        27.680629,
+        -11.992676,
+        -7.657954
+      ],
+      "max": [
+        93.649958,
+        19.98584,
+        15.999634
+      ]
+    }
+  },
+  "seam_x70": {
+    "west_band": [
+      69.0,
+      70.0
+    ],
+    "east_band": [
+      70.0,
+      71.0
+    ],
+    "west_band_points": 901,
+    "east_band_points": 1361,
+    "west_to_east_nn": {
+      "samples": 901,
+      "mean_nn_m": 9.666654471061232,
+      "p95_nn_m": 15.055697093402522,
+      "max_nn_m": 16.290877685519327
+    }
+  },
+  "ef_support": [
+    {
+      "house": "E",
+      "radius_m": 3.8,
+      "points": 120,
+      "z_min": 1.1473563744563968,
+      "z_max": 1.2195010299839772,
+      "z_span": 0.07214465552758043
+    },
+    {
+      "house": "F",
+      "radius_m": 3.8,
+      "points": 602,
+      "z_min": 1.0261387045090409,
+      "z_max": 1.7864042114900442,
+      "z_span": 0.7602655069810034
+    }
+  ],
+  "recovered_chunks": [
+    {
+      "file": "p0-east-1.b64",
+      "points": 2000,
+      "bytes": 18000,
+      "b64_len": 24000
+    },
+    {
+      "file": "p0-east-2.b64",
+      "points": 2000,
+      "bytes": 18000,
+      "b64_len": 24000
+    },
+    {
+      "file": "p0-east-3.b64",
+      "points": 2000,
+      "bytes": 18000,
+      "b64_len": 24000
+    }
+  ]
+}
