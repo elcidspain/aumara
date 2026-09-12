@@ -78,12 +78,13 @@ assert.equal(cesiumStarts, 1, "Cesium startup should be in flight before close")
 close.onclick({});
 const resumedAttempt = flight.onclick();
 
-window.__AUMARA_GOOGLE_TILE_VISIBLE = true;
+window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
 window.__AUMARA = {
   provider: "GOOGLE_PHOTOREALISTIC_3D_TILES",
   stage: "WP0_27",
   firstFrameRendered: true,
   firstGoogleTileRendered: true,
+  googleTileVisibleObserved: true,
   globalTilesVisible: false,
   fatalRenderError: false,
 };
@@ -94,6 +95,13 @@ assert.equal(await resumedAttempt, true, "the reopened generation should reuse e
 assert.equal(cesiumStarts, 1, "the latched Cesium startup must only be invoked once");
 assert.equal(replacements, 0, "an established Cesium handoff must not trigger local reload");
 assert.equal(stored.has("AUMARA_FORCE_LOCAL_ONCE"), false);
+
+window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
+window.__AUMARA.globalTilesVisible = false;
+close.onclick({});
+assert.equal(await flight.onclick(), true, "hidden Google tiles after a proven session must not discard Cesium");
+assert.equal(cesiumStarts, 1);
+assert.equal(replacements, 0);
 
 close.onclick({});
 assert.equal(await flight.onclick(), true, "later reopenings should reuse validated Cesium");

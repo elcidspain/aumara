@@ -104,14 +104,13 @@
 
   function establishedCesiumState() {
     const state = window.__AUMARA;
-    return !!(
-      state &&
-      !state.fatalRenderError &&
-      state.stage !== "LOCAL_FALLBACK" &&
-      state.firstFrameRendered &&
-      state.firstGoogleTileRendered &&
-      window.__AUMARA_GOOGLE_TILE_VISIBLE === true
+    if (!state || state.fatalRenderError || state.stage === "LOCAL_FALLBACK") return false;
+    const googleTilesProven = !!(
+      window.__AUMARA_GOOGLE_TILE_VISIBLE === true ||
+      state.firstGoogleTileRendered ||
+      state.googleTileVisibleObserved
     );
+    return !!(state.firstFrameRendered && googleTilesProven);
   }
 
   function ensureCesiumStarted() {
@@ -171,20 +170,22 @@
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     }
-    const resumingCesium = !!cesiumPromise;
     try {
       await ensureCesiumStarted();
       if (!isAttemptActive(generation)) return false;
-      if (resumingCesium && establishedCesiumState()) {
+      if (establishedCesiumState()) {
         cesiumValidated = true;
         root.dataset.aumaraFlight = "cesium-rendered";
         return true;
       }
       const state = await waitForCesiumState(5000, generation);
-      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile", generation);
-      cesiumValidated = true;
-      root.dataset.aumaraFlight = "cesium-rendered";
-      return true;
+      if (!isAttemptActive(generation)) return false;
+      if (state || establishedCesiumState()) {
+        cesiumValidated = true;
+        root.dataset.aumaraFlight = "cesium-rendered";
+        return true;
+      }
+      return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile", generation);
     } catch (error) {
       return reloadIntoCleanLocalFallback(error && error.message ? error.message : "cesium-start-failed", generation);
     }
