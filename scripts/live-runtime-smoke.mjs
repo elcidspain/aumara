@@ -85,20 +85,28 @@ try {
   console.log("ROOT_SOUND_PASS", JSON.stringify(sound));
 
   await navigate(base + "/spatial/#flight");
-  await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "local flight runtime");
+  const primary = await waitFor(
+    () => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'cesium-primary' ? ({runtime:document.documentElement.dataset.aumaraFlightRuntime, local:typeof window.AUMARA_START_LOCAL_FLIGHT}) : null"),
+    10000,
+    "Cesium primary bootstrap",
+  );
+  console.log("SPATIAL_CESIUM_PRIMARY_PASS", JSON.stringify(primary));
+
+  await navigate(base + "/spatial/?renderer=local#flight");
+  await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "local fallback runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
     20000,
-    "first spatial WebGL frame",
+    "first fallback WebGL frame",
   );
   await evaluate("window.__AUMARA.advanceTo(999); true");
   const complete = await waitFor(
     () => evaluate("window.__AUMARA?.flightComplete && window.__AUMARA?.waypointReached === 27 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, flightComplete:window.__AUMARA.flightComplete}) : null"),
     5000,
-    "WP27 completion",
+    "fallback WP27 completion",
   );
-  console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
-  console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
+  console.log("SPATIAL_FALLBACK_FIRST_FRAME_PASS", JSON.stringify(frame));
+  console.log("SPATIAL_FALLBACK_WP27_PASS", JSON.stringify(complete));
   console.log("AUMARA_LIVE_RUNTIME_PASS");
 } finally {
   try { ws?.close(); } catch {}
