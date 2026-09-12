@@ -107,7 +107,6 @@
     if (!state || state.fatalRenderError || state.stage === "LOCAL_FALLBACK") return false;
     const googleTilesProven = !!(
       window.__AUMARA_GOOGLE_TILE_VISIBLE === true ||
-      state.firstGoogleTileRendered ||
       state.googleTileVisibleObserved
     );
     return !!(state.firstFrameRendered && googleTilesProven);
