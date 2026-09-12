@@ -86,15 +86,25 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'ion-primary-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'cesium-first-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
-    "hybrid flight mode",
+    "Cesium-first flight mode",
   );
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
-    20000,
+    30000,
     "first spatial WebGL frame",
+  );
+  const google = await waitFor(
+    () => evaluate("window.__AUMARA?.firstGoogleTileRendered && window.__AUMARA?.provider === 'GOOGLE_PHOTOREALISTIC_3D_TILES' ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, firstGoogleTileRendered:true}) : null"),
+    5000,
+    "first Google photorealistic tile",
+  );
+  const autonomous = await waitFor(
+    () => evaluate("window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
+    10000,
+    "autonomous Earth to Iberia progression",
   );
   await evaluate("window.__AUMARA.advanceTo(999); true");
   const complete = await waitFor(
@@ -104,6 +114,8 @@ try {
   );
   console.log("SPATIAL_MODE_PASS", JSON.stringify(mode));
   console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
+  console.log("SPATIAL_GOOGLE_TILE_PASS", JSON.stringify(google));
+  console.log("SPATIAL_AUTONOMOUS_PROGRESS_PASS", JSON.stringify(autonomous));
   console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
   console.log("AUMARA_LIVE_RUNTIME_PASS");
 } finally {
