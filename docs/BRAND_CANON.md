@@ -34,11 +34,11 @@ Do not attach the personal / ILIA logo.
 ## Ads account
 
 CID `855-744-3576` · Payments `2448-5835-5959` · `elcidspain@gmail.com`
-Live Search campaign: `Aumara_Booking_Search` — leave ON.
-PMax pack: `docs/ADS_PMAX_INSTALL.md`. Do not enable PMax until billing + Book conversion exist.
+Live Search campaign: `Aumara_Booking_Search` — leave ON unless an explicit spend decision changes it.
+PMax pack: `docs/ADS_PMAX_INSTALL.md`. Do not enable PMax until billing + verified completed-booking conversion exist.
 Visa •••• 6608 declined 1 Sep 2026 — card must be replaced or nothing serves.
 
-No Google Ads API connector on this workspace. Brand Library is a click path.
+Current connected tooling is sufficient for read-side account inspection; conversion creation/import is still an external Ads/GA4 configuration step.
 
 ### Click path — Brand Library (the four ineligible rows)
 
@@ -52,23 +52,25 @@ No Google Ads API connector on this workspace. Brand Library is a click path.
 
 ## Conversions — owner priority 2026-09-05
 
-Primary: website visit on www.aumara.me + direct book on Beds24 property **324882**.
-- Chalet room 674465
-- Superior room 674466
+Primary objective: a completed direct booking attributable to AUMARA paid traffic.
 - Final URL of ads: https://www.aumara.me/  (not Beds24, not elcidspain.com)
-- Conversion 1 (primary, Purchase/Book): destination contains `beds24.com/booking2.php`
-- Conversion 2 (secondary, observe): click out to Beds24 `propid=324882`
+- Primary Purchase/Book conversion: fire only after a verified successful Beds24 booking completion signal, or from an already-linked GA4 completion event.
+- A destination rule that only matches the Beds24 booking page is **not** a completed-booking conversion and must never be used as the primary Purchase/Book signal.
+- Secondary / observe-only: outbound click intent to Beds24 (`booking_click`) from instrumented AUMARA pages.
+- Current coverage caveat: the standalone `/spatial/` static experience does not yet emit the same booking-click telemetry, so full-funnel click coverage is still open.
 
 Not primary: phone +34 966 57 99 70. Keep the call asset. Do not bid to calls.
 
 Airbnb: owner asked whether to switch it on. Default = off until explicit yes.
 Do not use Booking.com as the owned conversion destination anymore.
 
-### Site gap
+### Site measurement state
 
-`app/layout.tsx` on aumara.me has schema.org ReserveAction → Beds24, but **no Google tag / gtag / GTM**. dataLayer events exist only on the old COOKBOOK static landing. Tag must be installed on the Vercel project that serves www.aumara.me before Maximize conversions can work.
+`app/layout.tsx` on aumara.me ships the public Google Ads tag with consent-default-denied behavior. `booking_click` is emitted from the Next-rendered guest pages. GA4 is conditional on a real `NEXT_PUBLIC_GA_MEASUREMENT_ID` and must not be invented. The standalone `/spatial/` static experience is outside the Next root layout and remains a separate instrumentation gap.
+
+Maximize conversions remains blocked until a real successful direct booking can be observed end-to-end in the chosen Google Ads or linked GA4 conversion action.
 
 ## Identity chain (do not collapse)
 
-Brand AUMARA → legal operator EL CID VENTURES BENIDOLEIG S.L. → booking Beds24 324882.
+Brand AUMARA → legal operator EL CID VENTURES BENIDOLEIG S.L. → booking Beds24.
 EL CID (knight) is the sister public brand, not the stay product name.
