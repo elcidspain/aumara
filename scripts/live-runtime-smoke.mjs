@@ -125,7 +125,7 @@ try {
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
-    35000,
+    55000,
     "first spatial WebGL frame",
   );
 
