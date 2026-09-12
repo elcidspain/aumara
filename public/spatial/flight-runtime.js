@@ -5,6 +5,12 @@
   const cesiumStart = typeof window.startFlight === "function" ? window.startFlight.bind(window) : null;
   let hybridPromise = null;
   let localPromise = null;
+  let attemptGeneration = 0;
+  let flightCancelled = false;
+
+  function isAttemptActive(generation) {
+    return generation === attemptGeneration && !flightCancelled;
+  }
 
   function failClosed(error) {
     const message = String(error && error.message ? error.message : error).slice(0, 180);
@@ -37,7 +43,8 @@
     }
   }
 
-  function reloadIntoCleanLocalFallback(reason) {
+  function reloadIntoCleanLocalFallback(reason, generation) {
+    if (!isAttemptActive(generation)) return false;
     root.dataset.aumaraFlight = "local-reload";
     root.dataset.aumaraCesiumFailure = String(reason || "cesium-failed").slice(0, 80);
     try {
@@ -72,9 +79,10 @@
     });
   }
 
-  async function waitForCesiumState(timeoutMs) {
+  async function waitForCesiumState(timeoutMs, generation) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
+      if (!isAttemptActive(generation)) return null;
       const state = window.__AUMARA;
       if (state && state.fatalRenderError) return null;
       const googlePathStillActive = !!(
@@ -131,20 +139,22 @@
     return localPromise;
   }
 
-  async function startCesiumFlight() {
+  async function startCesiumFlight(generation) {
     if (!cesiumStart) return false;
     await waitForIonRuntimeConfig();
+    if (!isAttemptActive(generation)) return false;
     if (!runtimeCredentialPresent()) return false;
     root.dataset.aumaraFlight = "cesium-starting";
     window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
     try {
       await withTimeout(cesiumStart(), 40000, "cesium-start-timeout");
-      const state = await waitForCesiumState(5000);
-      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile");
+      if (!isAttemptActive(generation)) return false;
+      const state = await waitForCesiumState(5000, generation);
+      if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile", generation);
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     } catch (error) {
-      return reloadIntoCleanLocalFallback(error && error.message ? error.message : "cesium-start-failed");
+      return reloadIntoCleanLocalFallback(error && error.message ? error.message : "cesium-start-failed", generation);
     }
   }
 
@@ -153,11 +163,15 @@
     if (stage) stage.classList.add("on");
     if (hybridPromise) return hybridPromise;
 
+    flightCancelled = false;
+    const generation = ++attemptGeneration;
     hybridPromise = (async () => {
-      if (await startCesiumFlight()) return true;
+      if (await startCesiumFlight(generation)) return true;
+      if (!isAttemptActive(generation)) return false;
       root.dataset.aumaraFlight = "local-fallback";
       return startLocalFlight();
     })().catch((error) => {
+      if (!isAttemptActive(generation)) return false;
       hybridPromise = null;
       return failClosed(error);
     });
@@ -168,6 +182,22 @@
   window.AUMARA_START_FLIGHT = startHybridFlight;
   const button = document.getElementById("flight");
   if (button) button.onclick = startHybridFlight;
+
+  const closeButton = document.getElementById("close");
+  const legacyClose = closeButton && typeof closeButton.onclick === "function" ? closeButton.onclick : null;
+  if (closeButton) {
+    closeButton.onclick = function (event) {
+      flightCancelled = true;
+      attemptGeneration += 1;
+      hybridPromise = null;
+      window.__AUMARA_PENDING_FLIGHT = false;
+      try { sessionStorage.removeItem("AUMARA_FORCE_LOCAL_ONCE"); } catch (error) {}
+      if (legacyClose) return legacyClose.call(this, event);
+      const stage = document.getElementById("stage");
+      if (stage) stage.classList.remove("on");
+    };
+  }
+
   const ionButton = document.getElementById("ionbtn");
   if (ionButton && new URL(location.href).searchParams.get("debug") !== "1") ionButton.style.display = "none";
   root.dataset.aumaraFlightRuntime = "local-ready";
