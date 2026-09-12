@@ -13,6 +13,9 @@ test("machine-readable blocker doc lists exact remaining external actions", () =
   assert.equal(gapDoc.issue, 34);
   assert.equal(gapDoc.status, "blocked_on_external_configuration");
   assert.deepEqual(gapDoc.site_side_verified.events, ["booking_click", "spatial_flight_open"]);
+  assert.equal(gapDoc.completion_receiver.status, "not_implemented");
+  assert.match(gapDoc.completion_receiver.reason, /No authenticated Beds24-supported/);
+  assert.equal(gapDoc.completion_receiver.implementation_gate.length, 3);
   assert.ok(Array.isArray(gapDoc.external_blockers));
   assert.equal(gapDoc.external_blockers.length, 3);
 });
