@@ -1,0 +1,32 @@
+{
+  "issue": 34,
+  "status": "blocked_on_external_configuration",
+  "site_side_verified": {
+    "google_ads_tag_id": "AW-11392880991",
+    "consent_default_denied": true,
+    "events": [
+      "booking_click",
+      "spatial_flight_open"
+    ]
+  },
+  "can_measure_now": [
+    "Guest click intent to Beds24 booking flow (booking_click)"
+  ],
+  "cannot_measure_yet": [
+    "Completed direct Beds24 booking conversion"
+  ],
+  "external_blockers": [
+    {
+      "key": "beds24_completion_signal",
+      "required_action": "Configure Beds24 to send a deterministic post-booking completion signal to a URL under aumara.me (return URL/callback/webhook) that can only occur after successful booking completion."
+    },
+    {
+      "key": "google_ads_conversion_mapping",
+      "required_action": "Provide the existing Google Ads completed-booking conversion action mapping (conversion label and intended event contract) or route through an already-linked GA4 purchase/booking-complete event."
+    },
+    {
+      "key": "attribution_link_verification",
+      "required_action": "If GA4 is used, verify GA4↔Google Ads linking and import settings for the completed booking event before campaign optimization changes."
+    }
+  ]
+}
