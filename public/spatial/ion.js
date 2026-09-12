@@ -9,6 +9,16 @@
   }
   window.__AUMARA_AUTO_FLIGHT = autoFlight;
 
+  document.addEventListener("click", function (event) {
+    var target = event.target && event.target.closest ? event.target.closest("#flight") : null;
+    if (!target) return;
+    var runtimeState = document.documentElement.dataset.aumaraFlightRuntime || "";
+    if (runtimeState === "local-ready" || runtimeState === "load-error") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.__AUMARA_PENDING_FLIGHT = true;
+  }, true);
+
   try {
     var u = new URL(location.href);
     if (u.searchParams.has("ion")) {
