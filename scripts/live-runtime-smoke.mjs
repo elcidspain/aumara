@@ -124,7 +124,7 @@ try {
   );
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
-    () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
+    () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
     35000,
     "first spatial WebGL frame",
   );
@@ -136,12 +136,12 @@ try {
   let autonomous;
   if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
     const google = await waitFor(
-      () => evaluate("window.__AUMARA_GOOGLE_TILE_VISIBLE === true && window.__AUMARA?.firstGoogleTileRendered ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, tileVisible:true}) : null"),
+      () => evaluate("window.__AUMARA_GOOGLE_TILE_VISIBLE === true && window.__AUMARA?.firstGoogleTileRendered && window.__AUMARA?.stage !== 'LOCAL_FALLBACK' && window.__AUMARA?.globalTilesVisible === true ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,globalTilesStatus:window.__AUMARA.globalTilesStatus,globalTilesVisible:true,tileVisible:true}) : null"),
       8000,
-      "visible Google photorealistic tile",
+      "visible active Google photorealistic tile",
     );
     autonomous = await waitFor(
-      () => evaluate("window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
+      () => evaluate("window.__AUMARA?.stage !== 'LOCAL_FALLBACK' && window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
       10000,
       "autonomous Earth to Iberia progression",
     );
