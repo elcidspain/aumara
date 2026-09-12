@@ -1,0 +1,95 @@
+name: Recon east piecewise trajectory validation
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-piecewise-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reconstruction dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Patch checkout only with two-segment trajectory alignment
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/recover-p0-east.py')
+          s = p.read_text()
+          s = s.replace(
+              '@dataclass\nclass TriPoint:\n    xyz: np.ndarray\n    rgb: Tuple[int, int, int]\n    score: float\n',
+              '@dataclass\nclass TriPoint:\n    xyz: np.ndarray\n    rgb: Tuple[int, int, int]\n    score: float\n    source_t: float = 0.5\n',
+          )
+          s = s.replace(
+              'def build_candidates(flight_path: Path, flight_mp4: Path, frame_count: int, pair_window: int, orb_features: int) -> List[TriPoint]:',
+              'def build_candidates(flight_path: Path, flight_mp4: Path, frame_count: int, pair_window: int, orb_features: int, alignment: str = "global") -> Tuple[List[TriPoint], dict]:',
+          )
+          s = s.replace(
+              'tri_points.append(TriPoint(xyz=x, rgb=(int(bgr[2]), int(bgr[1]), int(bgr[0])), score=float(matches[idx].distance)))',
+              'source_t = ((i + j) * 0.5) / max(1, len(frames) - 1)\n                tri_points.append(TriPoint(xyz=x, rgb=(int(bgr[2]), int(bgr[1]), int(bgr[0])), score=float(matches[idx].distance), source_t=float(source_t)))',
+          )
+          old = '''    r, s, t = umeyama(cam_centers_arr, wp_for_frames)\n\n    out = []\n    for tp in tri_points:\n        aligned = (s * (r @ tp.xyz)) + t\n        if not (70.0 < aligned[0] <= 95.0 and -12.0 <= aligned[1] <= 20.0 and -8.0 <= aligned[2] <= 16.0):\n            continue\n        out.append(TriPoint(xyz=aligned, rgb=tp.rgb, score=tp.score))\n\n    if not out:\n        raise RuntimeError("no east-envelope points from triangulation")\n\n    return out\n'''
+          new = '''    r, s, t = umeyama(cam_centers_arr, wp_for_frames)\n\n    n_frames = len(cam_centers_arr)\n    early_end = max(4, int(math.ceil(n_frames * 0.58)))\n    late_start = min(n_frames - 4, int(math.floor(n_frames * 0.42)))\n    early_idx = np.arange(0, early_end)\n    late_idx = np.arange(late_start, n_frames)\n    re, se, te = umeyama(cam_centers_arr[early_idx], wp_for_frames[early_idx])\n    rl, sl, tl = umeyama(cam_centers_arr[late_idx], wp_for_frames[late_idx])\n\n    def report(rr, ss, tt, idx):\n        pred = (ss * (rr @ cam_centers_arr.T)).T + tt\n        residual = np.linalg.norm(pred[idx] - wp_for_frames[idx], axis=1)\n        return {"fit_count": int(len(idx)), "scale": float(ss), "fit_rms_m": float(np.sqrt(np.mean(residual**2))), "fit_p95_m": float(np.percentile(residual, 95))}\n\n    alignment_report = {\n        "mode": alignment,\n        "global": report(r, s, t, np.arange(n_frames)),\n        "early": report(re, se, te, early_idx),\n        "late": report(rl, sl, tl, late_idx),\n        "blend_t": [0.42, 0.58],\n    }\n\n    out = []\n    for tp in tri_points:\n        if alignment == "piecewise":\n            early_xyz = (se * (re @ tp.xyz)) + te\n            late_xyz = (sl * (rl @ tp.xyz)) + tl\n            u = float(np.clip((tp.source_t - 0.42) / 0.16, 0.0, 1.0))\n            u = u * u * (3.0 - 2.0 * u)\n            aligned = early_xyz * (1.0 - u) + late_xyz * u\n        else:\n            aligned = (s * (r @ tp.xyz)) + t\n        if not (70.0 < aligned[0] <= 95.0 and -12.0 <= aligned[1] <= 20.0 and -8.0 <= aligned[2] <= 16.0):\n            continue\n        out.append(TriPoint(xyz=aligned, rgb=tp.rgb, score=tp.score, source_t=tp.source_t))\n\n    if not out:\n        raise RuntimeError("no east-envelope points from triangulation")\n\n    return out, alignment_report\n'''
+          if old not in s:
+              raise SystemExit('alignment block not found')
+          s = s.replace(old, new)
+          s = s.replace(
+              '    ap.add_argument("--voxel", type=float, default=0.05)\n',
+              '    ap.add_argument("--voxel", type=float, default=0.05)\n    ap.add_argument("--alignment", choices=("global", "piecewise"), default="global")\n',
+          )
+          s = s.replace(
+              '    cands = build_candidates(flight_path, flight_mp4, args.frame_count, args.pair_window, args.orb_features)\n',
+              '    cands, alignment_report = build_candidates(flight_path, flight_mp4, args.frame_count, args.pair_window, args.orb_features, args.alignment)\n',
+          )
+          s = s.replace(
+              '        f"--pair-window {args.pair_window} --orb-features {args.orb_features} --voxel {args.voxel}"\n',
+              '        f"--pair-window {args.pair_window} --orb-features {args.orb_features} --voxel {args.voxel} --alignment {args.alignment}"\n',
+          )
+          s = s.replace(
+              '            "voxel": args.voxel,\n            "east_bbox": {"x": [70, 95], "y": [-12, 20], "z": [-8, 16]},\n',
+              '            "voxel": args.voxel,\n            "alignment": args.alignment,\n            "east_bbox": {"x": [70, 95], "y": [-12, 20], "z": [-8, 16]},\n',
+          )
+          s = s.replace('        "counts": {\n', '        "alignment_report": alignment_report,\n        "counts": {\n')
+          p.write_text(s)
+          PY
+          python -m py_compile scripts/recover-p0-east.py
+      - name: Run piecewise recovery candidate
+        run: >-
+          python scripts/recover-p0-east.py
+          --repo .
+          --frame-count 56
+          --pair-window 6
+          --orb-features 6000
+          --voxel 0.05
+          --alignment piecewise
+      - name: Report strict QA
+        run: |
+          python - <<'PY'
+          import json
+          q = json.load(open('public/v3-3-proof/p0_east_recovery_qa.json'))
+          seam = q['seam_x70']['ratio_vs_baseline']
+          print('AUMARA_PIECEWISE_QA', json.dumps({
+              'alignment_report': q['alignment_report'],
+              'mean_ratio': seam['mean_ratio'],
+              'p95_ratio': seam['p95_ratio'],
+              'integration_pass': q['integration_pass'],
+              'west_locked': q['west_chunks_byte_identical'],
+              'east_decoded': q['counts']['east_total_decoded_points'],
+              'E_points': q['ef_support'][0]['points'],
+              'F_points': q['ef_support'][1]['points'],
+          }, sort_keys=True))
+          if not q['west_chunks_byte_identical']:
+              raise SystemExit('west lock violated')
+          PY
