@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const base = process.env.AUMARA_SMOKE_BASE || "http://127.0.0.1:3000";
-const requireGoogle = process.env.AUMARA_REQUIRE_GOOGLE === "1";
+const forceRequireGoogle = process.env.AUMARA_REQUIRE_GOOGLE === "1";
 const cdpPort = 9222;
 const browser = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]
   .map((name) => ({ name, result: spawnSync("which", [name], { encoding: "utf8" }) }))
@@ -37,6 +37,23 @@ async function waitFor(fn, timeout = 20000, label = "condition") {
   throw new Error(`timeout waiting for ${label}: ${JSON.stringify(last)}`);
 }
 
+async function readRuntimeExpectation() {
+  try {
+    const response = await fetch(base + "/api/spatial-config?probe=1", { cache: "no-store" });
+    if (!response.ok) return { requireGoogle: forceRequireGoogle, probeAvailable: false };
+    const data = await response.json();
+    const publicCredentialConfigured = Boolean(data?.cesiumIon?.configured || data?.googleMaps?.configured);
+    return {
+      requireGoogle: forceRequireGoogle || publicCredentialConfigured,
+      probeAvailable: true,
+      publicCredentialConfigured,
+      privateIonConfigured: Boolean(data?.cesiumIon?.privateConfigured),
+    };
+  } catch {
+    return { requireGoogle: forceRequireGoogle, probeAvailable: false };
+  }
+}
+
 let ws;
 let nextId = 1;
 const pending = new Map();
@@ -59,6 +76,9 @@ async function navigate(url) {
 
 try {
   await waitFor(async () => (await fetch(`http://127.0.0.1:${cdpPort}/json/version`)).ok, 15000, "Chrome CDP");
+  const runtimeExpectation = await readRuntimeExpectation();
+  console.log("SPATIAL_RUNTIME_EXPECTATION", JSON.stringify(runtimeExpectation));
+
   const tab = await (await fetch(`http://127.0.0.1:${cdpPort}/json/new?${encodeURIComponent(base + "/")}`, { method: "PUT" })).json();
   ws = new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => { ws.addEventListener("open", resolve, { once: true }); ws.addEventListener("error", reject, { once: true }); });
@@ -94,20 +114,20 @@ try {
   await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
-    30000,
+    35000,
     "first spatial WebGL frame",
   );
 
-  if (requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
-    throw new Error(`Google runtime required but active provider is ${frame.provider}`);
+  if (runtimeExpectation.requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+    throw new Error(`Public Cesium/Google credential is configured but active provider is ${frame.provider}`);
   }
 
   let autonomous;
   if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
     const google = await waitFor(
-      () => evaluate("window.__AUMARA?.firstGoogleTileRendered ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, firstGoogleTileRendered:true}) : null"),
+      () => evaluate("window.__AUMARA_GOOGLE_TILE_VISIBLE === true && window.__AUMARA?.firstGoogleTileRendered ? ({provider:window.__AUMARA.provider, globalTilesStatus:window.__AUMARA.globalTilesStatus, tileVisible:true}) : null"),
       8000,
-      "first Google photorealistic tile",
+      "visible Google photorealistic tile",
     );
     autonomous = await waitFor(
       () => evaluate("window.__AUMARA?.events?.some((event) => event.name === 'IBERIA_STAGE') ? ({stage:window.__AUMARA.stage, events:window.__AUMARA.events.map((event)=>event.name)}) : null"),
@@ -116,6 +136,7 @@ try {
     );
     console.log("SPATIAL_GOOGLE_TILE_PASS", JSON.stringify(google));
   } else if (frame.provider === "LOCAL_THREE") {
+    if (runtimeExpectation.requireGoogle) throw new Error("Local fallback is not acceptable while a public Cesium/Google credential is configured");
     autonomous = await waitFor(
       () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
       10000,
