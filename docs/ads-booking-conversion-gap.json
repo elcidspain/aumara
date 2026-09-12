@@ -18,22 +18,37 @@
     "Beds24 click intent originating inside the standalone /spatial/ static experience"
   ],
   "completion_receiver": {
-    "status": "not_implemented",
-    "reason": "No authenticated Beds24-supported successful-booking signal contract has been verified yet, so implementing a receiver now would invent an external contract.",
+    "status": "supported_paths_verified_not_configured",
+    "verified_supported_paths": [
+      "Beds24 Booking Return URL after the confirmation step for browser attribution continuity",
+      "Beds24 Auto Action webhook or HTTP POST for server-side validation and reconciliation"
+    ],
     "implementation_gate": [
-      "Verify a Beds24-supported signal that fires only after successful booking completion.",
-      "Define authentication, idempotency/deduplication, booking identity, timestamp, currency/value availability, and retry semantics from that verified signal.",
-      "Map the verified completion event to an existing Google Ads conversion action or an already-linked GA4 key event."
+      "Configure a Beds24 success-only return or webhook contract for AUMARA without placing secrets or guest PII in analytics payloads.",
+      "Use booking_id as the transaction dedupe key and accept confirmed-or-equivalent successful booking state only.",
+      "Map the verified completion event to a website completed-booking Google Ads conversion action or an already-linked GA4 key event."
     ]
+  },
+  "google_ads_snapshot": {
+    "checked_at": "2026-09-12",
+    "enabled_primary_action_categories": [
+      "GET_DIRECTIONS",
+      "ENGAGEMENT",
+      "PAGE_VIEW",
+      "CONTACT"
+    ],
+    "enabled_primary_action_type": "GOOGLE_HOSTED",
+    "website_purchase_or_booking_action_found": false,
+    "completed_booking_primary_conversion_ready": false
   },
   "external_blockers": [
     {
-      "key": "beds24_completion_signal",
-      "required_action": "Verify the exact Beds24-supported post-booking mechanism and payload before creating any AUMARA receiver endpoint."
+      "key": "beds24_completion_configuration",
+      "required_action": "Configure one of the verified Beds24 completion paths with confirmed-booking semantics and transaction deduplication."
     },
     {
       "key": "google_ads_conversion_mapping",
-      "required_action": "Resolve the existing Google Ads completed-booking conversion action mapping (conversion label and event contract), or use a verified linked GA4 completion event."
+      "required_action": "Create or resolve a completed-booking website conversion action, or use a verified linked GA4 completion event; the current enabled primary actions are Google-hosted local actions only."
     },
     {
       "key": "attribution_link_verification",
