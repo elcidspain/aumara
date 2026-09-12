@@ -7,13 +7,13 @@
       "key": "booking_return_url",
       "role": "browser_attribution",
       "capability": "Beds24 can redirect the guest after the booking confirmation step to a first-party AUMARA URL and append booking information to that URL.",
-      "aumarа_state": "not_configured"
+      "aumara_state": "not_configured"
     },
     {
       "key": "auto_action_webhook",
       "role": "server_validation_reconciliation",
       "capability": "Beds24 Auto Actions can run webhooks or HTTP POST notifications using booking trigger conditions and template variables.",
-      "aumarа_state": "not_configured",
+      "aumara_state": "not_configured",
       "timing_note": "Auto Actions are batch processed and are not a strict real-time browser signal."
     }
   ],
