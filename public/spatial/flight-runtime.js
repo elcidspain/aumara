@@ -138,7 +138,7 @@
     root.dataset.aumaraFlight = "cesium-starting";
     window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
     try {
-      await withTimeout(cesiumStart(), 18000, "cesium-start-timeout");
+      await withTimeout(cesiumStart(), 40000, "cesium-start-timeout");
       const state = await waitForCesiumState(5000);
       if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile");
       root.dataset.aumaraFlight = "cesium-rendered";
