@@ -209,7 +209,7 @@ try {
   let state = await flightState();
   check(
     "reopen-after-handoff-keeps-cesium",
-    state.flight === "cesium-resumed" && !state.reloaded && !state.localFallback && state.twinRuns === 1,
+    state.flight === "cesium-rendered" && !state.reloaded && !state.localFallback && state.twinRuns === 1,
     state,
   );
 
@@ -224,7 +224,7 @@ try {
   state = await flightState();
   check(
     "reopen-during-startup-waits",
-    ["cesium-rendered", "cesium-resumed"].includes(state.flight) && !state.reloaded && !state.localFallback && state.twinRuns === 1,
+    state.flight === "cesium-rendered" && !state.reloaded && !state.localFallback && state.twinRuns === 1,
     state,
   );
 
