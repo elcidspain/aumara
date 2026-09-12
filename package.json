@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:unit": "node --test lib/*.test.mjs docs/*.test.mjs",
     "assert-copy": "node scripts/assert-guest-copy.mjs",
     "spatial:vendor": "node scripts/copy-spatial-three.mjs",
     "svg:optimize": "npx --yes svgo@4.1.0 -f public --recursive --exclude node_modules --config svgo.config.mjs",
