@@ -4,8 +4,9 @@ import { useEffect } from "react";
 
 export default function SpatialEntryPage() {
   useEffect(() => {
+    const search = window.location.search || "";
     const hash = window.location.hash || "";
-    window.location.replace(`/spatial/index.html${hash}`);
+    window.location.replace(`/spatial/index.html${search}${hash}`);
   }, []);
 
   return (

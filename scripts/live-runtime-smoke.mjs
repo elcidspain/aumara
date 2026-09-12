@@ -85,7 +85,12 @@ try {
   console.log("ROOT_SOUND_PASS", JSON.stringify(sound));
 
   await navigate(base + "/spatial/#flight");
-  await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "local flight runtime");
+  const mode = await waitFor(
+    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'ion-primary-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
+    10000,
+    "hybrid flight mode",
+  );
+  await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
   const frame = await waitFor(
     () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached}) : null"),
     20000,
@@ -97,6 +102,7 @@ try {
     5000,
     "WP27 completion",
   );
+  console.log("SPATIAL_MODE_PASS", JSON.stringify(mode));
   console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
   console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
   console.log("AUMARA_LIVE_RUNTIME_PASS");

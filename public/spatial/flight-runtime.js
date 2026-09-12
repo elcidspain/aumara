@@ -2,7 +2,9 @@
   "use strict";
 
   const root = document.documentElement;
-  let startPromise = null;
+  const cesiumStart = typeof window.startFlight === "function" ? window.startFlight.bind(window) : null;
+  let hybridPromise = null;
+  let localPromise = null;
 
   function failClosed(error) {
     const message = String(error && error.message ? error.message : error).slice(0, 180);
@@ -21,57 +23,92 @@
       hud.classList.add("on");
       hud.textContent = "3D runtime: " + message;
     }
-    console.error("AUMARA_LOCAL_FLIGHT", message);
+    console.error("AUMARA_FLIGHT", message);
     return false;
+  }
+
+  function ionSessionPresent() {
+    const ion = window.AUMARA_ION;
+    return !!(ion && typeof ion.resolve === "function" && ion.resolve());
   }
 
   async function startLocalFlight() {
     const stage = document.getElementById("stage");
     if (stage) stage.classList.add("on");
-    if (startPromise) return startPromise;
+    if (localPromise) return localPromise;
     root.dataset.aumaraFlight = "local-starting";
 
-    startPromise = (async () => {
-      try {
-        await import("./local-twin.mjs");
-        if (typeof window.runAumaraLocalTwin !== "function") throw new Error("local-twin-unavailable");
-        const [geo, flight, hm] = await Promise.all([
-          fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => {
-            if (!r.ok) throw new Error("georef:" + r.status);
-            return r.json();
-          }),
-          fetch("./world/flight-path.json").then((r) => {
-            if (!r.ok) throw new Error("flight-path:" + r.status);
-            return r.json();
-          }),
-          fetch("./world/heightmap.json").then((r) => {
-            if (!r.ok) throw new Error("heightmap:" + r.status);
-            return r.json();
-          }),
-        ]);
-        await window.runAumaraLocalTwin({
-          geo,
-          flight,
-          hm,
-          overlay: document.getElementById("overlay"),
-          openSheet: typeof window.openSheet === "function" ? window.openSheet : null,
-        });
-        root.dataset.aumaraFlight = "local-initialized";
-        return true;
-      } catch (error) {
-        startPromise = null;
-        return failClosed(error);
-      }
-    })();
-    return startPromise;
+    localPromise = (async () => {
+      await import("./local-twin.mjs");
+      if (typeof window.runAumaraLocalTwin !== "function") throw new Error("local-twin-unavailable");
+      const [geo, flight, hm] = await Promise.all([
+        fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => {
+          if (!r.ok) throw new Error("georef:" + r.status);
+          return r.json();
+        }),
+        fetch("./world/flight-path.json").then((r) => {
+          if (!r.ok) throw new Error("flight-path:" + r.status);
+          return r.json();
+        }),
+        fetch("./world/heightmap.json").then((r) => {
+          if (!r.ok) throw new Error("heightmap:" + r.status);
+          return r.json();
+        }),
+      ]);
+      await window.runAumaraLocalTwin({
+        geo,
+        flight,
+        hm,
+        overlay: document.getElementById("overlay"),
+        openSheet: typeof window.openSheet === "function" ? window.openSheet : null,
+      });
+      root.dataset.aumaraFlight = "local-initialized";
+      return true;
+    })().catch((error) => {
+      localPromise = null;
+      return failClosed(error);
+    });
+    return localPromise;
+  }
+
+  async function startCesiumFlight() {
+    if (!cesiumStart || !ionSessionPresent()) return false;
+    root.dataset.aumaraFlight = "ion-starting";
+    try {
+      await cesiumStart();
+      const state = window.__AUMARA;
+      if (state && state.fatalRenderError) return false;
+      root.dataset.aumaraFlight = state && state.firstGoogleTileRendered ? "ion-rendered" : "ion-initialized";
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function startHybridFlight() {
+    const stage = document.getElementById("stage");
+    if (stage) stage.classList.add("on");
+    if (hybridPromise) return hybridPromise;
+
+    hybridPromise = (async () => {
+      if (await startCesiumFlight()) return true;
+      root.dataset.aumaraFlight = "local-fallback";
+      return startLocalFlight();
+    })().catch((error) => {
+      hybridPromise = null;
+      return failClosed(error);
+    });
+    return hybridPromise;
   }
 
   window.AUMARA_START_LOCAL_FLIGHT = startLocalFlight;
+  window.AUMARA_START_FLIGHT = startHybridFlight;
   const button = document.getElementById("flight");
-  if (button) button.onclick = startLocalFlight;
+  if (button) button.onclick = startHybridFlight;
   const ionButton = document.getElementById("ionbtn");
   if (ionButton && new URL(location.href).searchParams.get("debug") !== "1") ionButton.style.display = "none";
   root.dataset.aumaraFlightRuntime = "local-ready";
+  root.dataset.aumaraFlightMode = "ion-primary-local-fallback";
 
-  if (window.__AUMARA_AUTO_FLIGHT) startLocalFlight();
+  if (window.__AUMARA_AUTO_FLIGHT) startHybridFlight();
 })();

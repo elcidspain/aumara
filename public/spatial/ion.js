@@ -1,5 +1,5 @@
 /* AUMARA spatial bootstrap.
- * Cesium Ion remains debug-only; the guest flight is local Three.js.
+ * Loads the hybrid flight runtime after the page Cesium path is defined.
  * Never print or commit Ion tokens.
  */
 (function () {

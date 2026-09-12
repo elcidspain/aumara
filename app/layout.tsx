@@ -3,7 +3,12 @@ import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { SITE_URL } from "@/lib/guest";
-import { GA_MEASUREMENT_ID, isGaMeasurementId } from "@/lib/gtag";
+import {
+  GA_MEASUREMENT_ID,
+  GOOGLE_ADS_TAG_ID,
+  isGaMeasurementId,
+  isGoogleAdsTagId,
+} from "@/lib/gtag";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext", "cyrillic"],
@@ -64,6 +69,10 @@ const jsonLd = {
 };
 
 const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
+const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
+const googleTagIds = Array.from(new Set([gaId, adsId].filter(Boolean)));
+const googleTagLoaderId = googleTagIds[0] ?? "";
+const googleTagConfigs = googleTagIds.map((id) => `gtag('config','${id}');`).join("");
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -73,14 +82,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {gaId ? (
+        {googleTagLoaderId ? (
           <>
+            <Script id="google-consent-default" strategy="beforeInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
+            </Script>
             <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
               strategy="afterInteractive"
             />
-            <Script id="ga4" strategy="afterInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
+            <Script id="google-tags" strategy="afterInteractive">
+              {`gtag('js',new Date());${googleTagConfigs}`}
             </Script>
           </>
         ) : null}
