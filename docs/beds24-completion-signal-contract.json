@@ -1,0 +1,51 @@
+{
+  "status": "supported_mechanisms_verified_configuration_pending",
+  "verified_at": "2026-09-12",
+  "source": "Beds24 official documentation",
+  "supported_mechanisms": [
+    {
+      "key": "booking_return_url",
+      "role": "browser_attribution",
+      "capability": "Beds24 can redirect the guest after the booking confirmation step to a first-party AUMARA URL and append booking information to that URL.",
+      "aumarа_state": "not_configured"
+    },
+    {
+      "key": "auto_action_webhook",
+      "role": "server_validation_reconciliation",
+      "capability": "Beds24 Auto Actions can run webhooks or HTTP POST notifications using booking trigger conditions and template variables.",
+      "aumarа_state": "not_configured",
+      "timing_note": "Auto Actions are batch processed and are not a strict real-time browser signal."
+    }
+  ],
+  "recommended_contract": {
+    "browser_return": "Use Booking Return URL for first-party attribution continuity after successful direct booking.",
+    "server_signal": "Use a Beds24 Auto Action webhook as the authoritative validation/reconciliation signal when configured.",
+    "dedupe_key": "booking_id",
+    "accepted_booking_state": "confirmed_or_equivalent_success_state_only",
+    "analytics_payload": [
+      "transaction_id",
+      "currency",
+      "value_when_verified",
+      "booking_status",
+      "attribution_identifiers_preserved_first_party"
+    ],
+    "privacy": "Do not send guest name, email, phone or other direct identifiers to Google Ads/GA4 conversion events."
+  },
+  "google_ads_snapshot": {
+    "checked_at": "2026-09-12",
+    "enabled_primary_action_categories": [
+      "GET_DIRECTIONS",
+      "ENGAGEMENT",
+      "PAGE_VIEW",
+      "CONTACT"
+    ],
+    "enabled_primary_action_type": "GOOGLE_HOSTED",
+    "website_purchase_or_booking_action_found": false,
+    "completed_booking_primary_conversion_ready": false
+  },
+  "release_gate": [
+    "Configure one supported Beds24 completion path with confirmed-booking semantics.",
+    "Create or resolve a completed-booking Google Ads conversion action, or resolve an already-linked GA4 key event.",
+    "Prove one real successful direct booking end-to-end with transaction deduplication before enabling conversion-based bidding."
+  ]
+}
