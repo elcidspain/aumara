@@ -1,0 +1,71 @@
+name: Recon east parameter sweep
+
+on:
+  push:
+    branches:
+      - copilot/aumara-p0-recover-east-reconstruction-volume
+    paths:
+      - '.github/workflows/recon-east-parameter-sweep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - frame_count: 42
+            pair_window: 5
+            orb_features: 4500
+            voxel: '0.05'
+          - frame_count: 56
+            pair_window: 6
+            orb_features: 6000
+            voxel: '0.05'
+          - frame_count: 64
+            pair_window: 7
+            orb_features: 7000
+            voxel: '0.04'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install reconstruction dependencies
+        run: python -m pip install numpy opencv-python-headless
+      - name: Run deterministic east recovery variant
+        run: >-
+          python scripts/recover-p0-east.py
+          --repo .
+          --frame-count ${{ matrix.frame_count }}
+          --pair-window ${{ matrix.pair_window }}
+          --orb-features ${{ matrix.orb_features }}
+          --voxel ${{ matrix.voxel }}
+      - name: Report machine QA only
+        run: |
+          python - <<'PY'
+          import json
+          q = json.load(open('public/v3-3-proof/p0_east_recovery_qa.json'))
+          seam = q['seam_x70']['ratio_vs_baseline']
+          print('AUMARA_RECON_QA', json.dumps({
+              'frame_count': ${{ matrix.frame_count }},
+              'pair_window': ${{ matrix.pair_window }},
+              'orb_features': ${{ matrix.orb_features }},
+              'voxel': '${{ matrix.voxel }}',
+              'mean_ratio': seam['mean_ratio'],
+              'p95_ratio': seam['p95_ratio'],
+              'integration_pass': q['integration_pass'],
+              'west_chunks_byte_identical': q['west_chunks_byte_identical'],
+              'east_total_decoded_points': q['counts']['east_total_decoded_points'],
+              'E_points': q['ef_support'][0]['points'],
+              'F_points': q['ef_support'][1]['points'],
+          }, sort_keys=True))
+          if not q['west_chunks_byte_identical']:
+              raise SystemExit('west lock violated')
+          PY
