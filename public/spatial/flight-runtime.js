@@ -5,6 +5,8 @@
   const cesiumStart = typeof window.startFlight === "function" ? window.startFlight.bind(window) : null;
   let hybridPromise = null;
   let localPromise = null;
+  let cesiumPromise = null;
+  let cesiumValidated = false;
   let attemptGeneration = 0;
   let flightCancelled = false;
 
@@ -100,6 +102,26 @@
     return null;
   }
 
+  function establishedCesiumState() {
+    const state = window.__AUMARA;
+    return !!(
+      state &&
+      !state.fatalRenderError &&
+      state.stage !== "LOCAL_FALLBACK" &&
+      state.firstFrameRendered &&
+      state.firstGoogleTileRendered &&
+      window.__AUMARA_GOOGLE_TILE_VISIBLE === true
+    );
+  }
+
+  function ensureCesiumStarted() {
+    if (!cesiumPromise) {
+      window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
+      cesiumPromise = withTimeout(cesiumStart(), 40000, "cesium-start-timeout");
+    }
+    return cesiumPromise;
+  }
+
   async function startLocalFlight() {
     const stage = document.getElementById("stage");
     if (stage) stage.classList.add("on");
@@ -145,12 +167,22 @@
     if (!isAttemptActive(generation)) return false;
     if (!runtimeCredentialPresent()) return false;
     root.dataset.aumaraFlight = "cesium-starting";
-    window.__AUMARA_GOOGLE_TILE_VISIBLE = false;
+    if (cesiumValidated) {
+      root.dataset.aumaraFlight = "cesium-rendered";
+      return true;
+    }
+    const resumingCesium = !!cesiumPromise;
     try {
-      await withTimeout(cesiumStart(), 40000, "cesium-start-timeout");
+      await ensureCesiumStarted();
       if (!isAttemptActive(generation)) return false;
+      if (resumingCesium && establishedCesiumState()) {
+        cesiumValidated = true;
+        root.dataset.aumaraFlight = "cesium-rendered";
+        return true;
+      }
       const state = await waitForCesiumState(5000, generation);
       if (!state) return reloadIntoCleanLocalFallback("cesium-no-visible-active-tile", generation);
+      cesiumValidated = true;
       root.dataset.aumaraFlight = "cesium-rendered";
       return true;
     } catch (error) {
