@@ -107,5 +107,7 @@
       "bytes": 18000,
       "b64_len": 24000
     }
-  ]
+  ],
+  "status": "DISCONNECTED_SEAM_PENDING_ALIGNMENT",
+  "integration_pass": false
 }

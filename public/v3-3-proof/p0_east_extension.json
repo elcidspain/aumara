@@ -35,8 +35,8 @@
   "sfm": false,
   "vggt": false,
   "gpu": false,
-  "pass": true,
-  "qa_gate": "Recovered and integrated east chunks 1..3 with west lock; seam and E/F diagnostics in p0_east_recovery_qa.json",
+  "pass": false,
+  "qa_gate": "East chunks recovered and staged; seam at x\u224870 remains quantified gap (see p0_east_recovery_qa.json) pending alignment join before PASS",
   "chunks_surviving": [
     {
       "file": "p0-east-0.b64",
