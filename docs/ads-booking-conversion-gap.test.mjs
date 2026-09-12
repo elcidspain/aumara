@@ -29,7 +29,7 @@ test("machine-readable blocker doc lists exact remaining external actions", () =
   assert.ok(gapDoc.external_blockers.some((blocker) => blocker.key === "spatial_click_coverage"));
 });
 
-test("Beds24 contract keeps browser attribution separate from server validation", () => {
+test("Beds24 contract keeps browser attribution separate from server validation and PII", () => {
   assert.equal(beds24Contract.status, "supported_mechanisms_verified_configuration_pending");
   assert.equal(beds24Contract.supported_mechanisms.length, 2);
   assert.equal(beds24Contract.supported_mechanisms[0].key, "booking_return_url");
@@ -37,6 +37,18 @@ test("Beds24 contract keeps browser attribution separate from server validation"
   assert.equal(beds24Contract.supported_mechanisms[1].key, "auto_action_webhook");
   assert.equal(beds24Contract.supported_mechanisms[1].role, "server_validation_reconciliation");
   assert.equal(beds24Contract.recommended_contract.dedupe_key, "booking_id");
+  assert.equal(beds24Contract.recommended_contract.return_query_policy.tagged_page_query_allowed, false);
+  assert.deepEqual(
+    beds24Contract.recommended_contract.return_query_policy.allowed_before_server_redirect,
+    ["opaque_booking_reference", "opaque_state_nonce"],
+  );
+  assert.deepEqual(
+    beds24Contract.recommended_contract.return_query_policy.forbidden,
+    ["guest_name", "guest_email", "guest_phone", "postal_address", "free_text_guest_fields"],
+  );
+  assert.match(beds24Contract.recommended_contract.browser_return, /untagged AUMARA server endpoint/i);
+  assert.match(beds24Contract.recommended_contract.browser_return, /no query string before any Google tag renders/i);
+  assert.doesNotMatch(beds24Contract.recommended_contract.browser_return, /guest name|guest email|guest phone/i);
   assert.equal(beds24Contract.google_ads_snapshot.website_purchase_or_booking_action_found, false);
   assert.equal(beds24Contract.release_gate.length, 3);
 });
