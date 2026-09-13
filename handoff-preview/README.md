@@ -16,8 +16,10 @@ Standalone Cesium Earth → parcel → local V2.1 GLB twin.
 ## Deploy
 
 Create or use a **separate** Vercel project with this directory as the root.
+Do not assign `www.aumara.me` / `aumara.me`. Do not production-deploy to `aumara-path-cut`.
 Copy ion env names only (`CESIUM_ION_TOKEN` / public ion token / Maps key) in the Vercel dashboard.
 Add the preview origin to the Cesium ion token URL allow-list. Without that, tiles 403 and the runtime fail-closes to local.
+World assets may rewrite to already-public `aumara-path-cut.vercel.app/spatial/...` paths (read-only). That is not a www promote.
 
 ## Verify
 

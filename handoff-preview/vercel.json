@@ -1,5 +1,10 @@
 {
   "cleanUrls": false,
+  "functions": {
+    "api/ion.js": { "includeFiles": "lib/**" },
+    "api/ion-gate.js": { "includeFiles": "lib/**" },
+    "api/ion-boot.js": { "includeFiles": "lib/**" }
+  },
   "rewrites": [
     {
       "source": "/world/aumara-site-v2_1.glb",

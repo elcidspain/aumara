@@ -28,6 +28,7 @@
   #stage.local .cesium-widget-credits,#stage.local .cesium-credit-lightbox-overlay{display:none!important}
   #stage:not(.dbg) .cesium-widget-errorPanel{display:none!important}
 </style>
+<script src="./utm.js"></script>
 <script src="./ion.js"></script>
 </head>
 <body>
@@ -70,9 +71,8 @@ function loadCss(href) {
   if (document.querySelector(`link[href="${href}"]`)) return;
   const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l);
 }
-function lonLatToEn(lon, lat, oLon, oLat) {
-  const k = Math.cos(oLat * Math.PI / 180);
-  return { east: (lon - oLon) * 111320 * k, north: (lat - oLat) * 110540 };
+function lonLatToEn(lon, lat, originE, originN) {
+  return AUMARA_UTM.localFromWgs84(lon, lat, originE, originN);
 }
 function sampleHM(hm, east, north) {
   if (!hm) return 1.5;
@@ -136,6 +136,7 @@ async function runTwin() {
   ]);
   MEDIA = media;
   const lon = geo.localOrigin.wgs84.longitude, lat = geo.localOrigin.wgs84.latitude;
+  const originE = geo.localOrigin.utm30n.easting, originN = geo.localOrigin.utm30n.northing;
   const refMsl = (geo.verticalPolicy && geo.verticalPolicy.projectReferenceElevationMslMetres) || 91;
   const wps = flight.waypoints;
   const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -245,9 +246,25 @@ async function runTwin() {
     } catch (e) { parcelClippingActive = false; }
   }
   const origin = C.Cartesian3.fromDegrees(lon, lat, originH);
+  function utmGridModelMatrix() {
+    const pE = AUMARA_UTM.utm30nToWgs84(originE + 1, originN);
+    const pN = AUMARA_UTM.utm30nToWgs84(originE, originN + 1);
+    const cE = C.Cartesian3.fromDegrees(pE.lon, pE.lat, originH);
+    const cN = C.Cartesian3.fromDegrees(pN.lon, pN.lat, originH);
+    const xAxis = C.Cartesian3.normalize(C.Cartesian3.subtract(cE, origin, new C.Cartesian3()), new C.Cartesian3());
+    let yAxis = C.Cartesian3.normalize(C.Cartesian3.subtract(cN, origin, new C.Cartesian3()), new C.Cartesian3());
+    const zAxis = C.Cartesian3.normalize(C.Cartesian3.cross(xAxis, yAxis, new C.Cartesian3()), new C.Cartesian3());
+    yAxis = C.Cartesian3.normalize(C.Cartesian3.cross(zAxis, xAxis, new C.Cartesian3()), new C.Cartesian3());
+    const m = new C.Matrix4();
+    C.Matrix4.setColumn(m, 0, new C.Cartesian4(xAxis.x, xAxis.y, xAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 1, new C.Cartesian4(yAxis.x, yAxis.y, yAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 2, new C.Cartesian4(zAxis.x, zAxis.y, zAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 3, new C.Cartesian4(origin.x, origin.y, origin.z, 1), m);
+    return m;
+  }
   const glb = await C.Model.fromGltfAsync({
     url: "./world/aumara-site-v2_1.glb",
-    modelMatrix: C.Transforms.eastNorthUpToFixedFrame(origin),
+    modelMatrix: utmGridModelMatrix(),
     scale: 1.0, incrementallyLoadTextures: true, backFaceCulling: true,
   });
   viewer.scene.primitives.add(glb);
@@ -260,7 +277,7 @@ async function runTwin() {
     return { h, el };
   });
   function groundSample(lonX, latX) {
-    const en = lonLatToEn(lonX, latX, lon, lat);
+    const en = lonLatToEn(lonX, latX, originE, originN);
     const dem = originH + sampleHM(hm, en.east, en.north);
     return { ground: dem, source: tilesOn ? "LOCAL_DEM" : "LOCAL_DEM" };
   }
@@ -276,8 +293,8 @@ async function runTwin() {
     return { east: ee, north: nn };
   }
   function enToLonLat(east, north) {
-    const k = Math.cos(lat * Math.PI / 180);
-    return { lon: lon + east / (111320 * k), lat: lat + north / 110540 };
+    const ll = AUMARA_UTM.wgs84FromLocal(east, north, originE, originN);
+    return { lon: ll.lon, lat: ll.lat };
   }
   function ease(t) { return t * t * (3 - 2 * t); }
   const start = C.JulianDate.now();
@@ -406,7 +423,7 @@ async function runTwin() {
       if (st === "WP0") emit("WP0");
     }
     const lonX = carto.longitude * 180 / Math.PI, latX = carto.latitude * 180 / Math.PI;
-    const enNow = lonLatToEn(lonX, latX, lon, lat);
+    const enNow = lonLatToEn(lonX, latX, originE, originN);
     const horiz = Math.hypot(enNow.east, enNow.north);
     const localAlt = alt - originH;
     if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {
@@ -461,7 +478,7 @@ async function runTwin() {
     const placed = [];
     arNodes.forEach(({ h, el }) => {
       const cam = viewer.camera.positionCartographic;
-      const en = cam ? lonLatToEn(cam.longitude * 180 / Math.PI, cam.latitude * 180 / Math.PI, lon, lat) : { east: 999, north: 999 };
+      const en = cam ? lonLatToEn(cam.longitude * 180 / Math.PI, cam.latitude * 180 / Math.PI, originE, originN) : { east: 999, north: 999 };
       const allow = handoffComplete && cam && (cam.height - originH) < 20 && Math.hypot(en.east, en.north) < 180;
       if (!allow) { el.style.display = "none"; return; }
       const p = C.Cartesian3.fromDegrees(h.wgs84.longitude, h.wgs84.latitude, originH + 5.4);

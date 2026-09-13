@@ -95,6 +95,26 @@ function jsonOf(res) {
   assert.match(html, /hideGlobe/);
   assert.match(html, /TILE_PROOF_MS/);
   assert.match(html, /CLEAN_LOCAL_HANDOFF/);
+  assert.match(html, /utmGridModelMatrix/);
+  assert.match(html, /utm\.js/);
+  const utm = readFileSync(join(root, "utm.js"), "utf8");
+  assert.match(utm, /wgs84ToUtm30n/);
+}
+
+{
+  const vm = await import("node:vm");
+  const ctx = { globalThis: {} };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync(join(root, "utm.js"), "utf8"), ctx);
+  const geo = JSON.parse(readFileSync(join(root, "AUMARA_WORLD_GEOREFERENCE_v1.json"), "utf8"));
+  const originE = geo.localOrigin.utm30n.easting;
+  const originN = geo.localOrigin.utm30n.northing;
+  geo.houses.forEach((h) => {
+    const rt = ctx.AUMARA_UTM.localFromWgs84(h.wgs84.longitude, h.wgs84.latitude, originE, originN);
+    const err = Math.hypot(rt.east - h.localMetres.east, rt.north - h.localMetres.north);
+    assert.ok(err < 0.05, "house " + h.spatialId + " UTM err " + err);
+  });
 }
 
 {
