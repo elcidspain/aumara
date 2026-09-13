@@ -88,7 +88,7 @@ function boundHeightProbe(C) {
       var scene = this;
       return Promise.race([
         Promise.resolve(original.call(scene, cartographics)),
-        new Promise(function (resolve) { setTimeout(function () { resolve(cartographics); }, 2500); }),
+        new Promise(function (resolve) { setTimeout(function () { resolve([{ height: undefined }]); }, 2500); }),
       ]);
     };
     proto.__AUMARA_HEIGHT_PROBE_BOUNDED = true;
