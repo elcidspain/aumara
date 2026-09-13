@@ -160,6 +160,8 @@ function installCanonicalModelFallback(C) {
     };
     C.Model.__AUMARA_CANONICAL_FALLBACK_WRAPPED = true;
   } catch (e) {}
+}
+
 function installAumaraGlbBridge(C) {
   if (!C || !C.Model || C.Model.__AUMARA_GLB_BRIDGED || typeof C.Model.fromGltfAsync !== "function") return;
   var original = C.Model.fromGltfAsync.bind(C.Model);

@@ -55,7 +55,7 @@
 </head>
 <body>
 <header>
-  <a href="/aumara/" class="row" style="align-items:center;gap:10px;font:600 12px system-ui;letter-spacing:.18em">
+  <a href="/" class="row" style="align-items:center;gap:10px;font:600 12px system-ui;letter-spacing:.18em">
     <span class="mark">A</span> AUMARA
   </a>
   <div class="row">
@@ -163,7 +163,7 @@ function openSheet(h) {
 }
 let started = false;
 document.getElementById("flight").onclick = () => startFlight();
-document.getElementById("close").onclick = () => { document.getElementById("stage").classList.remove("on"); sheet.className = ""; };
+document.getElementById("close").onclick = () => { document.getElementById("stage").classList.remove("on"); sheet.className = ""; window.location.replace("/"); };
 document.getElementById("ionbtn").onclick = () => {
   const next = prompt("Cesium ion token", "");
   if (!next) return;

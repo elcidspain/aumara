@@ -145,7 +145,7 @@ export const COPY: Record<Lang, Copy> = {
     navOperator: "Quién opera",
     navBook: "Reservar",
     eyebrow: "Benidoleig · Marina Alta · Costa Blanca",
-    h1: "Hay lugares que te dan más.\nEn AUMARA, vuelves a encontrarte contigo mismo.",
+    h1: "Hay lugares que te dan más.\nEn AUMARA vuelves a encontrarte.",
     lead: "Casas geodésicas independientes entre pinos, abiertas al valle. Casa completa. Entrada propia.",
     ctaWalk: "Recorrer el lugar",
     ctaBookBeds: "Consultar disponibilidad",

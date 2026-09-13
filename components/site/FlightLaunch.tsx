@@ -14,7 +14,7 @@ export default function FlightLaunch() {
   return (
     <a
       className="btn primary"
-      href="/spatial/#flight"
+      href="/spatial/index.html#flight"
       aria-label="Abrir el vuelo 3D de AUMARA"
       onClick={trackFlightOpen}
       style={{
@@ -25,7 +25,7 @@ export default function FlightLaunch() {
         boxShadow: "0 12px 36px rgba(0, 0, 0, 0.28)",
       }}
     >
-      3D Flight
+      Vuelo 3D
     </a>
   );
 }
