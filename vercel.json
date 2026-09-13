@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/world/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/world/aumara-site-v2_1.glb",
+      "destination": "https://www.aumara.me/spatial/world/aumara-site-v2_1.glb"
+    },
+    {
+      "source": "/world/flight-path.json",
+      "destination": "https://www.aumara.me/spatial/world/flight-path.json"
+    },
+    {
+      "source": "/world/heightmap.json",
+      "destination": "https://www.aumara.me/spatial/world/heightmap.json"
+    },
+    {
+      "source": "/world/media-index.json",
+      "destination": "https://www.aumara.me/spatial/world/media-index.json"
+    },
+    {
+      "source": "/AUMARA_WORLD_GEOREFERENCE_v1.json",
+      "destination": "https://www.aumara.me/spatial/AUMARA_WORLD_GEOREFERENCE_v1.json"
+    }
+  ]
+}
