@@ -160,6 +160,8 @@ function installCanonicalModelFallback(C) {
     };
     C.Model.__AUMARA_CANONICAL_FALLBACK_WRAPPED = true;
   } catch (e) {}
+}
+
 function installAumaraGlbBridge(C) {
   if (!C || !C.Model || C.Model.__AUMARA_GLB_BRIDGED || typeof C.Model.fromGltfAsync !== "function") return;
   var original = C.Model.fromGltfAsync.bind(C.Model);
@@ -203,8 +205,8 @@ window.AUMARA_ION = {
     if (hasIon) C.Ion.defaultAccessToken = token;
     if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
     boundRuntimeHeightProbe(C);
-    installCanonicalModelFallback(C);
     installAumaraGlbBridge(C);
+    installCanonicalModelFallback(C);
 
     if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
       var directGoogleFactory = typeof C.createGooglePhotorealistic3DTileset === "function" ? C.createGooglePhotorealistic3DTileset.bind(C) : null;
