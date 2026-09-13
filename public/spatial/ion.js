@@ -29,19 +29,13 @@
 
   window.addEventListener("DOMContentLoaded", function () {
     var flightButton = document.getElementById("flight");
-    if (flightButton) {
-      flightButton.onclick = function () {
-        window.__AUMARA_PENDING_FLIGHT = true;
-      };
-    }
+    if (flightButton) flightButton.onclick = function () { window.__AUMARA_PENDING_FLIGHT = true; };
     if (document.querySelector('script[data-aumara-local-flight="1"]')) return;
     var script = document.createElement("script");
     script.src = "./flight-runtime.js";
     script.defer = true;
     script.dataset.aumaraLocalFlight = "1";
-    script.onerror = function () {
-      document.documentElement.dataset.aumaraFlightRuntime = "load-error";
-    };
+    script.onerror = function () { document.documentElement.dataset.aumaraFlightRuntime = "load-error"; };
     document.body.appendChild(script);
   }, { once: true });
 })();
@@ -53,31 +47,19 @@ async function loadAumaraIonRuntimeConfig() {
   var controller = typeof AbortController === "function" ? new AbortController() : null;
   var timer = controller ? setTimeout(function () { controller.abort(); }, 4000) : null;
   try {
-    var response = await fetch("/api/spatial-config", {
-      cache: "no-store",
-      signal: controller ? controller.signal : undefined,
-    });
+    var response = await fetch("/api/spatial-config", { cache: "no-store", signal: controller ? controller.signal : undefined });
     if (!response.ok) return false;
     var data = await response.json();
     var ion = data && data.cesiumIon ? data.cesiumIon : null;
     var googleMaps = data && data.googleMaps ? data.googleMaps : null;
-    if (ion && ion.configured && typeof ion.token === "string" && ion.token.trim()) {
-      aumaraRuntimeIonToken = ion.token.trim();
-    }
-    if (googleMaps && googleMaps.configured && typeof googleMaps.key === "string" && googleMaps.key.trim()) {
-      aumaraGoogleMapsKey = googleMaps.key.trim();
-    }
-    window.__AUMARA_ION_STATUS = {
-      ionConfigured: Boolean(aumaraRuntimeIonToken),
-      googleMapsConfigured: Boolean(aumaraGoogleMapsKey),
-    };
+    if (ion && ion.configured && typeof ion.token === "string" && ion.token.trim()) aumaraRuntimeIonToken = ion.token.trim();
+    if (googleMaps && googleMaps.configured && typeof googleMaps.key === "string" && googleMaps.key.trim()) aumaraGoogleMapsKey = googleMaps.key.trim();
+    window.__AUMARA_ION_STATUS = { ionConfigured: Boolean(aumaraRuntimeIonToken), googleMapsConfigured: Boolean(aumaraGoogleMapsKey) };
     return Boolean(aumaraRuntimeIonToken || aumaraGoogleMapsKey);
   } catch (e) {
     window.__AUMARA_ION_STATUS = { ionConfigured: false, googleMapsConfigured: false };
     return false;
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
+  } finally { if (timer) clearTimeout(timer); }
 }
 
 function instrumentVisibleTileset(tileset) {
@@ -178,6 +160,32 @@ function installCanonicalModelFallback(C) {
     };
     C.Model.__AUMARA_CANONICAL_FALLBACK_WRAPPED = true;
   } catch (e) {}
+function installAumaraGlbBridge(C) {
+  if (!C || !C.Model || C.Model.__AUMARA_GLB_BRIDGED || typeof C.Model.fromGltfAsync !== "function") return;
+  var original = C.Model.fromGltfAsync.bind(C.Model);
+  C.Model.fromGltfAsync = async function (options) {
+    var url = String(options && options.url || "");
+    if (!/aumara-site-v2_1\.glb(?:$|\?)/.test(url)) return original(options);
+    var localRuntime = import("./glb-flight.mjs").then(function (m) { return m.prepareAumaraGlbFlight(); });
+    await localRuntime;
+    var visible = false, destroyed = false;
+    return {
+      update: function () {},
+      prePassesUpdate: function () {},
+      updateForPass: function () {},
+      postPassesUpdate: function () {},
+      isDestroyed: function () { return destroyed; },
+      destroy: function () { destroyed = true; localRuntime.then(function (r) { r.stop(); }).catch(function () {}); },
+      get show() { return visible; },
+      set show(value) {
+        visible = !!value;
+        localRuntime.then(function (r) { if (visible) r.start(); else r.stop(); }).catch(function (error) {
+          if (window.__AUMARA) { window.__AUMARA.renderError = String(error && error.message || error); window.__AUMARA.fatalRenderError = true; }
+        });
+      },
+    };
+  };
+  C.Model.__AUMARA_GLB_BRIDGED = true;
 }
 
 window.AUMARA_ION = {
@@ -196,29 +204,19 @@ window.AUMARA_ION = {
     if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
     boundRuntimeHeightProbe(C);
     installCanonicalModelFallback(C);
+    installAumaraGlbBridge(C);
 
     if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
-      var directGoogleFactory = typeof C.createGooglePhotorealistic3DTileset === "function"
-        ? C.createGooglePhotorealistic3DTileset.bind(C)
-        : null;
-      var ionFactory = C.Cesium3DTileset && typeof C.Cesium3DTileset.fromIonAssetId === "function"
-        ? C.Cesium3DTileset.fromIonAssetId.bind(C.Cesium3DTileset)
-        : null;
-
+      var directGoogleFactory = typeof C.createGooglePhotorealistic3DTileset === "function" ? C.createGooglePhotorealistic3DTileset.bind(C) : null;
+      var ionFactory = C.Cesium3DTileset && typeof C.Cesium3DTileset.fromIonAssetId === "function" ? C.Cesium3DTileset.fromIonAssetId.bind(C.Cesium3DTileset) : null;
       if (hasGoogleKey && directGoogleFactory) {
         C.createGooglePhotorealistic3DTileset = async function () {
-          try {
-            return instrumentVisibleTileset(await directGoogleFactory.apply(null, arguments));
-          } catch (error) {
-            if (hasIon && ionFactory) return instrumentVisibleTileset(await ionFactory(assetId));
-            throw error;
-          }
+          try { return instrumentVisibleTileset(await directGoogleFactory.apply(null, arguments)); }
+          catch (error) { if (hasIon && ionFactory) return instrumentVisibleTileset(await ionFactory(assetId)); throw error; }
         };
         C.__AUMARA_GOOGLE_FACTORY_WRAPPED = true;
       } else if (hasIon && ionFactory) {
-        C.createGooglePhotorealistic3DTileset = async function () {
-          return instrumentVisibleTileset(await ionFactory(assetId));
-        };
+        C.createGooglePhotorealistic3DTileset = async function () { return instrumentVisibleTileset(await ionFactory(assetId)); };
         C.__AUMARA_GOOGLE_FACTORY_WRAPPED = true;
       }
     }
