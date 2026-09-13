@@ -6,7 +6,6 @@ import {
   BOOK_DIRECT,
   BOOK_SUPERIOR,
   EL_CID_URL,
-  FLIGHT,
   NODE_POSITIONS,
   WALK_NODES,
   beds24Url,
@@ -44,6 +43,12 @@ const QUIET: Record<Lang, string> = {
   sv: "Tystnad",
 };
 
+const HERO_SLIDES = [
+  "/media/hero/three-houses-01.webp",
+  "/media/hero/three-houses-02.webp",
+  "/media/hero/three-houses-03.webp",
+] as const;
+
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
@@ -70,6 +75,7 @@ export default function GuestHome() {
   const [lang, setLang] = useState<Lang>("es");
   const [langOpen, setLangOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
   const padRef = useRef<PadHandle | null>(null);
 
   const t = COPY[lang];
@@ -87,6 +93,13 @@ export default function GuestHome() {
   useEffect(() => {
     persistLang(lang);
   }, [lang]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((index) => (index + 1) % HERO_SLIDES.length);
+    }, 9000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     padRef.current = createOpeningPad();
@@ -191,17 +204,19 @@ export default function GuestHome() {
 
       <main id="top">
         <section className="hero">
-          <video
-            className="hero-bg"
-            src={FLIGHT.video}
-            poster={FLIGHT.poster}
-            muted
-            autoPlay
-            playsInline
-            loop
-            preload="metadata"
-            aria-label={t.flightAria}
-          />
+          <div className="hero-bg hero-slideshow" aria-hidden="true">
+            {HERO_SLIDES.map((src, index) => (
+              <img
+                key={src}
+                className={index === heroIndex ? "hero-slide active" : "hero-slide"}
+                src={src}
+                alt=""
+                decoding="async"
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
+              />
+            ))}
+          </div>
           <div className="hero-inner">
             <div className="wrap">
               <p className="eyebrow hero-in hero-in-1">{t.eyebrow}</p>
