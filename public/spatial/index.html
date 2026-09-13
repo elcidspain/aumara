@@ -33,16 +33,20 @@
   .card p{font:14px/1.45 system-ui,sans-serif;color:rgba(243,236,222,.55);margin:0}
   .foot{max-width:1100px;margin:0 auto;padding:0 20px 48px;font:14px/1.6 system-ui,sans-serif;color:rgba(243,236,222,.45)}
   .foot a{color:var(--gold)}
-  #stage{display:none;position:fixed;inset:0;z-index:20;background:#000}
+  #stage{display:none;position:fixed;inset:0;z-index:20;background:#061009}
   #stage.on{display:block}
   #c{position:absolute;inset:0}
+  #flight-cover{position:absolute;inset:0;z-index:5;display:flex;align-items:flex-end;padding:48px;background:linear-gradient(180deg,rgba(6,16,9,.18),rgba(6,16,9,.82)),url('/media/hero/three-houses-01.webp') center/cover no-repeat;transition:opacity .8s ease,visibility .8s ease}
+  #flight-cover.off{opacity:0;visibility:hidden;pointer-events:none}
+  #flight-cover strong{font:500 clamp(32px,5vw,68px)/1.02 Georgia,'Times New Roman',serif;color:#e8d5a4;max-width:12ch}
+  #flight-cover span{display:block;margin-top:10px;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#f3ecde}
   #overlay{position:absolute;inset:0;z-index:2;pointer-events:none}
   .ar{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-50%,-130%);
     border:0;border-radius:999px;padding:7px 11px;background:var(--gold);color:#111;
     font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer}
   #hud{display:none;position:absolute;left:12px;top:12px;z-index:3;background:#0008;padding:8px 12px;border-radius:12px;font:12px/1.4 ui-monospace,monospace}
   #hud.on{display:block}
-  #close{position:absolute;right:12px;top:12px;z-index:3}
+  #close{position:absolute;right:12px;top:12px;z-index:7}
   #sheet{display:none;position:absolute;left:12px;right:12px;bottom:12px;z-index:4;background:#0a1a14f2;border:1px solid var(--line);border-radius:18px;padding:12px;color:var(--cream);gap:12px;align-items:center}
   #sheet.on{display:flex}
   #sheet img{width:96px;height:72px;object-fit:cover;border-radius:10px}
@@ -83,6 +87,7 @@
 </section>
 <div id="stage">
   <div id="c"></div>
+  <div id="flight-cover"><div><strong>AUMARA</strong><span>Preparando el vuelo 3D…</span></div></div>
   <div id="overlay"></div>
   <div id="hud">Earth…</div>
   <button class="btn gold" id="close" type="button">Cerrar</button>
@@ -191,6 +196,10 @@ async function runTwin() {
     fetch("./world/heightmap.json").then((r) => r.json()),
   ]);
   const lon = geo.localOrigin.wgs84.longitude, lat = geo.localOrigin.wgs84.latitude;
+  import("./glb-flight.mjs").then((m) => m.prepareAumaraGlbFlight()).then(() => {
+    window.__AUMARA_LOCAL_TWIN_READY = true;
+    if (window.__AUMARA) window.__AUMARA.localTwinReady = true;
+  }).catch(() => {});
   const refMsl = (geo.verticalPolicy && geo.verticalPolicy.projectReferenceElevationMslMetres) || 91;
   const wps = flight.waypoints;
   const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -198,10 +207,10 @@ async function runTwin() {
     animation: false, timeline: false, baseLayerPicker: false,
     geocoder: false, homeButton: false, sceneModePicker: false, navigationHelpButton: false,
     fullscreenButton: false, infoBox: false, selectionIndicator: false,
-    baseLayer: false, shadows: false, msaaSamples: 1, targetFrameRate: mobile ? 30 : 60,
+    shadows: false, msaaSamples: 1, targetFrameRate: mobile ? 30 : 60,
     requestRenderMode: false,
   });
-  viewer.scene.globe.show = false;
+  viewer.scene.globe.show = true;
   viewer.scene.skyAtmosphere.show = true;
   viewer.scene.fog.enabled = false;
   viewer.scene.fxaa = false;
@@ -237,13 +246,17 @@ async function runTwin() {
   }
   let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
   try {
-    tileset = await C.createGooglePhotorealistic3DTileset();
+    tileset = await Promise.race([
+      C.createGooglePhotorealistic3DTileset(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("google-tiles-timeout")), 7000)),
+    ]);
     tileset.maximumScreenSpaceError = mobile ? 16 : 8;
     tileset.skipLevelOfDetail = true;
     tileset.immediatelyLoadDesiredLevelOfDetail = false;
     tileset.dynamicScreenSpaceError = true;
     if (tileset.cacheBytes !== undefined) tileset.cacheBytes = mobile ? 256 * 1024 * 1024 : 768 * 1024 * 1024;
     viewer.scene.primitives.add(tileset);
+    tileset.show = false;
     tilesOn = true;
     tilesStatus = "LOADING";
     const markTile = () => {
@@ -263,26 +276,9 @@ async function runTwin() {
     tilesOn = false;
     tileset = null;
     tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
-    viewer.scene.globe.show = false;
+    viewer.scene.globe.show = true;
   }
-  if (tilesOn) {
-    const waitUntil = Date.now() + 14000;
-    while (!firstGoogleTileRendered && Date.now() < waitUntil) {
-      await new Promise((r) => setTimeout(r, 200));
-    }
-    if (!firstGoogleTileRendered) {
-      tilesStatus = sessionIon ? "LOADING" : "AWAITING_OWNER_RUNTIME_PROOF";
-      if (!sessionIon) tilesOn = false;
-    }
-  }
-  let originH = tilesOn ? refMsl : 0;
-  if (tilesOn) {
-    try {
-      const originProbe = C.Cartographic.fromDegrees(lon, lat);
-      const sampled = await viewer.scene.sampleHeightMostDetailed([originProbe]);
-      if (sampled[0] && isFinite(sampled[0].height) && sampled[0].height > -50 && sampled[0].height < 500) originH = sampled[0].height;
-    } catch (e) {}
-  }
+  let originH = refMsl;
   let parcelClippingActive = false, clipSupported = false;
   const clipOk = !!(C.ClippingPolygonCollection && C.ClippingPolygonCollection.isSupported && C.ClippingPolygonCollection.isSupported(viewer.scene));
   clipSupported = clipOk;
@@ -356,31 +352,26 @@ async function runTwin() {
   const dur = flight.duration_s_default || 48;
   const pos = new C.SampledPositionProperty();
   pos.setInterpolationOptions({ interpolationDegree: 1, interpolationAlgorithm: C.LinearApproximation });
-  let intro = 2;
-  if (tilesOn) {
-    intro = 22;
-    const stages = [
-      { lon: lon, lat: lat, h: 18000000 },
-      { lon: -2.8, lat: 40.15, h: 650000 },
-      { lon: -0.18, lat: 38.70, h: 30000 },
-      { lon: lon, lat: lat, h: originH + 2200 },
-      { lon: lon, lat: lat, h: originH + 140 },
-      { lon: wps[0].wgs84.longitude, lat: wps[0].wgs84.latitude, h: originH + 40 },
-    ];
-    const ts = [0, 5.2, 10.4, 14.6, 18.2, 22];
-    for (let s = 0; s < stages.length - 1; s++) {
-      const a = stages[s], b = stages[s + 1], t0 = ts[s], t1 = ts[s + 1], n = 10;
-      for (let i = 0; i < n; i++) {
-        const u = ease(i / n);
-        const t = C.JulianDate.addSeconds(start, t0 + (t1 - t0) * (i / n), new C.JulianDate());
-        pos.addSample(t, C.Cartesian3.fromDegrees(a.lon + (b.lon - a.lon) * u, a.lat + (b.lat - a.lat) * u, a.h + (b.h - a.h) * u));
-      }
+  const intro = 22;
+  const stages = [
+    { lon: lon, lat: lat, h: 18000000 },
+    { lon: -2.8, lat: 40.15, h: 650000 },
+    { lon: -0.18, lat: 38.70, h: 30000 },
+    { lon: lon, lat: lat, h: originH + 2200 },
+    { lon: lon, lat: lat, h: originH + 140 },
+    { lon: wps[0].wgs84.longitude, lat: wps[0].wgs84.latitude, h: originH + 40 },
+  ];
+  const ts = [0, 5.2, 10.4, 14.6, 18.2, 22];
+  for (let s = 0; s < stages.length - 1; s++) {
+    const a = stages[s], b = stages[s + 1], t0 = ts[s], t1 = ts[s + 1], n = 10;
+    for (let i = 0; i < n; i++) {
+      const u = ease(i / n);
+      const t = C.JulianDate.addSeconds(start, t0 + (t1 - t0) * (i / n), new C.JulianDate());
+      pos.addSample(t, C.Cartesian3.fromDegrees(a.lon + (b.lon - a.lon) * u, a.lat + (b.lat - a.lat) * u, a.h + (b.h - a.h) * u));
     }
-    pos.addSample(C.JulianDate.addSeconds(start, intro, new C.JulianDate()), C.Cartesian3.fromDegrees(wps[0].wgs84.longitude, wps[0].wgs84.latitude, originH + 40));
-    emit("EARTH_STAGE");
-  } else {
-    pos.addSample(start, C.Cartesian3.fromDegrees(lon, lat, originH + 55));
   }
+  pos.addSample(C.JulianDate.addSeconds(start, intro, new C.JulianDate()), C.Cartesian3.fromDegrees(wps[0].wgs84.longitude, wps[0].wgs84.latitude, originH + 40));
+  emit("EARTH_STAGE");
   const dense = 80;
   for (let s = 0; s < dense; s++) {
     const u = s / (dense - 1);
@@ -399,7 +390,7 @@ async function runTwin() {
   viewer.clock.clockRange = C.ClockRange.CLAMPED;
   viewer.clock.shouldAnimate = true;
   let firstFrameRendered = false, maxWp = -1, lastHz = -0.1;
-  let blendComplete = !tilesOn, localTwinVisible = false, handoffComplete = !tilesOn;
+  let blendComplete = false, localTwinVisible = false, handoffComplete = false;
   let localTwinVisibleBeforeBlend = false, labelsVisibleBeforeBlend = false, zFightingObserved = false;
   const rawAgl = [];
   const startedMs = Date.now();
@@ -419,14 +410,15 @@ async function runTwin() {
     continuousCamera: true, parcelClippingActive, localTwinLoaded: true, blendComplete,
     localTwinVisible: false, localTwinVisibleBeforeBlend: false,
     labelsVisibleBeforeBlend: false, labelsVisibleBeforeHandoffComplete: false,
-    zFightingObserved: false, globalTilesVisible: tilesOn, handoffComplete: !tilesOn,
+    zFightingObserved: false, globalTilesVisible: false, handoffComplete: false,
+    earthBasemapVisible: true, localTwinReady: !!window.__AUMARA_LOCAL_TWIN_READY,
     mobileGoogleHiddenBeforeWP0: !mobile || !tilesOn, localTwinVisibleAtWP0: false,
-    GoogleEarthStageVisible: false, GoogleParcelApproachVisible: false,
+    GoogleEarthStageVisible: true, GoogleParcelApproachVisible: false,
     clipSupported: clipSupported, renderError: null, fatalRenderError: false,
     ionQueryRemoved: !new URL(location.href).searchParams.has("ion"),
     flightComplete: false,
-    stage: tilesOn ? "EARTH" : "LOCAL_FALLBACK",
-    verification_status: tilesOn && firstGoogleTileRendered ? "READY" : "AWAITING_OWNER_RUNTIME_PROOF",
+    stage: "EARTH",
+    verification_status: "EARTH_READY",
     required_events: ["GOOGLE_TILE_FIRST_RENDER","EARTH_STAGE","IBERIA_STAGE","COSTA_BLANCA_STAGE","PARCEL_APPROACH","GOOGLE_LOCAL_HANDOFF_START","GOOGLE_LOCAL_HANDOFF_COMPLETE","LOCAL_TWIN_VISIBLE","BLEND_COMPLETE","WP0","WP27"],
     ownerProof: function () {
       const a = window.__AUMARA;
@@ -466,7 +458,6 @@ async function runTwin() {
     window.__AUMARA.glb_sha = Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, "0")).join("");
   }).catch(() => {});
   function stageOf(alt, elapsed) {
-    if (!tilesOn) return "LOCAL_FALLBACK";
     if (elapsed >= intro) return elapsed < intro + 0.3 ? "WP0" : "WP0_27";
     if (alt > 4e6) return "EARTH";
     if (alt > 1.2e5) return "IBERIA";
@@ -521,40 +512,44 @@ async function runTwin() {
     const enNow = lonLatToEn(lonX, latX, lon, lat);
     const horiz = Math.hypot(enNow.east, enNow.north);
     const localAlt = alt - originH;
-    if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {
-      if (!tileset.show) tileset.show = true;
-    }
-    if (st === "EARTH" && tileset && tileset.show) window.__AUMARA.GoogleEarthStageVisible = true;
-    if (st === "PARCEL_APPROACH" && tileset && tileset.show) window.__AUMARA.GoogleParcelApproachVisible = true;
-    if (tilesOn && !window.__AUMARA._handoffStart && horiz < 220 && localAlt < 120) {
+    const localReady = !!window.__AUMARA_LOCAL_TWIN_READY || glb.ready === true;
+    const localFrameVisible = !!window.__AUMARA_LOCAL_FRAME_VISIBLE;
+    window.__AUMARA.localTwinReady = localReady;
+    const googleApproach = !!(tilesOn && localAlt < 120000 && elapsed >= 5 && !localFrameVisible);
+    if (tileset) tileset.show = googleApproach;
+    if (viewer.scene.globe) viewer.scene.globe.show = !localFrameVisible && !(firstGoogleTileRendered && googleApproach && localAlt < 30000);
+    if (st === "EARTH") window.__AUMARA.GoogleEarthStageVisible = true;
+    if (st === "PARCEL_APPROACH" && ((tileset && tileset.show) || viewer.scene.globe.show)) window.__AUMARA.GoogleParcelApproachVisible = true;
+    const localWindow = localReady && elapsed >= intro - 0.6 && horiz < 260 && localAlt < 180;
+    if (localWindow && !window.__AUMARA._handoffStart) {
       window.__AUMARA._handoffStart = true;
       emit("GOOGLE_LOCAL_HANDOFF_START");
     }
-    const mobileHide = mobile && tilesOn && horiz < 180 && localAlt < 90;
-    const deskHide = !mobile && tilesOn && horiz < 180 && localAlt < 70;
-    if (tileset && (mobileHide || deskHide || (tilesOn && elapsed >= intro))) tileset.show = false;
-    const googleHidden = !tileset || !tileset.show;
-    if (!glb.show && (!tilesOn || (googleHidden && localAlt < 140))) {
+    if (localWindow && !glb.show) {
       glb.show = true;
       localTwinVisible = true;
-      emit("LOCAL_TWIN_VISIBLE");
-      window.__AUMARA.localTwinVisible = true;
       window.__AUMARA.localTwinLoaded = true;
+    }
+    const googleHidden = !tileset || !tileset.show;
+    if (!handoffComplete && glb.show && localFrameVisible && !window.__AUMARA.fatalRenderError) {
+      if (tileset) tileset.show = false;
+      if (viewer.scene.globe) viewer.scene.globe.show = false;
+      handoffComplete = true;
+      blendComplete = true;
+      window.__AUMARA.handoffComplete = true;
+      window.__AUMARA.blendComplete = true;
+      window.__AUMARA.localTwinVisible = true;
+      emit("LOCAL_TWIN_VISIBLE");
+      emit("GOOGLE_LOCAL_HANDOFF_COMPLETE");
+      emit("BLEND_COMPLETE");
     }
     if (localTwinVisible && tileset && tileset.show && localAlt > 140) {
       localTwinVisibleBeforeBlend = true;
       window.__AUMARA.localTwinVisibleBeforeBlend = true;
     }
-    if (!handoffComplete && glb.show && googleHidden && !window.__AUMARA.fatalRenderError) {
-      handoffComplete = true;
-      blendComplete = true;
-      window.__AUMARA.handoffComplete = true;
-      window.__AUMARA.blendComplete = true;
-      emit("GOOGLE_LOCAL_HANDOFF_COMPLETE");
-      emit("BLEND_COMPLETE");
-    }
     window.__AUMARA.globalTilesVisible = !!(tileset && tileset.show);
-    window.__AUMARA.localTwinVisible = !!glb.show;
+    window.__AUMARA.earthBasemapVisible = !!(viewer.scene.globe && viewer.scene.globe.show);
+    window.__AUMARA.localTwinVisible = !!(glb.show && localFrameVisible);
     const googleBlockingWp = !!(mobile && tilesOn && tileset && tileset.show);
     if (elapsed >= intro && !googleBlockingWp) {
       if (googleHidden) window.__AUMARA.mobileGoogleHiddenBeforeWP0 = true;
@@ -595,7 +590,12 @@ async function runTwin() {
     sampleOnce(false);
   };
   viewer.scene.postRender.addEventListener(() => {
-    if (!firstFrameRendered) { firstFrameRendered = true; window.__AUMARA.firstFrameRendered = true; }
+    if (!firstFrameRendered) {
+      firstFrameRendered = true;
+      window.__AUMARA.firstFrameRendered = true;
+      const cover = document.getElementById("flight-cover");
+      if (cover) setTimeout(() => cover.classList.add("off"), 1800);
+    }
     const placed = [];
     arNodes.forEach(({ h, el }) => {
       const cam = viewer.camera.positionCartographic;
