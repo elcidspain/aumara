@@ -485,6 +485,7 @@ async function runTwin() {
     if (!p) return;
     const elapsed = C.JulianDate.secondsDifference(viewer.clock.currentTime, start);
     const atEnd = elapsed >= flightEnd - 0.02;
+    window.__AUMARA.localPathU = elapsed < intro ? 0 : Math.min(1, (elapsed - intro) / dur);
     const carto = C.Cartographic.fromCartesian(p);
     const alt = carto.height;
     if (!measureOnly) {
@@ -598,9 +599,11 @@ async function runTwin() {
     if (!firstFrameRendered) { firstFrameRendered = true; window.__AUMARA.firstFrameRendered = true; }
     const placed = [];
     arNodes.forEach(({ h, el }) => {
-      const cam = viewer.camera.positionCartographic;
-      const en = cam ? lonLatToEn(cam.longitude * 180 / Math.PI, cam.latitude * 180 / Math.PI, lon, lat) : { east: 999, north: 999 };
-      const allow = handoffComplete && cam && (cam.height - originH) < 20 && Math.hypot(en.east, en.north) < 180;
+      const loc = window.__AUMARA && window.__AUMARA.localRenderer === "THREE_GLTF" && window.__AUMARA.localCamera;
+      const cam = loc ? null : viewer.camera.positionCartographic;
+      const en = loc ? { east: loc.east, north: loc.north } : (cam ? lonLatToEn(cam.longitude * 180 / Math.PI, cam.latitude * 180 / Math.PI, lon, lat) : { east: 999, north: 999 });
+      const alt = loc ? loc.height : (cam ? cam.height - originH : 999);
+      const allow = handoffComplete && (loc || cam) && alt < 20 && Math.hypot(en.east, en.north) < 180;
       if (!allow) {
         if (el.style.display === "block" && !handoffComplete) {
           window.__AUMARA.labelsVisibleBeforeHandoffComplete = true;
@@ -610,10 +613,19 @@ async function runTwin() {
         el.style.display = "none";
         return;
       }
-      const p = C.Cartesian3.fromDegrees(h.wgs84.longitude, h.wgs84.latitude, originH + 5.4);
-      const win = C.SceneTransforms.worldToWindowCoordinates(viewer.scene, p);
-      if (!win) { el.style.display = "none"; return; }
-      placed.push({ el, win, dist: C.Cartesian3.distance(viewer.camera.position, p) });
+      let win, dist;
+      if (loc && typeof window.__AUMARA.projectLocal === "function") {
+        const lm = h.localMetres || { east: 0, north: 0 };
+        win = window.__AUMARA.projectLocal(lm.east, lm.north, 5.4);
+        if (!win) { el.style.display = "none"; return; }
+        dist = Math.hypot(loc.east - lm.east, loc.north - lm.north, loc.height - 5.4);
+      } else {
+        const p = C.Cartesian3.fromDegrees(h.wgs84.longitude, h.wgs84.latitude, originH + 5.4);
+        win = C.SceneTransforms.worldToWindowCoordinates(viewer.scene, p);
+        if (!win) { el.style.display = "none"; return; }
+        dist = C.Cartesian3.distance(viewer.camera.position, p);
+      }
+      placed.push({ el, win, dist });
     });
     placed.sort((a, b) => a.dist - b.dist);
     placed.forEach((a, i) => {

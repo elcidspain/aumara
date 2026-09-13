@@ -58,30 +58,50 @@ export async function prepareAumaraGlbFlight() {
 
   let active = false, startedAt = 0, raf = 0;
   const duration = (flight.duration_s_default || 48) * 1000;
+  const ndc = new THREE.Vector3();
+  function pathU(now) {
+    const a = window.__AUMARA;
+    if (a && typeof a.localPathU === 'number' && isFinite(a.localPathU)) return Math.max(0, Math.min(1, a.localPathU));
+    if (!startedAt) return 0;
+    return Math.min(1, ((now != null ? now : performance.now()) - startedAt) / duration);
+  }
+  function projectLocal(east, north, y) {
+    ndc.set(east, y, -north).project(camera);
+    if (!isFinite(ndc.x) || !isFinite(ndc.y) || ndc.z > 1) return null;
+    const w = renderer.domElement.clientWidth || innerWidth;
+    const h = renderer.domElement.clientHeight || innerHeight;
+    return { x: (ndc.x * 0.5 + 0.5) * w, y: (-ndc.y * 0.5 + 0.5) * h };
+  }
+  function publish() {
+    if (!window.__AUMARA) return;
+    window.__AUMARA.localTwinVisible = true;
+    window.__AUMARA.localTwinLoaded = true;
+    window.__AUMARA.localRenderer = 'THREE_GLTF';
+    window.__AUMARA.localGlbBounds = { min: bounds.min.toArray(), max: bounds.max.toArray() };
+    window.__AUMARA.localCamera = { east: camera.position.x, north: -camera.position.z, height: camera.position.y };
+    window.__AUMARA.projectLocal = projectLocal;
+  }
   function render(now) {
     if (!active) return;
-    const u = Math.min(1, (now - startedAt) / duration);
+    const u = pathU(now);
     const p = at(path, houses, u >= 1 ? 0.999999 : u);
     const t = at(path, houses, Math.min(0.999999, u + 0.035));
     t.y -= 1.55;
     camera.position.copy(p); camera.lookAt(t); renderer.render(scene, camera);
-    if (window.__AUMARA) {
-      window.__AUMARA.localTwinVisible = true;
-      window.__AUMARA.localTwinLoaded = true;
-      window.__AUMARA.localRenderer = 'THREE_GLTF';
-      window.__AUMARA.localGlbBounds = { min: bounds.min.toArray(), max: bounds.max.toArray() };
-    }
-    if (u < 1) raf = requestAnimationFrame(render);
+    publish();
+    raf = requestAnimationFrame(render);
   }
-  function start() {
+  function start(u) {
+    if (typeof u === 'number' && isFinite(u) && window.__AUMARA) window.__AUMARA.localPathU = Math.max(0, Math.min(1, u));
+    startedAt = performance.now() - pathU(performance.now()) * duration;
     if (active) return true;
-    active = true; startedAt = performance.now(); renderer.domElement.style.display = 'block';
+    active = true; renderer.domElement.style.display = 'block';
     const cesium = document.querySelector('#c canvas'); if (cesium) cesium.style.visibility = 'hidden';
-    raf = requestAnimationFrame(render); return true;
+    render(performance.now()); return true;
   }
   function stop() { active = false; cancelAnimationFrame(raf); renderer.domElement.style.display = 'none'; }
   addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-  runtime = { start, stop, bounds };
+  runtime = { start, stop, bounds, projectLocal };
   return runtime;
 }
 

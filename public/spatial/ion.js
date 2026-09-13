@@ -97,7 +97,12 @@ function installAumaraGlbBridge(C) {
       get show() { return visible; },
       set show(value) {
         visible = !!value;
-        localRuntime.then(function (r) { if (visible) r.start(); else r.stop(); }).catch(function (error) {
+        localRuntime.then(function (r) {
+          if (visible) {
+            var u = window.__AUMARA && typeof window.__AUMARA.localPathU === "number" ? window.__AUMARA.localPathU : undefined;
+            r.start(u);
+          } else r.stop();
+        }).catch(function (error) {
           if (window.__AUMARA) { window.__AUMARA.renderError = String(error && error.message || error); window.__AUMARA.fatalRenderError = true; }
         });
       },
