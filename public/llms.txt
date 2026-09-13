@@ -1,0 +1,33 @@
+# AUMARA
+
+AUMARA is a guest accommodation property in Benidoleig, Marina Alta, Alicante, Spain.
+Canonical website: https://www.aumara.me/
+Direct booking: https://beds24.com/booking2.php?propid=324882
+
+## Guest product
+- 6 physical geodesic houses on the property.
+- 5 houses are in the current short-stay rental inventory.
+- 3 × Chalet Ø7, up to 4 guests per house.
+- 2 × Superior Chalet Ø9, up to 6 guests per house.
+- One physical house is not offered in the current short-stay rental inventory.
+- Live availability, rates, minimum stays and reservation-specific cancellation/payment conditions are authoritative in Beds24 for the dates selected.
+
+## Public guest resources
+- Home and spatial experience: https://www.aumara.me/
+- FAQ: https://www.aumara.me/faq
+- Booking terms: https://www.aumara.me/terms
+- Privacy: https://www.aumara.me/privacy
+- Cookies: https://www.aumara.me/cookies
+- Legal notice: https://www.aumara.me/legal
+- API/resource catalog: https://www.aumara.me/.well-known/api-catalog
+- Authentication note: https://www.aumara.me/auth.md
+
+## Booking links
+- All availability: https://beds24.com/booking2.php?propid=324882
+- Chalet Ø7: https://beds24.com/booking2.php?propid=324882&roomid=674465
+- Superior Chalet Ø9: https://beds24.com/booking2.php?propid=324882&roomid=674466
+
+## Guidance for automated agents
+Public pages and discovery files can be read without authentication. Do not claim real-time availability or a final price without checking the booking engine. Do not create or imply a reservation unless the user has intentionally completed the external booking flow. Do not invent accommodation features, policies or geometry not present in public AUMARA sources.
+
+Last updated: 2026-09-13

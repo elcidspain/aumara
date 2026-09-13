@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import GuestActivation from "@/components/site/GuestActivation";
+import AgentWebTools from "@/components/site/AgentWebTools";
 import { SITE_URL } from "@/lib/guest";
 import {
   GA_MEASUREMENT_ID,
@@ -11,40 +12,25 @@ import {
   isGoogleAdsTagId,
 } from "@/lib/gtag";
 
-const inter = Inter({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const display = Playfair_Display({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-sans", display: "swap" });
+const display = Playfair_Display({ subsets: ["latin", "latin-ext", "cyrillic"], weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-display", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AUMARA — Hay lugares que te dan más",
-  description:
-    "Casas geodésicas independientes en Benidoleig, Marina Alta. Un vuelo real entre las casas, un recorrido por el lugar y reserva directa.",
+  description: "Casas geodésicas independientes en Benidoleig, Marina Alta. Explora el lugar, comprueba disponibilidad real y reserva directamente.",
   robots: "index,follow,max-image-preview:large",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     title: "AUMARA — Hay lugares que te dan más",
-    description:
-      "Casas geodésicas independientes en Benidoleig, Marina Alta. Un vuelo real entre las casas y reserva directa.",
+    description: "Casas geodésicas independientes en Benidoleig, Marina Alta. Un recorrido real por el lugar y reserva directa.",
     url: SITE_URL,
     images: [{ url: "/media/flight/poster.jpg", width: 1920, height: 1080 }],
   },
 };
 
-export const viewport: Viewport = {
-  themeColor: "#f2eadc",
-};
+export const viewport: Viewport = { themeColor: "#f2eadc" };
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -63,10 +49,11 @@ const jsonLd = {
     addressRegion: "Alicante",
     addressCountry: "ES",
   },
-  potentialAction: {
-    "@type": "ReserveAction",
-    target: "https://beds24.com/booking2.php?propid=324882",
-  },
+  containsPlace: [
+    { "@type": "Accommodation", name: "Chalet Ø7", occupancy: { "@type": "QuantitativeValue", maxValue: 4 } },
+    { "@type": "Accommodation", name: "Superior Chalet Ø9", occupancy: { "@type": "QuantitativeValue", maxValue: 6 } },
+  ],
+  potentialAction: { "@type": "ReserveAction", target: "https://beds24.com/booking2.php?propid=324882" },
 };
 
 const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
@@ -82,25 +69,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className={`${inter.variable} ${display.variable} ${inter.className}`}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         {googleTagLoaderId ? (
           <>
             <Script id="google-consent-default" strategy="beforeInteractive">
-            {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
+              {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});`}
             </Script>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
-              strategy="afterInteractive"
-            />
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`} strategy="afterInteractive" />
             <Script id="google-tags" strategy="afterInteractive">
               {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('js',new Date());${googleTagConfigs}`}
             </Script>
           </>
         ) : null}
         <GuestActivation />
+        <AgentWebTools />
         {children}
       </body>
     </html>

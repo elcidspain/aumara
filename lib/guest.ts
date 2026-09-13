@@ -14,9 +14,10 @@ export const BEDS24 = {
 
 export const INVENTORY = {
   totalHouses: 6,
+  rentableHouses: 5,
   chalet: {
-    count: 4,
-    label: "Ø7.5 Chalet",
+    count: 3,
+    label: "Ø7 Chalet",
     roomId: BEDS24.chaletRoomId,
     maxGuests: 4,
   },

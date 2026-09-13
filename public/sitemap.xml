@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.aumara.me/</loc>
-    <changefreq>weekly</changefreq>
-  </url>
+  <url><loc>https://www.aumara.me/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://www.aumara.me/faq</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.aumara.me/terms</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.aumara.me/privacy</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.aumara.me/cookies</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.aumara.me/legal</loc><changefreq>monthly</changefreq></url>
 </urlset>
