@@ -78,6 +78,88 @@ function instrumentVisibleTileset(tileset) {
   return tileset;
 }
 
+function boundRuntimeHeightProbe(C) {
+  try {
+    var proto = C && C.Scene && C.Scene.prototype;
+    if (!proto || proto.__AUMARA_HEIGHT_PROBE_BOUNDED) return;
+    var sampleHeightMostDetailed = proto.sampleHeightMostDetailed;
+    if (typeof sampleHeightMostDetailed !== "function") return;
+    proto.sampleHeightMostDetailed = function (cartographics) {
+      var scene = this;
+      return Promise.race([
+        Promise.resolve(sampleHeightMostDetailed.call(scene, cartographics)),
+new Promise(function (_, reject) {
+          setTimeout(function () { reject(new Error("height-probe-timeout")); }, 2500);
+        }),
+      ]);
+    };
+    proto.__AUMARA_HEIGHT_PROBE_BOUNDED = true;
+  } catch (e) {}
+}
+
+function sampleCanonicalHeight(hm, east, north) {
+  var u = (east - hm.east0) / hm.cell;
+  var v = (north - hm.north0) / hm.cell;
+  var c0 = Math.floor(u), r0 = Math.floor(v), tx = u - c0, ty = v - r0;
+  function at(c, r) {
+    var cc = Math.max(0, Math.min(hm.cols - 1, c));
+    var rr = Math.max(0, Math.min(hm.rows - 1, r));
+    return hm.heights_m[rr * hm.cols + cc];
+  }
+  return at(c0, r0) * (1 - tx) * (1 - ty) + at(c0 + 1, r0) * tx * (1 - ty) + at(c0, r0 + 1) * (1 - tx) * ty + at(c0 + 1, r0 + 1) * tx * ty;
+}
+
+async function buildCanonicalCesiumLocalModel(C, modelOptions) {
+  var parts = await Promise.all([
+    fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json", { cache: "force-cache" }).then(function (r) { return r.json(); }),
+    fetch("./world/heightmap.json", { cache: "force-cache" }).then(function (r) { return r.json(); }),
+  ]);
+  var geo = parts[0], hm = parts[1];
+  var collection = new C.PrimitiveCollection();
+  var parent = modelOptions && modelOptions.modelMatrix ? modelOptions.modelMatrix : C.Matrix4.IDENTITY;
+  var shellInstances = [], ringInstances = [];
+  var colors = { A: "#c56a32", B: "#e8dcc4", C: "#3f7a3a", D: "#ddd0b4", E: "#9b2f22", F: "#c8b896" };
+  geo.houses.forEach(function (h) {
+    var r = h.diameterMetres / 2;
+    var z = sampleCanonicalHeight(hm, h.localMetres.east, h.localMetres.north);
+    var shellLocal = C.Matrix4.fromTranslation(new C.Cartesian3(h.localMetres.east, h.localMetres.north, z + r * 0.02));
+    var ringLocal = C.Matrix4.fromTranslation(new C.Cartesian3(h.localMetres.east, h.localMetres.north, z + 0.24));
+    shellInstances.push(new C.GeometryInstance({
+      geometry: new C.EllipsoidGeometry({ radii: new C.Cartesian3(r, r, r), vertexFormat: C.PerInstanceColorAppearance.VERTEX_FORMAT }),
+      modelMatrix: C.Matrix4.multiply(parent, shellLocal, new C.Matrix4()),
+      attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(C.Color.fromCssColorString(colors[h.spatialId] || "#c8b896")) },
+    }));
+    ringInstances.push(new C.GeometryInstance({
+      geometry: new C.CylinderGeometry({ length: 0.48, topRadius: r * 0.98, bottomRadius: r * 1.04, slices: 28, vertexFormat: C.PerInstanceColorAppearance.VERTEX_FORMAT }),
+      modelMatrix: C.Matrix4.multiply(parent, ringLocal, new C.Matrix4()),
+      attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(C.Color.fromCssColorString("#4a2c18")) },
+    }));
+  });
+  collection.add(new C.Primitive({ geometryInstances: shellInstances, appearance: new C.PerInstanceColorAppearance({ translucent: false, closed: true }), asynchronous: false }));
+  collection.add(new C.Primitive({ geometryInstances: ringInstances, appearance: new C.PerInstanceColorAppearance({ translucent: false, closed: true }), asynchronous: false }));
+  collection.show = true;
+  collection.__AUMARA_CANONICAL_FALLBACK = true;
+  return collection;
+}
+
+function installCanonicalModelFallback(C) {
+  try {
+    if (!C || !C.Model || C.Model.__AUMARA_CANONICAL_FALLBACK_WRAPPED) return;
+    var original = C.Model.fromGltfAsync.bind(C.Model);
+    C.Model.fromGltfAsync = async function (options) {
+      var url = String(options && options.url || "");
+      if (!/aumara-site-v2_1\.glb(?:$|\?)/.test(url)) return original(options);
+      try {
+        return await Promise.race([
+          original(options),
+          new Promise(function (_, reject) { setTimeout(function () { reject(new Error("aumara-local-model-timeout")); }, 2500); }),
+        ]);
+      } catch (error) {
+        return buildCanonicalCesiumLocalModel(C, options);
+      }
+    };
+    C.Model.__AUMARA_CANONICAL_FALLBACK_WRAPPED = true;
+  } catch (e) {}
 function installAumaraGlbBridge(C) {
   if (!C || !C.Model || C.Model.__AUMARA_GLB_BRIDGED || typeof C.Model.fromGltfAsync !== "function") return;
   var original = C.Model.fromGltfAsync.bind(C.Model);
@@ -120,6 +202,8 @@ window.AUMARA_ION = {
     var hasIon = !!(token && C && C.Ion);
     if (hasIon) C.Ion.defaultAccessToken = token;
     if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
+    boundRuntimeHeightProbe(C);
+    installCanonicalModelFallback(C);
     installAumaraGlbBridge(C);
 
     if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
