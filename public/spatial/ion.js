@@ -78,6 +78,23 @@ function instrumentVisibleTileset(tileset) {
   return tileset;
 }
 
+function boundHeightProbe(C) {
+  try {
+    var proto = C && C.Scene && C.Scene.prototype;
+    if (!proto || proto.__AUMARA_HEIGHT_PROBE_BOUNDED) return;
+    var original = proto.sampleHeightMostDetailed;
+    if (typeof original !== "function") return;
+    proto.sampleHeightMostDetailed = function (cartographics) {
+      var scene = this;
+      return Promise.race([
+        Promise.resolve(original.call(scene, cartographics)),
+        new Promise(function (resolve) { setTimeout(function () { resolve(cartographics); }, 2500); }),
+      ]);
+    };
+    proto.__AUMARA_HEIGHT_PROBE_BOUNDED = true;
+  } catch (e) {}
+}
+
 function installAumaraGlbBridge(C) {
   if (!C || !C.Model || C.Model.__AUMARA_GLB_BRIDGED || typeof C.Model.fromGltfAsync !== "function") return;
   var original = C.Model.fromGltfAsync.bind(C.Model);
@@ -120,6 +137,7 @@ window.AUMARA_ION = {
     var hasIon = !!(token && C && C.Ion);
     if (hasIon) C.Ion.defaultAccessToken = token;
     if (hasGoogleKey) C.GoogleMaps.defaultApiKey = aumaraGoogleMapsKey;
+    boundHeightProbe(C);
     installAumaraGlbBridge(C);
 
     if (C && !C.__AUMARA_GOOGLE_FACTORY_WRAPPED) {
