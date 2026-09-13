@@ -6,7 +6,7 @@ export default function FaqPage() {
     <h2>What can I book?</h2>
     <p>AUMARA has six physical geodesic houses. Five are offered in the current guest rental inventory: three Chalet Ø7 houses and two Superior Chalet Ø9 houses. Live inventory in the booking engine is authoritative for a specific date.</p>
     <h2>Where is AUMARA?</h2>
-    <p>AUMARA is in Benidoleig, Marina Alta, Alicante, Spain. The website's spatial experience and real recorded routes are designed to show the relationship between the houses, paths and surrounding valley before you book.</p>
+    <p>AUMARA is in Benidoleig, Marina Alta, Alicante, Spain. The website&apos;s spatial experience and real recorded routes are designed to show the relationship between the houses, paths and surrounding valley before you book.</p>
     <h2>How do I check availability?</h2>
     <p>Use the <a href={BOOK_DIRECT} target="_blank" rel="noreferrer">direct booking engine</a>. It shows current room types, dates, rates and booking conditions.</p>
     <h2>Where are the final price and cancellation conditions?</h2>
