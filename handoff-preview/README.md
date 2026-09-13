@@ -15,10 +15,18 @@ Standalone Cesium Earth → parcel → local V2.1 GLB twin.
 
 ## Deploy
 
-Create or use a **separate** Vercel project with this directory as the root.
-Do not assign `www.aumara.me` / `aumara.me`. Do not production-deploy to `aumara-path-cut`.
-Copy ion env names only (`CESIUM_ION_TOKEN` / public ion token / Maps key) in the Vercel dashboard.
-Add the preview origin to the Cesium ion token URL allow-list. Without that, tiles 403 and the runtime fail-closes to local.
+A separate preview project was published (not `aumara-path-cut`, no www domains):
+
+- Alias: `https://aumara-clh-live-v33-elidspaincom.vercel.app`
+- Inspector: `https://vercel.com/elidspaincom/aumara-clh-live-v33`
+
+Team SSO still wraps that URL (302 to Vercel login). This MCP token cannot disable Deployment Protection on the new project. In the Vercel dashboard for **aumara-clh-live-v33**:
+
+1. Turn off Vercel Authentication / SSO for that project only
+2. Copy ion env names only (`CESIUM_ION_TOKEN` / public ion token / Maps key)
+3. Allow-list the preview origin on the URL-restricted Cesium ion token
+
+Without (2)+(3), tiles 403 (expected) and the runtime stays local.
 World assets may rewrite to already-public `aumara-path-cut.vercel.app/spatial/...` paths (read-only). That is not a www promote.
 
 ## Verify
