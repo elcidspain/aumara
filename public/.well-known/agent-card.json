@@ -1,0 +1,36 @@
+{
+  "name": "AUMARA Guest Discovery Agent",
+  "description": "Read-only discovery for AUMARA stays, location and direct-booking routes in Benidoleig, Marina Alta, Alicante. It never creates or changes a reservation.",
+  "version": "1.0.0",
+  "protocolVersion": "1.0",
+  "supportedInterfaces": [
+    {
+      "url": "https://www.aumara.me/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "discover-aumara-stay",
+      "name": "Discover AUMARA stay",
+      "description": "Return factual public information about AUMARA, its geodesic house formats and its Benidoleig location.",
+      "tags": ["lodging", "Benidoleig", "Marina Alta", "Costa Blanca", "geodesic houses"],
+      "examples": ["quiet nature stay near Dénia", "geodesic house in Marina Alta", "private chalet among pine trees on the Costa Blanca"]
+    },
+    {
+      "id": "find-direct-booking",
+      "name": "Find direct booking",
+      "description": "Return canonical Beds24 availability links for AUMARA without creating or modifying a reservation.",
+      "tags": ["direct booking", "availability", "Chalet", "Superior Chalet"],
+      "examples": ["check AUMARA availability", "book AUMARA directly", "find a Chalet Ø7 or Superior Chalet Ø9"]
+    }
+  ]
+}
