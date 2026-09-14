@@ -1,0 +1,39 @@
+{
+  "cleanUrls": false,
+  "functions": {
+    "api/ion.js": { "includeFiles": "lib/**" },
+    "api/ion-gate.js": { "includeFiles": "lib/**" },
+    "api/ion-boot.js": { "includeFiles": "lib/**" }
+  },
+  "rewrites": [
+    {
+      "source": "/world/aumara-site-v2_1.glb",
+      "destination": "https://aumara-path-cut.vercel.app/spatial/world/aumara-site-v2_1.glb"
+    },
+    {
+      "source": "/world/flight-path.json",
+      "destination": "https://aumara-path-cut.vercel.app/spatial/world/flight-path.json"
+    },
+    {
+      "source": "/world/heightmap.json",
+      "destination": "https://aumara-path-cut.vercel.app/spatial/world/heightmap.json"
+    },
+    {
+      "source": "/world/media-index.json",
+      "destination": "https://aumara-path-cut.vercel.app/spatial/world/media-index.json"
+    },
+    {
+      "source": "/AUMARA_WORLD_GEOREFERENCE_v1.json",
+      "destination": "https://aumara-path-cut.vercel.app/spatial/AUMARA_WORLD_GEOREFERENCE_v1.json"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
+}
