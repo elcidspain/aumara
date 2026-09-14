@@ -1,3 +1,5 @@
+import { agentAuthorized } from "@/lib/agentAccess";
+import { getAumaraAgentOffer } from "@/lib/agentOffer";
 import { compareAumaraStayLengths, getAumaraAvailability } from "@/lib/liveAvailability";
 
 const PROTOCOL_VERSION = "2025-06-18";
@@ -35,6 +37,23 @@ const tools = [
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   {
+    name: "aumara_agent_offer",
+    title: "AUMARA private agent offer",
+    description: "For an authorized agent channel, compare the live private Beds24 agent price with the simultaneously fetched public price and return a signed booking handoff only when a lower private price really exists. Requires Authorization: Bearer. Read-only.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        checkIn: { type: "string", description: "Arrival date in YYYY-MM-DD" },
+        checkOut: { type: "string", description: "Departure date in YYYY-MM-DD" },
+        adults: { type: "integer", minimum: 1, maximum: 20, default: 2 },
+        children: { type: "integer", minimum: 0, maximum: 20, default: 0 },
+      },
+      required: ["checkIn", "checkOut"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  {
     name: "aumara_compare_stay_lengths",
     title: "AUMARA stay-length value finder",
     description: "Compare live published totals and nightly value across nearby stay lengths so an agent can suggest the best currently published option. Read-only; never invents or applies a discount.",
@@ -54,7 +73,7 @@ const tools = [
   },
 ];
 
-const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
+const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Authorized agent channels may use aumara_agent_offer. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
 
 const bookingOptions = {
   property: "AUMARA",
@@ -69,7 +88,7 @@ function headers() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, MCP-Protocol-Version, Mcp-Session-Id",
     "Cache-Control": "no-store",
     "MCP-Protocol-Version": PROTOCOL_VERSION,
   };
@@ -109,8 +128,8 @@ export async function POST(request: Request) {
     return rpc(id, {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "aumara-public-mcp", title: "AUMARA Public Guest MCP", version: "1.1.0" },
-      instructions: "Read-only public guest information, live availability, published price comparison and direct-booking discovery for AUMARA. No reservation or rate is created, held, changed or charged by these tools.",
+      serverInfo: { name: "aumara-public-mcp", title: "AUMARA Guest + Agent MCP", version: "1.2.0" },
+      instructions: "Public guest information, live published availability and price comparison are read-only. The private agent offer tool additionally requires a valid Bearer authorization and only reports a discount when Beds24 returns a lower live private price than the simultaneous public quote.",
     });
   }
 
@@ -140,6 +159,23 @@ export async function POST(request: Request) {
         const result = await getAumaraAvailability(args);
         return rpc(id, {
           content: [{ type: "text", text: JSON.stringify(result) }],
+          structuredContent: result,
+          isError: false,
+        });
+      }
+      if (name === "aumara_agent_offer") {
+        if (!agentAuthorized(request)) {
+          return rpc(id, {
+            content: [{ type: "text", text: "Authorized AUMARA agent channel required." }],
+            isError: true,
+          });
+        }
+        const result = await getAumaraAgentOffer(args);
+        const lead = result.agentRateFound
+          ? "A lower live AUMARA private agent price is available."
+          : "No lower live AUMARA private agent price is currently available.";
+        return rpc(id, {
+          content: [{ type: "text", text: `${lead} ${JSON.stringify(result)}` }],
           structuredContent: result,
           isError: false,
         });
