@@ -1,7 +1,7 @@
 {
   "name": "AUMARA Guest Discovery Agent",
-  "description": "Read-only discovery for AUMARA stays, location and direct-booking routes in Benidoleig, Marina Alta, Alicante. It never creates or changes a reservation.",
-  "version": "1.0.0",
+  "description": "Read-only discovery for AUMARA stays, live Beds24 availability and published prices, location, stay-length value comparison and direct-booking routes in Benidoleig, Marina Alta, Alicante. It never creates, holds, changes or charges a reservation.",
+  "version": "1.1.0",
   "protocolVersion": "1.0",
   "supportedInterfaces": [
     {
@@ -26,11 +26,25 @@
       "examples": ["quiet nature stay near Dénia", "geodesic house in Marina Alta", "private chalet among pine trees on the Costa Blanca"]
     },
     {
+      "id": "check-live-availability",
+      "name": "Check live AUMARA availability",
+      "description": "Check exact dates against the public Beds24 availability feed and return published total price, nightly value, remaining unit count and a date-aware direct-booking link.",
+      "tags": ["live availability", "price", "Beds24", "dates", "booking"],
+      "examples": ["AUMARA from 20 to 23 September for two adults", "what is available next weekend", "live price for Chalet Ø7"]
+    },
+    {
+      "id": "compare-stay-value",
+      "name": "Compare stay-length value",
+      "description": "Compare nearby lengths of stay using live published Beds24 totals and identify the strongest nightly value without inventing or applying a discount.",
+      "tags": ["stay length", "value", "longer stay", "price comparison"],
+      "examples": ["is 4 nights better value than 3", "compare 2 to 6 nights", "find the best published nightly value"]
+    },
+    {
       "id": "find-direct-booking",
       "name": "Find direct booking",
-      "description": "Return canonical Beds24 availability links for AUMARA without creating or modifying a reservation.",
+      "description": "Return canonical Beds24 booking routes for AUMARA without creating or modifying a reservation.",
       "tags": ["direct booking", "availability", "Chalet", "Superior Chalet"],
-      "examples": ["check AUMARA availability", "book AUMARA directly", "find a Chalet Ø7 or Superior Chalet Ø9"]
+      "examples": ["book AUMARA directly", "find a Chalet Ø7 or Superior Chalet Ø9", "continue to the direct booking engine"]
     }
   ]
 }
