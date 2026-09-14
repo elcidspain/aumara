@@ -26,6 +26,12 @@ function clampGuests(value: number | undefined, fallback: number, field: string)
   return parsed;
 }
 
+function bookingUrl(roomId: string | null, checkIn: string, checkOut: string) {
+  const params = new URLSearchParams({ propid: PROPERTY_ID, checkin: checkIn, checkout: checkOut });
+  if (roomId) params.set("roomid", roomId);
+  return `https://beds24.com/booking2.php?${params.toString()}`;
+}
+
 export async function getAumaraAvailability(query: AvailabilityQuery) {
   const checkInDate = requireIsoDate(query.checkIn, "checkIn");
   const checkOutDate = requireIsoDate(query.checkOut, "checkOut");
@@ -55,15 +61,17 @@ export async function getAumaraAvailability(query: AvailabilityQuery) {
   const raw = (await response.json()) as Record<string, any>;
   const inventory = Object.entries(ROOM_TYPES).map(([roomId, meta]) => {
     const item = raw[roomId] ?? {};
+    const price = typeof item.price === "number" ? item.price : null;
     return {
       roomId,
       name: meta.name,
       totalUnits: meta.totalUnits,
       maxGuests: meta.maxGuests,
       availableUnits: Number(item.roomsavail ?? 0),
-      price: typeof item.price === "number" ? item.price : null,
+      price,
+      pricePerNight: price === null ? null : Math.round((price / nights) * 100) / 100,
       currency: item.currency || raw.currency || "EUR",
-      bookingUrl: `https://beds24.com/booking2.php?propid=${PROPERTY_ID}&roomid=${roomId}`,
+      bookingUrl: bookingUrl(roomId, query.checkIn, query.checkOut),
     };
   });
 
@@ -76,8 +84,75 @@ export async function getAumaraAvailability(query: AvailabilityQuery) {
     adults,
     children,
     inventory,
-    allAvailability: `https://beds24.com/booking2.php?propid=${PROPERTY_ID}`,
+    allAvailability: bookingUrl(null, query.checkIn, query.checkOut),
     source: "Beds24 live availability",
+    pricingNote: "Prices and availability are live Beds24 results for the requested dates. This endpoint does not alter rates or create a reservation.",
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+export async function compareAumaraStayLengths(input: {
+  checkIn: string;
+  adults?: number;
+  children?: number;
+  minNights?: number;
+  maxNights?: number;
+}) {
+  const start = requireIsoDate(input.checkIn, "checkIn");
+  const minNights = Math.max(1, Math.min(14, Math.trunc(input.minNights ?? 2)));
+  const maxNights = Math.max(minNights, Math.min(14, Math.trunc(input.maxNights ?? 6)));
+  const options = await Promise.all(
+    Array.from({ length: maxNights - minNights + 1 }, async (_, index) => {
+      const nights = minNights + index;
+      const checkOutDate = new Date(start.getTime() + nights * 86400000);
+      const checkOut = checkOutDate.toISOString().slice(0, 10);
+      return getAumaraAvailability({
+        checkIn: input.checkIn,
+        checkOut,
+        adults: input.adults,
+        children: input.children,
+      });
+    })
+  );
+
+  const roomTypes = Object.keys(ROOM_TYPES).map((roomId) => {
+    const series = options.map((option) => option.inventory.find((item) => item.roomId === roomId)!).filter(Boolean);
+    const available = series.filter((item) => item.availableUnits > 0 && item.price !== null);
+    const bestNightly = available.length
+      ? available.reduce((best, current) => (current.pricePerNight! < best.pricePerNight! ? current : best))
+      : null;
+    return {
+      roomId,
+      name: ROOM_TYPES[roomId as keyof typeof ROOM_TYPES].name,
+      options: series.map((item, index) => ({
+        nights: minNights + index,
+        availableUnits: item.availableUnits,
+        totalPrice: item.price,
+        pricePerNight: item.pricePerNight,
+        currency: item.currency,
+        bookingUrl: item.bookingUrl,
+      })),
+      bestPublishedValue: bestNightly
+        ? {
+            nights: options.find((option) => option.inventory.some((item) => item === bestNightly))?.nights ?? null,
+            pricePerNight: bestNightly.pricePerNight,
+            totalPrice: bestNightly.price,
+            currency: bestNightly.currency,
+            bookingUrl: bestNightly.bookingUrl,
+          }
+        : null,
+    };
+  });
+
+  return {
+    property: "AUMARA",
+    checkIn: input.checkIn,
+    adults: input.adults ?? 2,
+    children: input.children ?? 0,
+    comparedNights: [minNights, maxNights],
+    roomTypes,
+    source: "Beds24 live published pricing",
+    guidance: "Use these published totals to suggest better-value stay lengths. Do not claim a discount unless the live price itself supports that claim, and never change a rate from this read-only endpoint.",
     generatedAt: new Date().toISOString(),
   };
 }
