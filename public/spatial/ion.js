@@ -168,24 +168,35 @@ function installAumaraGlbBridge(C) {
   C.Model.fromGltfAsync = async function (options) {
     var url = String(options && options.url || "");
     if (!/aumara-site-v2_1\.glb(?:$|\?)/.test(url)) return original(options);
-    var localRuntime = import("./glb-flight.mjs").then(function (m) { return m.prepareAumaraGlbFlight(); });
-    await localRuntime;
-    var visible = false, destroyed = false;
-    return {
-      update: function () {},
-      prePassesUpdate: function () {},
-      updateForPass: function () {},
-      postPassesUpdate: function () {},
+    if (typeof window.__AUMARA_LOCAL_TWIN_READY !== "boolean") window.__AUMARA_LOCAL_TWIN_READY = false;
+    var visible = false, destroyed = false, runtimeReady = !!window.__AUMARA_LOCAL_TWIN_READY;
+    var localRuntime = import("./glb-flight.mjs").then(function (m) { return m.prepareAumaraGlbFlight(); }).then(function (r) {
+      runtimeReady = true;
+      window.__AUMARA_LOCAL_TWIN_READY = true;
+      if (window.__AUMARA) window.__AUMARA.localTwinReady = true;
+      if (visible && !destroyed) r.start();
+      return r;
+    }).catch(function (error) {
+      window.__AUMARA_LOCAL_TWIN_READY = false;
+      if (window.__AUMARA) {
+        window.__AUMARA.localTwinReady = false;
+        window.__AUMARA.localTwinError = String(error && error.message || error);
+      }
+      throw error;
+    });
+    var proxy = {
+      update: function () {}, prePassesUpdate: function () {}, updateForPass: function () {}, postPassesUpdate: function () {},
       isDestroyed: function () { return destroyed; },
       destroy: function () { destroyed = true; localRuntime.then(function (r) { r.stop(); }).catch(function () {}); },
+      get ready() { return runtimeReady; },
       get show() { return visible; },
       set show(value) {
         visible = !!value;
-        localRuntime.then(function (r) { if (visible) r.start(); else r.stop(); }).catch(function (error) {
-          if (window.__AUMARA) { window.__AUMARA.renderError = String(error && error.message || error); window.__AUMARA.fatalRenderError = true; }
-        });
+        if (!runtimeReady) return;
+        localRuntime.then(function (r) { if (visible) r.start(); else r.stop(); }).catch(function () {});
       },
     };
+    return proxy;
   };
   C.Model.__AUMARA_GLB_BRIDGED = true;
 }

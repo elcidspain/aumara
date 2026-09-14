@@ -87,16 +87,13 @@
       if (!isAttemptActive(generation)) return null;
       const state = window.__AUMARA;
       if (state && state.fatalRenderError) return null;
-      const googlePathStillActive = !!(
+      const globalPathHealthy = !!(
         state &&
         state.stage !== "LOCAL_FALLBACK" &&
-        state.globalTilesVisible === true
-      );
-      if (
-        googlePathStillActive &&
         state.firstFrameRendered &&
-        window.__AUMARA_GOOGLE_TILE_VISIBLE === true
-      ) return state;
+        (state.earthBasemapVisible === true || state.globalTilesVisible === true || window.__AUMARA_GOOGLE_TILE_VISIBLE === true)
+      );
+      if (globalPathHealthy) return state;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     return null;
@@ -105,11 +102,13 @@
   function establishedCesiumState() {
     const state = window.__AUMARA;
     if (!state || state.fatalRenderError || state.stage === "LOCAL_FALLBACK") return false;
-    const googleTilesProven = !!(
+    const globalSurfaceProven = !!(
+      state.earthBasemapVisible === true ||
+      state.globalTilesVisible === true ||
       window.__AUMARA_GOOGLE_TILE_VISIBLE === true ||
       state.googleTileVisibleObserved
     );
-    return !!(state.firstFrameRendered && googleTilesProven);
+    return !!(state.firstFrameRendered && globalSurfaceProven);
   }
 
   function ensureCesiumStarted() {

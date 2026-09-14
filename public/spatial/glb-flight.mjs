@@ -49,14 +49,17 @@ export async function prepareAumaraGlbFlight() {
   scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x384330, 2.2));
   const sun = new THREE.DirectionalLight(0xfff2d4, 3.2); sun.position.set(35, 70, 20); scene.add(sun);
   const world = gltf.scene;
-  world.traverse(o => { if (o.isMesh && o.material) { o.material.side = THREE.DoubleSide; o.material.needsUpdate = true; } });
+  world.traverse(o => {
+    if (o.name === 'veg_lod') o.visible = false;
+    if (o.isMesh && o.material) { o.material.side = THREE.DoubleSide; o.material.needsUpdate = true; }
+  });
   scene.add(world);
   const bounds = new THREE.Box3().setFromObject(world);
   if (bounds.isEmpty()) throw new Error('glb-bounds-empty');
   const path = flight.waypoints.map(point);
   const houses = flight.houses || [];
 
-  let active = false, startedAt = 0, raf = 0;
+  let active = false, startedAt = 0, raf = 0, firstLocalFrame = false;
   const duration = (flight.duration_s_default || 48) * 1000;
   function render(now) {
     if (!active) return;
@@ -65,6 +68,12 @@ export async function prepareAumaraGlbFlight() {
     const t = at(path, houses, Math.min(0.999999, u + 0.035));
     t.y -= 1.55;
     camera.position.copy(p); camera.lookAt(t); renderer.render(scene, camera);
+    if (!firstLocalFrame) {
+      firstLocalFrame = true;
+      window.__AUMARA_LOCAL_FRAME_VISIBLE = true;
+      const cesium = document.querySelector('#c canvas');
+      if (cesium) cesium.style.visibility = 'hidden';
+    }
     if (window.__AUMARA) {
       window.__AUMARA.localTwinVisible = true;
       window.__AUMARA.localTwinLoaded = true;
@@ -75,11 +84,13 @@ export async function prepareAumaraGlbFlight() {
   }
   function start() {
     if (active) return true;
-    active = true; startedAt = performance.now(); renderer.domElement.style.display = 'block';
-    const cesium = document.querySelector('#c canvas'); if (cesium) cesium.style.visibility = 'hidden';
+    active = true; firstLocalFrame = false; window.__AUMARA_LOCAL_FRAME_VISIBLE = false; startedAt = performance.now(); renderer.domElement.style.display = 'block';
     raf = requestAnimationFrame(render); return true;
   }
-  function stop() { active = false; cancelAnimationFrame(raf); renderer.domElement.style.display = 'none'; }
+  function stop() {
+    active = false; cancelAnimationFrame(raf); renderer.domElement.style.display = 'none';
+    const cesium = document.querySelector('#c canvas'); if (cesium) cesium.style.visibility = 'visible';
+  }
   addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
   runtime = { start, stop, bounds };
   return runtime;

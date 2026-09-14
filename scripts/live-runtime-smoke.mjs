@@ -125,15 +125,18 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'cesium-first-local-fallback' ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
-    "Cesium-first flight mode",
+    "supported flight mode",
   );
-  await waitFor(() => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'local-ready'"), 10000, "flight runtime");
+  await waitFor(() => evaluate("['local-ready','guest-ready'].includes(document.documentElement.dataset.aumaraFlightRuntime)"), 10000, "flight runtime");
+  const guestMode = mode === "cinematic-to-dense-local";
   const frame = await waitFor(
-    () => evaluate("window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
+    () => evaluate(guestMode
+      ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount}) : null"
+      : "window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
     55000,
-    "first spatial WebGL frame",
+    guestMode ? "dense local guest frame" : "first spatial WebGL frame",
   );
 
   if (runtimeExpectation.requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
@@ -141,7 +144,14 @@ try {
   }
 
   let autonomous;
-  if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
+  if (frame.provider === "AUMARA_RGB_POINTCLOUD") {
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount}) : null"),
+      10000,
+      "autonomous dense local waypoint progression",
+    );
+    console.log("SPATIAL_DENSE_GUEST_PASS", JSON.stringify(autonomous));
+  } else if (frame.provider === "GOOGLE_PHOTOREALISTIC_3D_TILES") {
     const google = await waitFor(
       () => evaluate("window.__AUMARA_GOOGLE_TILE_VISIBLE === true && window.__AUMARA?.firstGoogleTileRendered && window.__AUMARA?.stage !== 'LOCAL_FALLBACK' && window.__AUMARA?.globalTilesVisible === true ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,globalTilesStatus:window.__AUMARA.globalTilesStatus,globalTilesVisible:true,tileVisible:true}) : null"),
       8000,
