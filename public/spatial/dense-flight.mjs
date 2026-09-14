@@ -25,7 +25,8 @@ function decodePoints(bytes) {
   const colors = new Float32Array(count * 3);
   let p = 0;
   for (let i = 0; i + 8 < bytes.length; i += 9) {
-    const qx = view.getUint16(i, true), qy = view.getUint16(i + 2, true), qz = view.getUint16(i + 4, true);    const x = MIN[0] + (MAX[0] - MIN[0]) * qx / 65535;
+    const qx = view.getUint16(i, true), qy = view.getUint16(i + 2, true), qz = view.getUint16(i + 4, true);
+    const x = MIN[0] + (MAX[0] - MIN[0]) * qx / 65535;
     const north = MIN[1] + (MAX[1] - MIN[1]) * qy / 65535;
     const up = MIN[2] + (MAX[2] - MIN[2]) * qz / 65535;
     positions[p] = x; positions[p + 1] = up; positions[p + 2] = -north;
@@ -80,7 +81,8 @@ async function buildRuntime() {
   const camera = new THREE.PerspectiveCamera(58, 1, .08, 450);
   const pointGeo = new THREE.BufferGeometry();
   pointGeo.setAttribute("position", new THREE.BufferAttribute(decoded.positions, 3));
-  pointGeo.setAttribute("color", new THREE.BufferAttribute(decoded.colors, 3));  const points = new THREE.Points(pointGeo, new THREE.PointsMaterial({ size: mobile ? .095 : .07, vertexColors:true, transparent:true, opacity:.97, sizeAttenuation:true }));
+  pointGeo.setAttribute("color", new THREE.BufferAttribute(decoded.colors, 3));
+  const points = new THREE.Points(pointGeo, new THREE.PointsMaterial({ size: mobile ? .095 : .07, vertexColors:true, transparent:true, opacity:.97, sizeAttenuation:true }));
   scene.add(points);
   const grid = new THREE.GridHelper(150, 30, 0x8e744f, 0x223129);
   grid.material.transparent = true; grid.material.opacity = .10; grid.position.y = -.25; scene.add(grid);
@@ -96,22 +98,24 @@ async function buildRuntime() {
   };
   resize(); addEventListener("resize", resize);
   let active = false, raf = 0, startedAt = 0, firstFrame = false;
-  const duration = 22000;
+  const duration = 28000;
+  const approachDuration = 5200;
   const overviewFrom = new THREE.Vector3(23, 18, 24);
   const overviewLook = new THREE.Vector3(43, 2.2, 0);
   function render(now) {
     if (!active) return;
     const elapsed = now - startedAt;
     const u = Math.min(1, elapsed / duration);
-    if (elapsed < 2400) {
-      const t = elapsed / 2400, e = t * t * (3 - 2 * t);
+    if (elapsed < approachDuration) {
+      const t = elapsed / approachDuration, e = t * t * (3 - 2 * t);
       const first = route[0]; camera.position.copy(overviewFrom).lerp(first.clone().add(new THREE.Vector3(-2, 7, 8)), e);
       camera.lookAt(overviewLook.clone().lerp(route[Math.min(4, route.length - 1)], e));
     } else {
-      const pu = (elapsed - 2400) / Math.max(1, duration - 2400);
+      const pu = (elapsed - approachDuration) / Math.max(1, duration - approachDuration);
       const here = interpolateRoute(route, pu), ahead = interpolateRoute(route, Math.min(1, pu + .035));
       camera.position.copy(here); camera.lookAt(ahead.x, ahead.y - .35, ahead.z);
-    }    renderer.render(scene, camera);
+    }
+    renderer.render(scene, camera);
     if (!firstFrame) {
       firstFrame = true; window.__AUMARA_LOCAL_FRAME_VISIBLE = true;
       canvas.style.opacity = "1";
