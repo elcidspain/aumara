@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "plan-aumara-stay",
+      "type": "skill-md",
+      "description": "Use this skill when a user asks about staying at AUMARA in Benidoleig, including chalet types, guest capacity, location, policies, direct booking, or how to continue to availability.",
+      "url": "/.well-known/agent-skills/plan-aumara-stay/SKILL.md",
+      "digest": "sha256:a712ca435253263329c0dec7b9605a7cc703ed52db2a040bcea1dde395111e45"
+    }
+  ]
+}
