@@ -1,0 +1,41 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "AUMARA",
+    "identifier": "did:web:www.aumara.me"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:www.aumara.me:server:guest-mcp",
+      "displayName": "AUMARA Public Guest MCP",
+      "type": "application/mcp-server-card+json",
+      "url": "https://www.aumara.me/.well-known/mcp/server-card.json",
+      "representativeQueries": [
+        "find a quiet nature stay near Denia",
+        "what accommodation does AUMARA offer in Benidoleig",
+        "check AUMARA direct booking options"
+      ]
+    },
+    {
+      "identifier": "urn:air:www.aumara.me:agent:guest-discovery",
+      "displayName": "AUMARA Guest Discovery Agent",
+      "type": "application/json",
+      "url": "https://www.aumara.me/.well-known/agent-card.json",
+      "representativeQueries": [
+        "find a geodesic house in Marina Alta",
+        "show a private chalet among pine trees on the Costa Blanca",
+        "how do I book AUMARA directly"
+      ]
+    },
+    {
+      "identifier": "urn:air:www.aumara.me:catalog:public-api",
+      "displayName": "AUMARA Public API Catalog",
+      "type": "application/linkset+json",
+      "url": "https://www.aumara.me/.well-known/api-catalog",
+      "representativeQueries": [
+        "discover AUMARA public APIs",
+        "get machine-readable AUMARA guest information"
+      ]
+    }
+  ]
+}

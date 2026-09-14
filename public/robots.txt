@@ -42,3 +42,4 @@ User-agent: CCBot
 Disallow: /
 
 Sitemap: https://www.aumara.me/sitemap.xml
+Agentmap: https://www.aumara.me/.well-known/ai-catalog.json
