@@ -1,6 +1,7 @@
 const BEDS24_AVAILABILITY_URL = "https://api.beds24.com/json/getAvailabilities";
 
 const PROPERTY_ID = "324882";
+const AGENT_REFERRER = "AUMARA_AI_AGENT";
 const ROOM_TYPES = {
   "674465": { name: "Chalet Ø7", totalUnits: 3, maxGuests: 4 },
   "674466": { name: "Superior Chalet Ø9", totalUnits: 2, maxGuests: 6 },
@@ -27,7 +28,12 @@ function clampGuests(value: number | undefined, fallback: number, field: string)
 }
 
 function bookingUrl(roomId: string | null, checkIn: string, checkOut: string) {
-  const params = new URLSearchParams({ propid: PROPERTY_ID, checkin: checkIn, checkout: checkOut });
+  const params = new URLSearchParams({
+    propid: PROPERTY_ID,
+    checkin: checkIn,
+    checkout: checkOut,
+    referer: AGENT_REFERRER,
+  });
   if (roomId) params.set("roomid", roomId);
   return `https://beds24.com/booking2.php?${params.toString()}`;
 }
@@ -85,8 +91,9 @@ export async function getAumaraAvailability(query: AvailabilityQuery) {
     children,
     inventory,
     allAvailability: bookingUrl(null, query.checkIn, query.checkOut),
+    bookingAttribution: AGENT_REFERRER,
     source: "Beds24 live availability",
-    pricingNote: "Prices and availability are live Beds24 results for the requested dates. This endpoint does not alter rates or create a reservation.",
+    pricingNote: "Prices and availability are live Beds24 results for the requested dates. Agent booking links carry a Beds24 referrer for conversion attribution. This endpoint does not alter rates or create a reservation.",
     generatedAt: new Date().toISOString(),
   };
 }
@@ -151,8 +158,9 @@ export async function compareAumaraStayLengths(input: {
     children: input.children ?? 0,
     comparedNights: [minNights, maxNights],
     roomTypes,
+    bookingAttribution: AGENT_REFERRER,
     source: "Beds24 live published pricing",
-    guidance: "Use these published totals to suggest better-value stay lengths. Do not claim a discount unless the live price itself supports that claim, and never change a rate from this read-only endpoint.",
+    guidance: "Use these published totals to suggest better-value stay lengths. Agent booking links are attributed in Beds24. Do not claim a discount unless the live price itself supports that claim, and never change a rate from this read-only endpoint.",
     generatedAt: new Date().toISOString(),
   };
 }
