@@ -23,7 +23,7 @@ function serializedInput(input: unknown) {
 }
 
 function findIsoDates(input: unknown) {
-  return [...new Set(serializedInput(input).match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? [])];
+  return Array.from(new Set(serializedInput(input).match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? []));
 }
 
 function findInteger(input: unknown, keys: string[]) {
