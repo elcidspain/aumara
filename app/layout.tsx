@@ -14,19 +14,29 @@ import {
 
 const inter = Inter({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-sans", display: "swap" });
 const display = Playfair_Display({ subsets: ["latin", "latin-ext", "cyrillic"], weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-display", display: "swap" });
+const heroImage = `${SITE_URL}/media/hero/three-houses-01.webp`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AUMARA — Hay lugares que te dan más",
   description: "Casas geodésicas independientes en Benidoleig, Marina Alta. Explora el lugar, comprueba disponibilidad real y reserva directamente.",
+  keywords: ["AUMARA", "Benidoleig", "Marina Alta", "Costa Blanca", "geodesic houses", "nature stay", "private chalet", "direct booking"],
   robots: "index,follow,max-image-preview:large",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     title: "AUMARA — Hay lugares que te dan más",
-    description: "Casas geodésicas independientes en Benidoleig, Marina Alta. Un recorrido real por el lugar y reserva directa.",
+    description: "Casas geodésicas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real del lugar y reserva directa.",
     url: SITE_URL,
-    images: [{ url: "/media/flight/poster.jpg", width: 1920, height: 1080 }],
+    siteName: "AUMARA",
+    locale: "es_ES",
+    images: [{ url: heroImage, width: 1920, height: 1080, alt: "AUMARA geodesic houses among pine trees in Benidoleig, Marina Alta" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AUMARA — Hay lugares que te dan más",
+    description: "Casas geodésicas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real y reserva directa.",
+    images: [heroImage],
   },
 };
 
@@ -39,6 +49,15 @@ const jsonLd = {
   legalName: "EL CID VENTURES BENIDOLEIG S.L.",
   taxID: "B53816989",
   url: SITE_URL,
+  description: "Independent geodesic houses among pine trees in Benidoleig, Marina Alta, Alicante, with direct booking through AUMARA.",
+  image: [
+    heroImage,
+    `${SITE_URL}/media/hero/three-houses-02.webp`,
+    `${SITE_URL}/media/hero/three-houses-03.webp`,
+    `${SITE_URL}/media/stills/inside-valley.jpg`,
+    `${SITE_URL}/media/stills/chalet-mezzanine.jpg`,
+    `${SITE_URL}/media/stills/superior-living.jpg`,
+  ],
   email: "elcidspain@gmail.com",
   telephone: "+34966579970",
   address: {
@@ -50,8 +69,8 @@ const jsonLd = {
     addressCountry: "ES",
   },
   containsPlace: [
-    { "@type": "Accommodation", name: "Chalet Ø7", occupancy: { "@type": "QuantitativeValue", maxValue: 4 } },
-    { "@type": "Accommodation", name: "Superior Chalet Ø9", occupancy: { "@type": "QuantitativeValue", maxValue: 6 } },
+    { "@type": "Accommodation", name: "Chalet Ø7", occupancy: { "@type": "QuantitativeValue", maxValue: 4 }, url: "https://beds24.com/booking2.php?propid=324882&roomid=674465" },
+    { "@type": "Accommodation", name: "Superior Chalet Ø9", occupancy: { "@type": "QuantitativeValue", maxValue: 6 }, url: "https://beds24.com/booking2.php?propid=324882&roomid=674466" },
   ],
   potentialAction: { "@type": "ReserveAction", target: "https://beds24.com/booking2.php?propid=324882" },
 };
