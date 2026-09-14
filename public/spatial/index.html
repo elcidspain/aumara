@@ -55,7 +55,7 @@
   .cesium-widget-credits,.cesium-credit-lightbox-overlay{display:block!important;visibility:visible!important;z-index:6}
   #stage:not(.dbg) .cesium-widget-errorPanel{display:none!important}
 </style>
-<script type="module" src="./guest-flight-v3.mjs"></script>
+<script type="module" src="./guest-flight-v6.mjs"></script>
 </head>
 <body>
 <header>
@@ -174,7 +174,7 @@ document.getElementById("ionbtn").onclick = () => {
   if (!next) return;
   try { localStorage.setItem("CESIUM_ION_TOKEN", next.trim()); } catch (e) {}
 };
-// guest-flight-v3.mjs owns the public #flight auto-start
+// guest-flight-v6.mjs owns the public #flight auto-start
 async function startFlight() {
   document.getElementById("stage").classList.add("on");
   if (started) return;

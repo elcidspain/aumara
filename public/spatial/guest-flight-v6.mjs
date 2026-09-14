@@ -58,7 +58,7 @@ function ensureUi(stage) {
     <div class="agf-copy">
       <small>AUMARA &middot; Vuelo 3D</small>
       <strong id="agf-label">Tierra</strong>
-      <span id="agf-sub">Hacia la penÃ­nsula ibÃ©rica</span>
+      <span id="agf-sub">Hacia la pen&iacute;nsula ib&eacute;rica</span>
     </div>
     <div class="agf-progress"><i id="agf-progress-bar"></i></div>`;
   stage.insertBefore(root, stage.firstChild);
@@ -97,6 +97,8 @@ async function runCinematic(root, token) {
   await preload(FRAMES[0].src);
   if (token !== generation) return false;
   showFrame(root, 0, 0);
+  const cover = document.getElementById("flight-cover");
+  if (cover) cover.classList.add("off");
   await sleep(2200);
   await restReady;
   for (let i = 1; i < FRAMES.length; i += 1) {
@@ -114,8 +116,6 @@ async function startGuestFlight() {
   if (!stage) return false;
   ensureStyles();
   const root = ensureUi(stage);
-  const cover = document.getElementById("flight-cover");
-  if (cover) cover.classList.add("off");
   root.style.display = "block";
   root.classList.remove("off");
   stage.classList.add("on");

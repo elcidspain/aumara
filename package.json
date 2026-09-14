@@ -15,7 +15,7 @@
     "svg:check": "npm run svg:optimize && git diff --exit-code -- '*.svg'",
     "logo:svgo": "npm run svg:optimize",
     "prebuild": "npm run spatial:syntax && npm run svg:optimize && npm run spatial:vendor",
-    "spatial:syntax": "node --check public/spatial/ion.js && node --check public/spatial/flight-runtime.js && node --check public/spatial/glb-flight.mjs && node --check public/spatial/dense-flight.mjs && node --check public/spatial/guest-flight-v3.mjs && node --check public/spatial/local-twin.mjs"
+    "spatial:syntax": "node --check public/spatial/ion.js && node --check public/spatial/flight-runtime.js && node --check public/spatial/glb-flight.mjs && node --check public/spatial/dense-flight.mjs && node --check public/spatial/guest-flight-v6.mjs && node --check public/spatial/local-twin.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",
