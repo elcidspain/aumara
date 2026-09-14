@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { agentAuthorized } from "@/lib/agentAccess";
+import { getAumaraAgentOffer } from "@/lib/agentOffer";
 import { compareAumaraStayLengths, getAumaraAvailability } from "@/lib/liveAvailability";
 
 const PROPERTY = {
@@ -12,7 +14,7 @@ const PROPERTY = {
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Accept",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Cache-Control": "no-store",
   "Content-Type": "application/json; charset=utf-8",
@@ -43,7 +45,7 @@ function baseMessage(input: unknown) {
   return `AUMARA is a stay of independent geodesic houses among pine trees in Benidoleig, Marina Alta, Alicante. Chalet Ø7 is for up to 4 guests; Superior Chalet Ø9 is for up to 6. Website: ${PROPERTY.website}. Direct availability: ${PROPERTY.booking}.`;
 }
 
-async function messagePayload(input: unknown) {
+async function messagePayload(input: unknown, privateAgentAccess: boolean) {
   const serialized = serializedInput(input).toLowerCase();
   const dates = findIsoDates(input);
   const adults = findInteger(input, ["adults", "numAdults", "guests"]);
@@ -57,6 +59,13 @@ async function messagePayload(input: unknown) {
   }
 
   if (dates.length >= 2) {
+    if (privateAgentAccess) {
+      const result = await getAumaraAgentOffer({ checkIn: dates[0], checkOut: dates[1], adults, children });
+      const lead = result.agentRateFound
+        ? "I found a live AUMARA private agent price below the current published Beds24 price."
+        : "I checked the AUMARA private agent channel; no lower live agent price is currently available.";
+      return { text: `${lead} ${JSON.stringify(result)}`, data: result };
+    }
     const result = await getAumaraAvailability({ checkIn: dates[0], checkOut: dates[1], adults, children });
     return { text: JSON.stringify(result), data: result };
   }
@@ -76,7 +85,7 @@ export async function POST(request: Request) {
   const method = body?.method;
   if (method === "SendMessage" || method === "message/send") {
     try {
-      const answer = await messagePayload(body?.params);
+      const answer = await messagePayload(body?.params, agentAuthorized(request));
       return NextResponse.json({
         jsonrpc: "2.0",
         id,
