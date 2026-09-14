@@ -76,6 +76,8 @@ function showFrame(root, index, slotIndex) {
   void current.offsetWidth;
   current.classList.add("on");
   previous.classList.remove("on");
+  const state = window.__AUMARA || (window.__AUMARA = {});
+  state.provider = "AUMARA_CINEMATIC"; state.stage = frame.label.toUpperCase().replace(/\s+/g, "_"); state.firstFrameRendered = true; state.fatalRenderError = false;
   root.querySelector("#agf-label").textContent = frame.label;
   root.querySelector("#agf-sub").textContent = frame.sub;
   root.querySelector("#agf-progress-bar").style.width = `${((index + 1) / FRAMES.length) * 100}%`;
@@ -97,6 +99,7 @@ async function runCinematic(root, token) {
   await preload(FRAMES[0].src);
   if (token !== generation) return false;
   showFrame(root, 0, 0);
+  root.style.opacity = "1";
   const cover = document.getElementById("flight-cover");
   if (cover) cover.classList.add("off");
   await sleep(2200);
@@ -117,7 +120,9 @@ async function startGuestFlight() {
   ensureStyles();
   const root = ensureUi(stage);
   root.style.display = "block";
+  root.style.opacity = "0";
   root.classList.remove("off");
+  window.__AUMARA = { provider:"AUMARA_CINEMATIC", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:0, flightComplete:false, events:[] };
   stage.classList.add("on");
   document.body.style.overflow = "hidden";
   stage.classList.remove("local-world");

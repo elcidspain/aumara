@@ -118,18 +118,19 @@ async function buildRuntime() {
       const cesium = document.querySelector("#c canvas:not([data-aumara-glb-flight])");
       if (cesium) cesium.style.visibility = "hidden";
     }
-    if (window.__AUMARA) {
-      window.__AUMARA.provider = "AUMARA_RGB_POINTCLOUD";
-      window.__AUMARA.localTwinVisible = true;
-      window.__AUMARA.localTwinLoaded = true;
-      window.__AUMARA.localPointCount = decoded.count;
-    }
+    const state = window.__AUMARA || (window.__AUMARA = {});
+    state.provider = "AUMARA_RGB_POINTCLOUD"; state.stage = "LOCAL_GUEST_FLIGHT";
+    state.firstFrameRendered = firstFrame; state.localTwinVisible = true; state.localTwinLoaded = true; state.localPointCount = decoded.count;
+    state.waypointReached = Math.min(27, Math.round(u * 27)); state.flightComplete = u >= 1; state.WP0_WP27_COMPLETE = u >= 1; state.fatalRenderError = false; state.renderError = null;
     if (u < 1) raf = requestAnimationFrame(render);
   }
   function start() {
     if (active) return true;
     active = true; firstFrame = false; window.__AUMARA_LOCAL_FRAME_VISIBLE = false; host.classList.add("local-world");
     canvas.style.display = "block"; canvas.style.opacity = "0"; startedAt = performance.now();
+    const state = window.__AUMARA || (window.__AUMARA = {});
+    state.provider = "AUMARA_RGB_POINTCLOUD"; state.stage = "LOCAL_GUEST_FLIGHT"; state.firstFrameRendered = false; state.waypointReached = 0; state.flightComplete = false; state.events = [{name:"LOCAL_TWIN_VISIBLE",t:Date.now()},{name:"WP0",t:Date.now()}];
+    state.advanceTo = (seconds) => { startedAt = performance.now() - Math.min(duration, Math.max(0, Number(seconds) * 1000)); render(performance.now()); return true; };
     raf = requestAnimationFrame(render); return true;
   }
   function stop() {
