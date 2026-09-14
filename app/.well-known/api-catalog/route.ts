@@ -7,10 +7,22 @@ const catalog = {
     {
       anchor: "https://www.aumara.me/api/guest-info",
       "service-doc": [
+        { href: "https://www.aumara.me/openapi.json", type: "application/json" },
         { href: "https://www.aumara.me/llms.txt", type: "text/plain" }
       ],
       "service-meta": [
-        { href: "https://www.aumara.me/.well-known/agent-skills/index.json", type: "application/json" }
+        { href: "https://www.aumara.me/.well-known/agent-skills/index.json", type: "application/json" },
+        { href: "https://www.aumara.me/.well-known/agent-card.json", type: "application/json" },
+        { href: "https://www.aumara.me/.well-known/mcp/server-card.json", type: "application/json" }
+      ]
+    },
+    {
+      anchor: "https://www.aumara.me/api/availability",
+      "service-doc": [
+        { href: "https://www.aumara.me/openapi.json", type: "application/json" }
+      ],
+      "service-meta": [
+        { href: "https://www.aumara.me/.well-known/agent-skills/find-aumara-availability/SKILL.md", type: "text/markdown" }
       ]
     }
   ]

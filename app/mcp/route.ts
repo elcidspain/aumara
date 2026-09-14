@@ -1,3 +1,5 @@
+import { compareAumaraStayLengths, getAumaraAvailability } from "@/lib/liveAvailability";
+
 const PROTOCOL_VERSION = "2025-06-18";
 
 const tools = [
@@ -15,9 +17,44 @@ const tools = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
+  {
+    name: "aumara_live_availability",
+    title: "AUMARA live availability and price",
+    description: "Check live AUMARA availability and published Beds24 pricing for exact dates. Read-only; does not hold inventory or create a reservation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        checkIn: { type: "string", description: "Arrival date in YYYY-MM-DD" },
+        checkOut: { type: "string", description: "Departure date in YYYY-MM-DD" },
+        adults: { type: "integer", minimum: 1, maximum: 20, default: 2 },
+        children: { type: "integer", minimum: 0, maximum: 20, default: 0 },
+      },
+      required: ["checkIn", "checkOut"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
+  {
+    name: "aumara_compare_stay_lengths",
+    title: "AUMARA stay-length value finder",
+    description: "Compare live published totals and nightly value across nearby stay lengths so an agent can suggest the best currently published option. Read-only; never invents or applies a discount.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        checkIn: { type: "string", description: "Arrival date in YYYY-MM-DD" },
+        adults: { type: "integer", minimum: 1, maximum: 20, default: 2 },
+        children: { type: "integer", minimum: 0, maximum: 20, default: 0 },
+        minNights: { type: "integer", minimum: 1, maximum: 14, default: 2 },
+        maxNights: { type: "integer", minimum: 1, maximum: 14, default: 6 },
+      },
+      required: ["checkIn"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
 ];
 
-const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each. For live availability, prices, minimum-stay rules and cancellation terms, use the public direct booking flow. Do not invent unpublished availability, prices or policies. Canonical site: https://www.aumara.me/`;
+const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
 
 const bookingOptions = {
   property: "AUMARA",
@@ -72,35 +109,56 @@ export async function POST(request: Request) {
     return rpc(id, {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "aumara-public-mcp", title: "AUMARA Public Guest MCP", version: "1.0.0" },
-      instructions: "Read-only public guest information and direct-booking discovery for AUMARA. No reservation is created or modified by these tools.",
+      serverInfo: { name: "aumara-public-mcp", title: "AUMARA Public Guest MCP", version: "1.1.0" },
+      instructions: "Read-only public guest information, live availability, published price comparison and direct-booking discovery for AUMARA. No reservation or rate is created, held, changed or charged by these tools.",
     });
   }
 
-  if (method === "notifications/initialized") {
-    return new Response(null, { status: 202, headers: headers() });
-  }
-
+  if (method === "notifications/initialized") return new Response(null, { status: 202, headers: headers() });
   if (method === "ping") return rpc(id, {});
   if (method === "tools/list") return rpc(id, { tools });
 
   if (method === "tools/call") {
     const name = params?.name;
-    if (name === "aumara_guest_guide") {
+    const args = params?.arguments ?? {};
+    try {
+      if (name === "aumara_guest_guide") {
+        return rpc(id, {
+          content: [{ type: "text", text: guestGuide }],
+          structuredContent: { guide: guestGuide, canonical: "https://www.aumara.me/" },
+          isError: false,
+        });
+      }
+      if (name === "aumara_booking_options") {
+        return rpc(id, {
+          content: [{ type: "text", text: JSON.stringify(bookingOptions) }],
+          structuredContent: bookingOptions,
+          isError: false,
+        });
+      }
+      if (name === "aumara_live_availability") {
+        const result = await getAumaraAvailability(args);
+        return rpc(id, {
+          content: [{ type: "text", text: JSON.stringify(result) }],
+          structuredContent: result,
+          isError: false,
+        });
+      }
+      if (name === "aumara_compare_stay_lengths") {
+        const result = await compareAumaraStayLengths(args);
+        return rpc(id, {
+          content: [{ type: "text", text: JSON.stringify(result) }],
+          structuredContent: result,
+          isError: false,
+        });
+      }
+      return rpcError(id, -32602, `Unknown tool: ${String(name ?? "")}`);
+    } catch (error) {
       return rpc(id, {
-        content: [{ type: "text", text: guestGuide }],
-        structuredContent: { guide: guestGuide, canonical: "https://www.aumara.me/" },
-        isError: false,
+        content: [{ type: "text", text: error instanceof Error ? error.message : "Availability lookup failed" }],
+        isError: true,
       });
     }
-    if (name === "aumara_booking_options") {
-      return rpc(id, {
-        content: [{ type: "text", text: JSON.stringify(bookingOptions) }],
-        structuredContent: bookingOptions,
-        isError: false,
-      });
-    }
-    return rpcError(id, -32602, `Unknown tool: ${String(name ?? "")}`);
   }
 
   return rpcError(id, -32601, `Method not found: ${method}`);

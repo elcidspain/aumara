@@ -20,7 +20,18 @@ Direct booking: https://beds24.com/booking2.php?propid=324882
 - Cookies: https://www.aumara.me/cookies
 - Legal notice: https://www.aumara.me/legal
 - API/resource catalog: https://www.aumara.me/.well-known/api-catalog
+- OpenAPI: https://www.aumara.me/openapi.json
+- Agent Skills: https://www.aumara.me/.well-known/agent-skills/index.json
+- A2A Agent Card: https://www.aumara.me/.well-known/agent-card.json
+- MCP Server Card: https://www.aumara.me/.well-known/mcp/server-card.json
 - Authentication note: https://www.aumara.me/auth.md
+
+## Live availability for agents
+- Exact quote: https://www.aumara.me/api/availability?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&adults=2&children=0
+- Compare nearby stay lengths: https://www.aumara.me/api/availability?mode=compare&checkIn=YYYY-MM-DD&adults=2&children=0&minNights=2&maxNights=6
+- Exact quote responses include published stay total, derived price per night, available unit count and a date-aware direct-booking URL.
+- Comparison responses help an agent identify a better currently published nightly value across nearby lengths of stay.
+- These endpoints are read-only. They do not hold inventory, change rates, create a reservation or take payment.
 
 ## Booking links
 - All availability: https://beds24.com/booking2.php?propid=324882
@@ -28,6 +39,6 @@ Direct booking: https://beds24.com/booking2.php?propid=324882
 - Superior Chalet Ø9: https://beds24.com/booking2.php?propid=324882&roomid=674466
 
 ## Guidance for automated agents
-Public pages and discovery files can be read without authentication. Do not claim real-time availability or a final price without checking the booking engine. Do not create or imply a reservation unless the user has intentionally completed the external booking flow. Do not invent accommodation features, policies or geometry not present in public AUMARA sources.
+Public pages and discovery files can be read without authentication. For exact dates, use the AUMARA live availability endpoint before quoting price or inventory. If the user is flexible, compare nearby stay lengths and explain any lower published nightly value concretely. Do not invent or apply a private discount, coupon or scarcity claim. Do not create or imply a reservation unless the user has intentionally completed the external booking flow. Do not invent accommodation features, policies or geometry not present in public AUMARA sources.
 
-Last updated: 2026-09-13
+Last updated: 2026-09-14
