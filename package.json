@@ -7,14 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node scripts/generate-agent-oauth-key.mjs && tsc --noEmit",
     "assert-copy": "node scripts/assert-guest-copy.mjs",
     "test:flight-runtime": "node scripts/flight-runtime-regression.mjs",
     "spatial:vendor": "node scripts/copy-spatial-three.mjs",
     "svg:optimize": "npx --yes svgo@4.1.0 -f public --recursive --exclude node_modules --config svgo.config.mjs",
     "svg:check": "npm run svg:optimize && git diff --exit-code -- '*.svg'",
     "logo:svgo": "npm run svg:optimize",
-    "prebuild": "npm run spatial:syntax && npm run svg:optimize && npm run spatial:vendor",
+    "prebuild": "node scripts/generate-agent-oauth-key.mjs && npm run spatial:syntax && npm run svg:optimize && npm run spatial:vendor",
     "spatial:syntax": "node --check public/spatial/ion.js && node --check public/spatial/flight-runtime.js && node --check public/spatial/glb-flight.mjs && node --check public/spatial/dense-flight.mjs && node --check public/spatial/guest-flight-v6.mjs && node --check public/spatial/local-twin.mjs"
   },
   "dependencies": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react-dom": "^18.3.1",
     "@types/three": "^0.168.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.35",
