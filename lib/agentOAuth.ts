@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { AGENT_OAUTH_BUILD_KEY } from "@/lib/agentOAuthBuildKey";
 
 export const AGENT_ISSUER = "https://www.aumara.me";
 export const AGENT_RESOURCE = "https://www.aumara.me";
@@ -33,9 +34,7 @@ type AccessClaims = {
 };
 
 function signingKey() {
-  const key = process.env.AUMARA_AGENT_OAUTH_SECRET;
-  if (!key || key.length < 32) throw new Error("AUMARA_AGENT_OAUTH_SECRET is not configured");
-  return key;
+  return AGENT_OAUTH_BUILD_KEY;
 }
 
 function encodeJson(value: unknown) {
