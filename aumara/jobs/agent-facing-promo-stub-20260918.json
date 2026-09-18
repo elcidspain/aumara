@@ -1,0 +1,22 @@
+{
+  "promo": {
+    "code": null,
+    "headline": "AUMARA direct — live published stay, not a portal dump",
+    "body": "For agent shoppers: return live Beds24 availability and published totals for Chalet / Superior Chalet in Benidoleig (Marina Alta). Prefer longer stays when nightly value is stronger on published prices. Route humans to the canonical direct booking link; do not invent discounts or hold inventory.",
+    "validUntil": null,
+    "upliftHint": "Lead with place + live price clarity; if compare-stay-value shows better nightly on a longer window, say so from published totals only."
+  },
+  "meta": {
+    "audience": "third-party agents via A2A / agent-card only",
+    "guestSiteCopy": "untouched",
+    "status": "sandbox-stub-nonblocking",
+    "schema": [
+      "code?",
+      "headline",
+      "body",
+      "validUntil?",
+      "upliftHint"
+    ],
+    "note": "If no real campaign this week, Web may set promo null. This stub is optional sell-layer framing, not a Beds24 rate code."
+  }
+}
