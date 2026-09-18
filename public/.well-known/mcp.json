@@ -1,0 +1,40 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/mcp-server-card/v1.json",
+  "version": "1.0",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "aumara-public-mcp",
+    "title": "AUMARA Public Guest MCP",
+    "version": "1.0.0"
+  },
+  "description": "Read-only public guest information and direct-booking discovery for AUMARA in Benidoleig, Alicante, Spain.",
+  "transport": {
+    "type": "streamable-http",
+    "endpoint": "/mcp"
+  },
+  "authentication": {
+    "required": false
+  },
+  "tools": [
+    {
+      "name": "aumara_guest_guide",
+      "title": "AUMARA guest guide",
+      "description": "Return the public AUMARA stay, location, inventory and policy guidance. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "aumara_booking_options",
+      "title": "AUMARA direct booking options",
+      "description": "Return the public Beds24 booking links for AUMARA. This does not create or modify a reservation. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ]
+}
