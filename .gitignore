@@ -6,3 +6,4 @@ out
 .DS_Store
 tsconfig.tsbuildinfo
 lib/agentOAuthBuildKey.ts
+lib/webBotAuthBuildKey.ts
