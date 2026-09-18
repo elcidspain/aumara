@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import GuestActivation from "@/components/site/GuestActivation";
 import AgentWebTools from "@/components/site/AgentWebTools";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SITE_URL } from "@/lib/guest";
 import {
   GA_MEASUREMENT_ID,
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GuestActivation />
         <AgentWebTools />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );

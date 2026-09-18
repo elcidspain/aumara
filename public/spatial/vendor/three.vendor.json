@@ -1,0 +1,20 @@
+{
+  "package": "three",
+  "files": [
+    {
+      "name": "three.module.min.js",
+      "bytes": 685408,
+      "sha256": "ee08b04912b21d9bf71f13658a65da65c113827601377076663e710c0b1772d0"
+    },
+    {
+      "name": "addons/GLTFLoader.js",
+      "bytes": 110060,
+      "sha256": "7a73b72c85270e66c3280dd2b532b472ee3c9d8a7faac71e626e6682ca0923cf"
+    },
+    {
+      "name": "utils/BufferGeometryUtils.js",
+      "bytes": 31785,
+      "sha256": "b51ca35ecf919b99791cbf8a0f70804da90c400bd36b1b0ec975d50d0ba5567f"
+    }
+  ]
+}
