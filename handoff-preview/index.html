@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AUMARA — CLEAN_LOCAL_HANDOFF</title>
+<meta name="robots" content="noindex, nofollow"/>
+<style>
+  :root{--ink:#0a1a14;--cream:#f3ecde;--gold:#c49a64;--line:rgba(255,255,255,.12)}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--cream);font-family:Georgia,"Times New Roman",serif;height:100%}
+  #stage{position:fixed;inset:0;background:#0a1a14}
+  #c{position:absolute;inset:0}
+  #overlay{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .ar{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-50%,-130%);
+    border:0;border-radius:999px;padding:7px 11px;background:var(--gold);color:#111;
+    font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer}
+  #hud{display:none;position:absolute;left:12px;top:12px;z-index:3;background:#0008;padding:8px 12px;border-radius:12px;font:12px/1.4 ui-monospace,monospace}
+  #hud.on{display:block}
+  #status{position:absolute;left:12px;top:12px;z-index:3;font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(243,236,222,.7)}
+  #close{position:absolute;right:12px;top:12px;z-index:3;display:inline-flex;align-items:center;height:42px;padding:0 16px;border-radius:999px;font:600 11px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;background:var(--gold);color:#111;border:0}
+  #sheet{display:none;position:absolute;left:12px;right:12px;bottom:12px;z-index:4;background:#0a1a14f2;border:1px solid var(--line);border-radius:18px;padding:12px;color:var(--cream);gap:12px;align-items:center}
+  #sheet.on{display:flex}
+  #sheet img{width:96px;height:72px;object-fit:cover;border-radius:10px}
+  #sheet h3{margin:0 0 4px;font-weight:400;font-size:22px}
+  #sheet p{margin:0 0 8px;font:13px/1.4 system-ui,sans-serif;color:rgba(243,236,222,.6)}
+  .btn{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;font:600 11px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;background:var(--gold);color:#111;text-decoration:none}
+  #stage.local .cesium-widget-credits,#stage.local .cesium-credit-lightbox-overlay{display:none!important}
+  #stage:not(.dbg) .cesium-widget-errorPanel{display:none!important}
+</style>
+<script src="./utm.js"></script>
+<script src="./ion.js"></script>
+</head>
+<body>
+<div id="stage">
+  <div id="c"></div>
+  <div id="overlay"></div>
+  <div id="status">AUMARA · starting…</div>
+  <div id="hud">Earth…</div>
+  <button id="close" type="button">Cerrar</button>
+  <div id="sheet"></div>
+</div>
+<script>
+const BOOK = "https://beds24.com/booking2.php?propid=324882";
+const CESIUM_JS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Cesium.js";
+const CESIUM_CSS = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/Widgets/widgets.css";
+const DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
+const FORCE_LOCAL = /(?:\?|&)local=1(?:&|$)/.test(location.search);
+const TILE_PROOF_MS = 8000;
+const overlay = document.getElementById("overlay");
+const sheet = document.getElementById("sheet");
+const hud = document.getElementById("hud");
+const statusEl = document.getElementById("status");
+const stage = document.getElementById("stage");
+if (DEBUG) { hud.classList.add("on"); stage.classList.add("dbg"); }
+function setStatus(text) { statusEl.textContent = text; }
+function pic(id) { return "https://lh3.googleusercontent.com/d/" + id + "=w1600"; }
+let MEDIA = null;
+function housePhoto(id) {
+  const m = MEDIA && MEDIA.houses && MEDIA.houses[id];
+  return m ? pic(m.id) : pic("1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO");
+}
+function houseKind(h) { return h.diameterMetres === 9 ? "Superior" : "Chalet"; }
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.body.appendChild(s);
+  });
+}
+function loadCss(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l);
+}
+function lonLatToEn(lon, lat, originE, originN) {
+  return AUMARA_UTM.localFromWgs84(lon, lat, originE, originN);
+}
+function sampleHM(hm, east, north) {
+  if (!hm) return 1.5;
+  const u = (east - hm.east0) / hm.cell, v = (north - hm.north0) / hm.cell;
+  const c0 = Math.floor(u), r0 = Math.floor(v), tx = u - c0, ty = v - r0;
+  function at(c, r) {
+    const cc = Math.max(0, Math.min(hm.cols - 1, c));
+    const rr = Math.max(0, Math.min(hm.rows - 1, r));
+    return hm.heights_m[rr * hm.cols + cc];
+  }
+  return at(c0, r0) * (1 - tx) * (1 - ty) + at(c0 + 1, r0) * tx * (1 - ty) + at(c0, r0 + 1) * (1 - tx) * ty + at(c0 + 1, r0 + 1) * tx * ty;
+}
+function openSheet(h) {
+  sheet.className = "on";
+  sheet.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt=""/>
+    <div style="flex:1"><h3>Casa ${h.spatialId}</h3>
+    <p>${houseKind(h)} · Ø${h.diameterMetres} · AUMARA spatial house</p>
+    <a class="btn" href="${BOOK}" target="_blank" rel="noreferrer">Ver disponibilidad</a></div>`;
+}
+document.getElementById("close").onclick = () => {
+  sheet.className = "";
+  if (window.__AUMARA) window.__AUMARA.closed = true;
+};
+function hideGlobe(viewer, C) {
+  try {
+    viewer.scene.globe.show = false;
+    viewer.scene.globe.baseColor = C.Color.fromCssColorString("#0a1a14");
+    viewer.scene.backgroundColor = C.Color.fromCssColorString("#0a1a14");
+    if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = false;
+    if (viewer.scene.skyBox) viewer.scene.skyBox.show = false;
+    if (viewer.scene.sun) viewer.scene.sun.show = false;
+    if (viewer.scene.moon) viewer.scene.moon.show = false;
+  } catch (e) {}
+}
+function enableSkyForProvenTiles(viewer) {
+  try {
+    if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = true;
+    if (viewer.scene.sun) viewer.scene.sun.show = true;
+  } catch (e) {}
+}
+window.addEventListener("DOMContentLoaded", () => { startFlight().catch((e) => setStatus(String(e && e.message ? e.message : e))); });
+async function startFlight() {
+  loadCss(CESIUM_CSS);
+  setStatus(FORCE_LOCAL ? "3D local · ?local=1" : "Loading runtime…");
+  if (window.AUMARA_ION && window.AUMARA_ION.ready) {
+    try { await window.AUMARA_ION.ready; } catch (e) {}
+  }
+  await loadScript(CESIUM_JS);
+  await runTwin();
+}
+async function runTwin() {
+  const C = window.Cesium;
+  window.CESIUM_BASE_URL = "https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/";
+  const sessionIon = !FORCE_LOCAL && !!(window.AUMARA_ION && window.AUMARA_ION.apply && window.AUMARA_ION.apply(C));
+  const ionPresent = !!(C.Ion && C.Ion.defaultAccessToken);
+  const [geo, flight, hm, media] = await Promise.all([
+    fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => { if (!r.ok) throw new Error("georef:" + r.status); return r.json(); }),
+    fetch("./world/flight-path.json").then((r) => { if (!r.ok) throw new Error("flight-path:" + r.status); return r.json(); }),
+    fetch("./world/heightmap.json").then((r) => { if (!r.ok) throw new Error("heightmap:" + r.status); return r.json(); }),
+    fetch("./world/media-index.json").then((r) => r.ok ? r.json() : { houses: {} }).catch(() => ({ houses: {} })),
+  ]);
+  MEDIA = media;
+  const lon = geo.localOrigin.wgs84.longitude, lat = geo.localOrigin.wgs84.latitude;
+  const originE = geo.localOrigin.utm30n.easting, originN = geo.localOrigin.utm30n.northing;
+  const refMsl = (geo.verticalPolicy && geo.verticalPolicy.projectReferenceElevationMslMetres) || 91;
+  const wps = flight.waypoints;
+  const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const viewer = new C.Viewer("c", {
+    animation: false, timeline: false, baseLayerPicker: false,
+    geocoder: false, homeButton: false, sceneModePicker: false, navigationHelpButton: false,
+    fullscreenButton: false, infoBox: false, selectionIndicator: false,
+    baseLayer: false, shadows: false, msaaSamples: 1, targetFrameRate: mobile ? 30 : 60,
+    requestRenderMode: false, skyAtmosphere: false, skyBox: false,
+  });
+  hideGlobe(viewer, C);
+  viewer.scene.fog.enabled = false;
+  viewer.scene.fxaa = false;
+  viewer.resolutionScale = mobile ? 0.75 : 1;
+  viewer.scene.light = new C.SunLight({ intensity: 1.35 });
+  try { viewer.scene.rethrowRenderErrors = false; } catch (e) {}
+  viewer.camera.setView({ destination: C.Cartesian3.fromDegrees(lon, lat, 120) });
+  const events = [];
+  function emit(name, extra) {
+    if (events.length && events[events.length - 1].name === name) return;
+    events.push({ name, t: Date.now(), extra: extra || null });
+    if (window.__AUMARA) window.__AUMARA.events = events;
+  }
+  let tilesOn = false, tileset = null, firstGoogleTileRendered = false, tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
+  let terrainProven = false;
+  if (!FORCE_LOCAL && sessionIon) {
+    setStatus("Proving Google tiles…");
+    try {
+      tileset = await C.createGooglePhotorealistic3DTileset();
+      tileset.maximumScreenSpaceError = mobile ? 16 : 8;
+      tileset.skipLevelOfDetail = true;
+      tileset.immediatelyLoadDesiredLevelOfDetail = false;
+      tileset.dynamicScreenSpaceError = true;
+      if (tileset.cacheBytes !== undefined) tileset.cacheBytes = mobile ? 256 * 1024 * 1024 : 768 * 1024 * 1024;
+      tileset.show = false;
+      viewer.scene.primitives.add(tileset);
+      tilesStatus = "LOADING";
+      const markTile = () => {
+        if (firstGoogleTileRendered) return;
+        firstGoogleTileRendered = true;
+        tilesStatus = "READY";
+        tilesOn = true;
+        tileset.show = true;
+        enableSkyForProvenTiles(viewer);
+        hideGlobe(viewer, C);
+        emit("GOOGLE_TILE_FIRST_RENDER");
+        if (window.__AUMARA) {
+          window.__AUMARA.firstGoogleTileRendered = true;
+          window.__AUMARA.globalTilesStatus = "READY";
+          window.__AUMARA.verification_status = "READY";
+        }
+      };
+      tileset.tileVisible.addEventListener(markTile);
+      if (tileset.initialTilesLoaded) tileset.initialTilesLoaded.addEventListener(markTile);
+      const waitUntil = Date.now() + TILE_PROOF_MS;
+      tileset.show = true;
+      while (!firstGoogleTileRendered && Date.now() < waitUntil) {
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      if (!firstGoogleTileRendered) {
+        tilesOn = false;
+        tileset.show = false;
+        try { viewer.scene.primitives.remove(tileset); } catch (e) {}
+        tileset = null;
+        tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
+      }
+    } catch (e) {
+      tilesOn = false;
+      tileset = null;
+      tilesStatus = "AWAITING_OWNER_RUNTIME_PROOF";
+    }
+  }
+  hideGlobe(viewer, C);
+  if (!tilesOn) {
+    stage.classList.add("local");
+    setStatus(FORCE_LOCAL ? "3D local · ?local=1" : "3D local · ion off / tiles unproven");
+  } else {
+    setStatus("Google tiles · Earth → parcel");
+  }
+  let originH = tilesOn ? refMsl : 0;
+  if (tilesOn) {
+    try {
+      const originProbe = C.Cartographic.fromDegrees(lon, lat);
+      const sampled = await Promise.race([
+        viewer.scene.sampleHeightMostDetailed([originProbe]),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("height-probe-timeout")), 2500)),
+      ]);
+      if (sampled && sampled[0] && isFinite(sampled[0].height) && sampled[0].height > -50 && sampled[0].height < 500) {
+        originH = sampled[0].height;
+        terrainProven = true;
+      }
+    } catch (e) {}
+  }
+  if (!terrainProven) hideGlobe(viewer, C);
+  let parcelClippingActive = false, clipSupported = false;
+  const clipOk = !!(C.ClippingPolygonCollection && C.ClippingPolygonCollection.isSupported && C.ClippingPolygonCollection.isSupported(viewer.scene));
+  clipSupported = clipOk;
+  if (tilesOn && tileset && C.ClippingPolygon && geo.officialParcelBoundary && clipOk) {
+    try {
+      const ring = geo.officialParcelBoundary.geometry.coordinates[0];
+      const clipPos = ring.map((p) => C.Cartesian3.fromDegrees(p[0], p[1]));
+      tileset.clippingPolygons = new C.ClippingPolygonCollection({
+        polygons: [new C.ClippingPolygon({ positions: clipPos })],
+        enabled: true,
+      });
+      parcelClippingActive = true;
+    } catch (e) { parcelClippingActive = false; }
+  }
+  const origin = C.Cartesian3.fromDegrees(lon, lat, originH);
+  function utmGridModelMatrix() {
+    const pE = AUMARA_UTM.utm30nToWgs84(originE + 1, originN);
+    const pN = AUMARA_UTM.utm30nToWgs84(originE, originN + 1);
+    const cE = C.Cartesian3.fromDegrees(pE.lon, pE.lat, originH);
+    const cN = C.Cartesian3.fromDegrees(pN.lon, pN.lat, originH);
+    const xAxis = C.Cartesian3.normalize(C.Cartesian3.subtract(cE, origin, new C.Cartesian3()), new C.Cartesian3());
+    let yAxis = C.Cartesian3.normalize(C.Cartesian3.subtract(cN, origin, new C.Cartesian3()), new C.Cartesian3());
+    const zAxis = C.Cartesian3.normalize(C.Cartesian3.cross(xAxis, yAxis, new C.Cartesian3()), new C.Cartesian3());
+    yAxis = C.Cartesian3.normalize(C.Cartesian3.cross(zAxis, xAxis, new C.Cartesian3()), new C.Cartesian3());
+    const m = new C.Matrix4();
+    C.Matrix4.setColumn(m, 0, new C.Cartesian4(xAxis.x, xAxis.y, xAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 1, new C.Cartesian4(yAxis.x, yAxis.y, yAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 2, new C.Cartesian4(zAxis.x, zAxis.y, zAxis.z, 0), m);
+    C.Matrix4.setColumn(m, 3, new C.Cartesian4(origin.x, origin.y, origin.z, 1), m);
+    return m;
+  }
+  const glb = await C.Model.fromGltfAsync({
+    url: "./world/aumara-site-v2_1.glb",
+    modelMatrix: utmGridModelMatrix(),
+    scale: 1.0, incrementallyLoadTextures: true, backFaceCulling: true,
+  });
+  viewer.scene.primitives.add(glb);
+  glb.show = !tilesOn;
+  const arNodes = geo.houses.map((h) => {
+    const el = document.createElement("button");
+    el.className = "ar"; el.type = "button"; el.textContent = h.spatialId;
+    el.style.display = "none";
+    el.onclick = () => openSheet(h); overlay.appendChild(el);
+    return { h, el };
+  });
+  function groundSample(lonX, latX) {
+    const en = lonLatToEn(lonX, latX, originE, originN);
+    const dem = originH + sampleHM(hm, en.east, en.north);
+    return { ground: dem, source: tilesOn ? "LOCAL_DEM" : "LOCAL_DEM" };
+  }
+  function clearHouses(e, n) {
+    let ee = e, nn = n;
+    geo.houses.forEach((h) => {
+      const he = h.localMetres.east, hn = h.localMetres.north;
+      const need = h.diameterMetres / 2 + 1.4;
+      const dx = ee - he, dy = nn - hn;
+      const d = Math.hypot(dx, dy) || 0.001;
+      if (d < need) { const k = need / d; ee = he + dx * k; nn = hn + dy * k; }
+    });
+    return { east: ee, north: nn };
+  }
+  function enToLonLat(east, north) {
+    const ll = AUMARA_UTM.wgs84FromLocal(east, north, originE, originN);
+    return { lon: ll.lon, lat: ll.lat };
+  }
+  function ease(t) { return t * t * (3 - 2 * t); }
+  const start = C.JulianDate.now();
+  const dur = flight.duration_s_default || 48;
+  const pos = new C.SampledPositionProperty();
+  pos.setInterpolationOptions({ interpolationDegree: 1, interpolationAlgorithm: C.LinearApproximation });
+  let intro = 2;
+  if (tilesOn) {
+    intro = 22;
+    const stages = [
+      { lon: lon, lat: lat, h: 18000000 },
+      { lon: -2.8, lat: 40.15, h: 650000 },
+      { lon: -0.18, lat: 38.70, h: 30000 },
+      { lon: lon, lat: lat, h: originH + 2200 },
+      { lon: lon, lat: lat, h: originH + 140 },
+      { lon: wps[0].wgs84.longitude, lat: wps[0].wgs84.latitude, h: originH + 40 },
+    ];
+    const ts = [0, 5.2, 10.4, 14.6, 18.2, 22];
+    for (let s = 0; s < stages.length - 1; s++) {
+      const a = stages[s], b = stages[s + 1], t0 = ts[s], t1 = ts[s + 1], n = 10;
+      for (let i = 0; i < n; i++) {
+        const u = ease(i / n);
+        const t = C.JulianDate.addSeconds(start, t0 + (t1 - t0) * (i / n), new C.JulianDate());
+        pos.addSample(t, C.Cartesian3.fromDegrees(a.lon + (b.lon - a.lon) * u, a.lat + (b.lat - a.lat) * u, a.h + (b.h - a.h) * u));
+      }
+    }
+    pos.addSample(C.JulianDate.addSeconds(start, intro, new C.JulianDate()), C.Cartesian3.fromDegrees(wps[0].wgs84.longitude, wps[0].wgs84.latitude, originH + 40));
+    emit("EARTH_STAGE");
+  } else {
+    pos.addSample(start, C.Cartesian3.fromDegrees(lon, lat, originH + 55));
+  }
+  const dense = 80;
+  for (let s = 0; s < dense; s++) {
+    const u = s / (dense - 1);
+    const i = Math.min(wps.length - 2, Math.floor(u * (wps.length - 1)));
+    const f = u * (wps.length - 1) - i;
+    const a = wps[i].local, b = wps[i + 1].local;
+    const cleared = clearHouses(a.east + (b.east - a.east) * f, a.north + (b.north - a.north) * f);
+    const ll = enToLonLat(cleared.east, cleared.north);
+    const g = sampleHM(hm, cleared.east, cleared.north);
+    const t = C.JulianDate.addSeconds(start, intro + u * dur, new C.JulianDate());
+    pos.addSample(t, C.Cartesian3.fromDegrees(ll.lon, ll.lat, originH + g + 3.72));
+  }
+  viewer.clock.startTime = start.clone();
+  viewer.clock.stopTime = C.JulianDate.addSeconds(start, intro + dur, new C.JulianDate());
+  viewer.clock.currentTime = start.clone();
+  viewer.clock.clockRange = C.ClockRange.CLAMPED;
+  viewer.clock.shouldAnimate = true;
+  let firstFrameRendered = false, maxWp = -1, lastHz = -0.1;
+  let blendComplete = !tilesOn, localTwinVisible = !tilesOn, handoffComplete = !tilesOn;
+  if (!tilesOn) emit("LOCAL_TWIN_VISIBLE");
+  const startedMs = Date.now();
+  window.__AUMARA = {
+    run_id: "clh-" + startedMs.toString(36),
+    capture_mode: "CLEAN_LOCAL_HANDOFF",
+    page_url: location.href,
+    firstFrameRendered: false,
+    waypointReached: 0,
+    twinLoaded: true,
+    events,
+    globalTilesStatus: tilesOn ? "READY" : tilesStatus,
+    provider: tilesOn ? "GOOGLE_PHOTOREALISTIC_3D_TILES" : "LOCAL_TWIN",
+    ionSessionToken: sessionIon,
+    ionDefaultTokenPresent: ionPresent,
+    firstGoogleTileRendered,
+    terrainProven,
+    globeShown: false,
+    localTwinLoaded: true,
+    localTwinVisible: !tilesOn,
+    blendComplete,
+    handoffComplete,
+    parcelClippingActive,
+    clipSupported,
+    flightComplete: false,
+    forceLocal: FORCE_LOCAL,
+    stage: tilesOn ? "EARTH" : "LOCAL_FALLBACK",
+    verification_status: tilesOn ? "READY" : "LOCAL_FALLBACK",
+    fatalRenderError: false,
+    renderError: null,
+  };
+  function stageOf(alt, elapsed) {
+    if (!tilesOn) return "LOCAL_FALLBACK";
+    if (elapsed >= intro) return elapsed < intro + 0.3 ? "WP0" : "WP0_27";
+    if (alt > 4e6) return "EARTH";
+    if (alt > 1.2e5) return "IBERIA";
+    if (alt > 8e3) return "COSTA_BLANCA";
+    if (alt > 600) return "BENIDOLEIG";
+    if (alt > 70) return "PARCEL_APPROACH";
+    return "LOCAL_BLEND";
+  }
+  const flightEnd = intro + dur;
+  let tickHandler = null;
+  function finiteVec(v) { return !!(v && isFinite(v.x) && isFinite(v.y) && isFinite(v.z)); }
+  function sampleOnce() {
+    hideGlobe(viewer, C);
+    if (tilesOn) enableSkyForProvenTiles(viewer);
+    const p = pos.getValue(viewer.clock.currentTime);
+    if (!p) return;
+    const elapsed = C.JulianDate.secondsDifference(viewer.clock.currentTime, start);
+    const atEnd = elapsed >= flightEnd - 0.02;
+    const carto = C.Cartographic.fromCartesian(p);
+    const alt = carto.height;
+    const lookT = atEnd ? Math.max(elapsed - 0.55, 0) : Math.min(elapsed + 0.55, flightEnd);
+    const other = pos.getValue(C.JulianDate.addSeconds(start, lookT, new C.JulianDate()));
+    if (other && finiteVec(p) && finiteVec(other)) {
+      const dir = atEnd ? C.Cartesian3.subtract(p, other, new C.Cartesian3()) : C.Cartesian3.subtract(other, p, new C.Cartesian3());
+      if (C.Cartesian3.magnitudeSquared(dir) >= 1e-12 && finiteVec(dir)) {
+        C.Cartesian3.normalize(dir, dir);
+        const up = C.Ellipsoid.WGS84.geodeticSurfaceNormal(p, new C.Cartesian3());
+        const right = C.Cartesian3.cross(dir, up, new C.Cartesian3());
+        if (finiteVec(up) && finiteVec(right) && C.Cartesian3.magnitudeSquared(right) >= 1e-12) {
+          C.Cartesian3.normalize(right, right);
+          const pitch = alt > 1e6 ? -0.12 : alt > 2e4 ? -0.22 : alt > 400 ? -0.30 : -0.38;
+          const look = C.Matrix3.multiplyByVector(C.Matrix3.fromQuaternion(C.Quaternion.fromAxisAngle(right, pitch)), dir, new C.Cartesian3());
+          if (finiteVec(look)) viewer.camera.setView({ destination: p, orientation: { direction: look, up } });
+        }
+      }
+    }
+    const st = stageOf(alt, elapsed);
+    if (window.__AUMARA.stage !== st) {
+      window.__AUMARA.stage = st;
+      if (st === "EARTH") emit("EARTH_STAGE");
+      if (st === "IBERIA") emit("IBERIA_STAGE");
+      if (st === "COSTA_BLANCA") emit("COSTA_BLANCA_STAGE");
+      if (st === "PARCEL_APPROACH") emit("PARCEL_APPROACH");
+      if (st === "WP0") emit("WP0");
+    }
+    const lonX = carto.longitude * 180 / Math.PI, latX = carto.latitude * 180 / Math.PI;
+    const enNow = lonLatToEn(lonX, latX, originE, originN);
+    const horiz = Math.hypot(enNow.east, enNow.north);
+    const localAlt = alt - originH;
+    if (tileset && tilesOn && (localAlt > 600 || elapsed < 4)) {
+      if (!tileset.show) tileset.show = true;
+    }
+    if (tilesOn && !window.__AUMARA._handoffStart && horiz < 220 && localAlt < 120) {
+      window.__AUMARA._handoffStart = true;
+      emit("GOOGLE_LOCAL_HANDOFF_START");
+    }
+    const mobileHide = mobile && tilesOn && horiz < 180 && localAlt < 90;
+    const deskHide = !mobile && tilesOn && horiz < 180 && localAlt < 70;
+    if (tileset && (mobileHide || deskHide || (tilesOn && elapsed >= intro))) tileset.show = false;
+    const googleHidden = !tileset || !tileset.show;
+    if (!glb.show && (!tilesOn || (googleHidden && localAlt < 140))) {
+      glb.show = true;
+      localTwinVisible = true;
+      emit("LOCAL_TWIN_VISIBLE");
+      window.__AUMARA.localTwinVisible = true;
+    }
+    if (!handoffComplete && glb.show && googleHidden) {
+      handoffComplete = true;
+      blendComplete = true;
+      window.__AUMARA.handoffComplete = true;
+      window.__AUMARA.blendComplete = true;
+      emit("GOOGLE_LOCAL_HANDOFF_COMPLETE");
+      emit("BLEND_COMPLETE");
+      setStatus("Local twin · houses A–F");
+    }
+    window.__AUMARA.globalTilesVisible = !!(tileset && tileset.show);
+    window.__AUMARA.localTwinVisible = !!glb.show;
+    window.__AUMARA.globeShown = !!(viewer.scene.globe && viewer.scene.globe.show);
+    const wp = elapsed < intro ? 0 : Math.min(27, Math.round(((elapsed - intro) / dur) * 27));
+    if (wp > maxWp) { maxWp = wp; window.__AUMARA.waypointReached = wp; if (wp === 27) emit("WP27"); }
+    if (elapsed >= intro && wp === 0) emit("WP0");
+    if ((wp === 27 || atEnd) && !window.__AUMARA.flightComplete) {
+      window.__AUMARA.flightComplete = true;
+      window.__AUMARA.waypointReached = 27;
+      viewer.clock.shouldAnimate = false;
+      if (tickHandler) {
+        try { viewer.clock.onTick.removeEventListener(tickHandler); } catch (e) {}
+        tickHandler = null;
+      }
+      emit("WP27");
+      setStatus(tilesOn ? "Handoff complete · local twin" : "Local twin complete");
+    }
+    if (DEBUG) hud.textContent = window.__AUMARA.verification_status + "  " + (tilesOn ? "GOOGLE  " : "LOCAL  ") + st + "  WP " + wp + "/27";
+  }
+  viewer.scene.postRender.addEventListener(() => {
+    if (!firstFrameRendered) { firstFrameRendered = true; window.__AUMARA.firstFrameRendered = true; }
+    hideGlobe(viewer, C);
+    if (tilesOn && tileset && tileset.show) enableSkyForProvenTiles(viewer);
+    const placed = [];
+    arNodes.forEach(({ h, el }) => {
+      const cam = viewer.camera.positionCartographic;
+      const en = cam ? lonLatToEn(cam.longitude * 180 / Math.PI, cam.latitude * 180 / Math.PI, originE, originN) : { east: 999, north: 999 };
+      const allow = handoffComplete && cam && (cam.height - originH) < 20 && Math.hypot(en.east, en.north) < 180;
+      if (!allow) { el.style.display = "none"; return; }
+      const p = C.Cartesian3.fromDegrees(h.wgs84.longitude, h.wgs84.latitude, originH + 5.4);
+      const win = C.SceneTransforms.worldToWindowCoordinates(viewer.scene, p);
+      if (!win) { el.style.display = "none"; return; }
+      placed.push({ el, win, dist: C.Cartesian3.distance(viewer.camera.position, p) });
+    });
+    placed.sort((a, b) => a.dist - b.dist);
+    placed.forEach((a, i) => {
+      const clash = placed.slice(0, i).some((b) => Math.hypot(a.win.x - b.win.x, a.win.y - b.win.y) < 36);
+      a.el.style.display = clash ? "none" : "block";
+      if (!clash) { a.el.style.left = a.win.x + "px"; a.el.style.top = a.win.y + "px"; }
+    });
+  });
+  tickHandler = function onFlightTick() { sampleOnce(); };
+  viewer.clock.onTick.addEventListener(tickHandler);
+}
+</script>
+</body>
+</html>
