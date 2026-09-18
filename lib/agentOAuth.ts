@@ -7,6 +7,7 @@ export const AGENT_PROTECTED_ENDPOINT = "https://www.aumara.me/api/agent/protect
 export const AGENT_SCOPE = "agent.read";
 export const AGENT_TOKEN_TTL_SECONDS = 600;
 const CODE_TTL_SECONDS = 300;
+const AUMARA_HOSTS = new Set(["aumara.me", "www.aumara.me"]);
 
 type ClientRegistration = {
   client_name: string;
@@ -32,6 +33,25 @@ type AccessClaims = {
   iat: number;
   exp: number;
 };
+
+export function requestAgentOrigin(req: Request): string {
+  const rawHost = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.aumara.me")
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:443$/, "");
+  const host = AUMARA_HOSTS.has(rawHost) ? rawHost : "www.aumara.me";
+  return `https://${host}`;
+}
+
+export function isAumaraOrigin(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && AUMARA_HOSTS.has(url.host);
+  } catch {
+    return false;
+  }
+}
 
 function signingKey() {
   return AGENT_OAUTH_BUILD_KEY;
@@ -110,7 +130,7 @@ export function issueAuthorizationCode(input: {
   if (!/^[A-Za-z0-9_-]{43,128}$/.test(input.codeChallenge)) throw new Error("invalid_code_challenge");
   const scope = input.scope || AGENT_SCOPE;
   const resource = input.resource || AGENT_RESOURCE;
-  if (scope !== AGENT_SCOPE || resource !== AGENT_RESOURCE) throw new Error("invalid_scope_or_resource");
+  if (scope !== AGENT_SCOPE || !isAumaraOrigin(resource)) throw new Error("invalid_scope_or_resource");
   const now = Math.floor(Date.now() / 1000);
   const code: AuthorizationCode = {
     client_id: input.clientId,
@@ -156,7 +176,7 @@ export function issueAgentToken(clientId: string) {
 export function verifyAgentToken(token: string) {
   const claims = open<AccessClaims>("access", token);
   const now = Math.floor(Date.now() / 1000);
-  if (!claims || claims.iss !== AGENT_ISSUER || claims.aud !== AGENT_RESOURCE) return null;
+  if (!claims || !isAumaraOrigin(claims.iss) || !isAumaraOrigin(claims.aud)) return null;
   if (claims.scope !== AGENT_SCOPE || typeof claims.exp !== "number" || claims.exp <= now) return null;
   return claims;
 }

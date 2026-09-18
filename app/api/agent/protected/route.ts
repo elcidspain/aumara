@@ -1,8 +1,7 @@
-import { AGENT_PROTECTED_ENDPOINT, AGENT_SCOPE, verifyAgentToken } from "@/lib/agentOAuth";
+import { AGENT_SCOPE, requestAgentOrigin, verifyAgentToken } from "@/lib/agentOAuth";
 
 export const dynamic = "force-dynamic";
 
-const resourceMetadata = "https://www.aumara.me/.well-known/oauth-protected-resource";
 const commonHeaders = {
   "Cache-Control": "no-store",
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +10,8 @@ const commonHeaders = {
 };
 
 export function GET(request: Request) {
+  const origin = requestAgentOrigin(request);
+  const resourceMetadata = `${origin}/.well-known/oauth-protected-resource`;
   const authorization = request.headers.get("authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
   const claims = token ? verifyAgentToken(token) : null;
@@ -31,14 +32,14 @@ export function GET(request: Request) {
 
   return Response.json({
     ok: true,
-    resource: AGENT_PROTECTED_ENDPOINT,
+    resource: `${origin}/api/agent/protected`,
     scope: claims.scope,
     subject: claims.sub,
     property: "AUMARA",
     access: "read-only",
-    publicMcp: "https://www.aumara.me/mcp",
-    publicA2a: "https://www.aumara.me/a2a",
-    liveAvailability: "https://www.aumara.me/api/availability",
+    publicMcp: `${origin}/mcp`,
+    publicA2a: `${origin}/a2a`,
+    liveAvailability: `${origin}/api/availability`,
     directBooking: "https://beds24.com/booking2.php?propid=324882",
     note: "This protected surface contains public guest-discovery data only and cannot create, change, hold or charge a reservation.",
   }, { headers: commonHeaders });

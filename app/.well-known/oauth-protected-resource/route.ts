@@ -1,18 +1,19 @@
-import { AGENT_ISSUER, AGENT_RESOURCE, AGENT_SCOPE } from "@/lib/agentOAuth";
+import { AGENT_SCOPE, requestAgentOrigin } from "@/lib/agentOAuth";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
+export function GET(request: Request) {
+  const origin = requestAgentOrigin(request);
   return Response.json({
-    resource: AGENT_RESOURCE,
-    authorization_servers: [AGENT_ISSUER],
+    resource: origin,
+    authorization_servers: [origin],
     scopes_supported: [AGENT_SCOPE],
     bearer_methods_supported: ["header"],
     resource_name: "AUMARA read-only agent resource",
-    resource_documentation: `${AGENT_ISSUER}/auth.md`,
+    resource_documentation: `${origin}/auth.md`,
   }, {
     headers: {
-      "Cache-Control": "public, max-age=300, s-maxage=300",
+      "Cache-Control": "public, max-age=60, s-maxage=60",
       "Access-Control-Allow-Origin": "*",
     },
   });
