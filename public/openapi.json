@@ -2,11 +2,13 @@
   "openapi": "3.1.0",
   "info": {
     "title": "AUMARA Public Guest API",
-    "version": "1.1.0",
-    "description": "Read-only public guest, live availability and published price-comparison API for AUMARA. No endpoint creates, holds, modifies or charges a reservation."
+    "version": "1.2.0",
+    "description": "Read-only public guest, live availability and published price-comparison API for AUMARA. No endpoint creates, holds, modifies or charges a reservation. Payment completes only in the human Beds24/Booking UI."
   },
   "servers": [
-    { "url": "https://www.aumara.me" }
+    {
+      "url": "https://www.aumara.me"
+    }
   ],
   "paths": {
     "/api/guest-info": {
@@ -14,7 +16,28 @@
         "operationId": "getAumaraGuestInfo",
         "summary": "Get public AUMARA guest information",
         "responses": {
-          "200": { "description": "Public AUMARA property and direct-booking information" }
+          "200": {
+            "description": "Public AUMARA property and direct-booking information"
+          }
+        },
+        "x-payment-info": {
+          "authMode": "human-checkout-required",
+          "agent_execution": false,
+          "intent": "human-checkout",
+          "method": "human-beds24",
+          "amount": null,
+          "currency": "EUR",
+          "description": "Reservation payment completes only in the human Beds24/Booking UI. Agents never create, hold, or charge. Use checkout_url to hand off to a human.",
+          "checkout_url": "https://beds24.com/booking2.php?propid=324882",
+          "protocols": [
+            {
+              "human_checkout": {
+                "provider": "Beds24",
+                "url": "https://beds24.com/booking2.php?propid=324882",
+                "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+              }
+            }
+          ]
         }
       }
     },
@@ -24,25 +47,155 @@
         "summary": "Get live AUMARA availability or compare nearby stay lengths",
         "description": "Uses the public Beds24 availability source. mode=quote returns exact-date live inventory and published totals. mode=compare checks a range of nearby stay lengths and identifies the strongest currently published nightly value. Read-only.",
         "parameters": [
-          { "name": "mode", "in": "query", "schema": { "type": "string", "enum": ["quote", "compare"], "default": "quote" } },
-          { "name": "checkIn", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
-          { "name": "checkOut", "in": "query", "required": false, "description": "Required when mode=quote", "schema": { "type": "string", "format": "date" } },
-          { "name": "adults", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 20, "default": 2 } },
-          { "name": "children", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 } },
-          { "name": "minNights", "in": "query", "description": "Used when mode=compare", "schema": { "type": "integer", "minimum": 1, "maximum": 14, "default": 2 } },
-          { "name": "maxNights", "in": "query", "description": "Used when mode=compare", "schema": { "type": "integer", "minimum": 1, "maximum": 14, "default": 6 } }
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "quote",
+                "compare"
+              ],
+              "default": "quote"
+            }
+          },
+          {
+            "name": "checkIn",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "checkOut",
+            "in": "query",
+            "required": false,
+            "description": "Required when mode=quote",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "adults",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 2
+            }
+          },
+          {
+            "name": "children",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "default": 0
+            }
+          },
+          {
+            "name": "minNights",
+            "in": "query",
+            "description": "Used when mode=compare",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 14,
+              "default": 2
+            }
+          },
+          {
+            "name": "maxNights",
+            "in": "query",
+            "description": "Used when mode=compare",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 14,
+              "default": 6
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Live Beds24 availability or stay-length comparison",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid dates or guest counts",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
+        },
+        "x-payment-info": {
+          "authMode": "human-checkout-required",
+          "agent_execution": false,
+          "intent": "human-checkout",
+          "method": "human-beds24",
+          "amount": null,
+          "currency": "EUR",
+          "description": "Reservation payment completes only in the human Beds24/Booking UI. Agents never create, hold, or charge. Use checkout_url to hand off to a human.",
+          "checkout_url": "https://beds24.com/booking2.php?propid=324882",
+          "protocols": [
+            {
+              "human_checkout": {
+                "provider": "Beds24",
+                "url": "https://beds24.com/booking2.php?propid=324882",
+                "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+              }
+            }
+          ]
         }
       }
+    }
+  },
+  "x-payment-info": {
+    "authMode": "human-checkout-required",
+    "agent_execution": false,
+    "intent": "human-checkout",
+    "method": "human-beds24",
+    "amount": null,
+    "currency": "EUR",
+    "description": "Reservation payment completes only in the human Beds24/Booking UI. Agents never create, hold, or charge. Use checkout_url to hand off to a human.",
+    "checkout_url": "https://beds24.com/booking2.php?propid=324882",
+    "protocols": [
+      {
+        "human_checkout": {
+          "provider": "Beds24",
+          "url": "https://beds24.com/booking2.php?propid=324882",
+          "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+        }
+      }
+    ]
+  },
+  "x-service-info": {
+    "categories": [
+      "lodging",
+      "hospitality",
+      "guest-discovery"
+    ],
+    "docs": {
+      "homepage": "https://www.aumara.me",
+      "apiReference": "https://www.aumara.me/openapi.json",
+      "llms": "https://www.aumara.me/llms.txt",
+      "auth": "https://www.aumara.me/auth.md",
+      "humanCheckout": "https://beds24.com/booking2.php?propid=324882"
     }
   }
 }
