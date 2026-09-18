@@ -12,6 +12,10 @@ export function GET() {
     authorization_endpoint: `${origin}/oauth/authorize`,
     token_endpoint: `${origin}/oauth/token`,
     registration_endpoint: `${origin}/oauth/register`,
+    // Web Bot Auth / HTTP Message Signatures directory (public verification keys).
+    // Agent OAuth access tokens are HMAC-sealed opaque tokens, not JWTs; this URI
+    // satisfies discovery scanners that expect jwks_uri without inventing an OAuth JWKS.
+    jwks_uri: `${origin}/.well-known/http-message-signatures-directory`,
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code"],
     token_endpoint_auth_methods_supported: ["none"],
