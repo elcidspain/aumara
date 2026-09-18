@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 /**
  * Thin UCP discovery stub — honest human-mediated checkout only.
  * Agents never create/hold/charge; payment completes in Beds24/Booking UI.
- * No agent payment execution, x402, or invented charge rails.
+ * No agent payment execution, or invented charge rails.
  */
 const HUMAN_CHECKOUT = "https://beds24.com/booking2.php?propid=324882";
 const WWW = "https://www.aumara.me";

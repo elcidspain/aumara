@@ -34,7 +34,7 @@
               "human_checkout": {
                 "provider": "Beds24",
                 "url": "https://beds24.com/booking2.php?propid=324882",
-                "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+                "note": "Human-mediated Beds24 checkout only. No agent auto-charge rails."
               }
             }
           ]
@@ -157,7 +157,7 @@
               "human_checkout": {
                 "provider": "Beds24",
                 "url": "https://beds24.com/booking2.php?propid=324882",
-                "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+                "note": "Human-mediated Beds24 checkout only. No agent auto-charge rails."
               }
             }
           ]
@@ -179,7 +179,7 @@
         "human_checkout": {
           "provider": "Beds24",
           "url": "https://beds24.com/booking2.php?propid=324882",
-          "note": "No x402 / no MPP agent auto-charge. Human-mediated only."
+          "note": "Human-mediated Beds24 checkout only. No agent auto-charge rails."
         }
       }
     ]
