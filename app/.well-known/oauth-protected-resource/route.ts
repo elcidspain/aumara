@@ -1,11 +1,12 @@
-import { AGENT_SCOPE, requestAgentOrigin } from "@/lib/agentOAuth";
+import { AGENT_ISSUER, AGENT_RESOURCE, AGENT_SCOPE } from "@/lib/agentOAuth";
 
 export const dynamic = "force-dynamic";
 
-export function GET(request: Request) {
-  const origin = requestAgentOrigin(request);
+/** Always emit www canon — do not echo request Host (Radar apex/www mismatch). */
+export function GET() {
+  const origin = AGENT_ISSUER;
   return Response.json({
-    resource: origin,
+    resource: AGENT_RESOURCE,
     authorization_servers: [origin],
     scopes_supported: [AGENT_SCOPE],
     bearer_methods_supported: ["header"],

@@ -34,14 +34,9 @@ type AccessClaims = {
   exp: number;
 };
 
-export function requestAgentOrigin(req: Request): string {
-  const rawHost = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.aumara.me")
-    .split(",")[0]
-    .trim()
-    .toLowerCase()
-    .replace(/:443$/, "");
-  const host = AUMARA_HOSTS.has(rawHost) ? rawHost : "www.aumara.me";
-  return `https://${host}`;
+/** Always https://www.aumara.me — never echo Host (Radar apex/www mismatch). */
+export function requestAgentOrigin(_req?: Request): string {
+  return AGENT_ISSUER;
 }
 
 export function isAumaraOrigin(value: string): boolean {

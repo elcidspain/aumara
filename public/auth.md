@@ -65,6 +65,16 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 On expiry or an invalid token, repeat discovery and the PKCE flow. The endpoint cannot create, hold, change, cancel, or charge a reservation.
 
+## Web Bot Auth / HTTP Message Signatures directory
+
+Public JWKS (Ed25519) for HTTP Message Signatures / Web Bot Auth:
+
+`GET https://www.aumara.me/.well-known/http-message-signatures-directory`
+
+Content-Type: `application/http-message-signatures-directory+json`
+
+Only public JWK parameters are published (`kty`, `crv`, `x`, `kid`, `alg`, `use`). Private key material is never served.
+
 ## Anonymous public surfaces
 
 OAuth is not required for the public website, `llms.txt`, agent skills, API catalog, MCP endpoint at `https://www.aumara.me/mcp`, A2A endpoint at `https://www.aumara.me/a2a`, or live public availability at `https://www.aumara.me/api/availability`.
@@ -93,4 +103,4 @@ Terms: `https://www.aumara.me/terms`
 Privacy: `https://www.aumara.me/privacy`
 Integration contact: `info@aumara.me`
 
-Last updated: 2026-09-15
+Last updated: 2026-09-18

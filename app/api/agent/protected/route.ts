@@ -1,4 +1,4 @@
-import { AGENT_SCOPE, requestAgentOrigin, verifyAgentToken } from "@/lib/agentOAuth";
+import { AGENT_ISSUER, AGENT_PROTECTED_ENDPOINT, AGENT_SCOPE, verifyAgentToken } from "@/lib/agentOAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ const commonHeaders = {
 };
 
 export function GET(request: Request) {
-  const origin = requestAgentOrigin(request);
+  const origin = AGENT_ISSUER;
   const resourceMetadata = `${origin}/.well-known/oauth-protected-resource`;
   const authorization = request.headers.get("authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
@@ -32,7 +32,7 @@ export function GET(request: Request) {
 
   return Response.json({
     ok: true,
-    resource: `${origin}/api/agent/protected`,
+    resource: AGENT_PROTECTED_ENDPOINT,
     scope: claims.scope,
     subject: claims.sub,
     property: "AUMARA",
