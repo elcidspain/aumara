@@ -15,16 +15,34 @@ async function build() {
   const base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
   if (!window.Cesium) {
     window.CESIUM_BASE_URL = base;
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      const timer = setTimeout(() => reject(new Error('global-engine-timeout')), 20000);
-      script.src = base + 'Cesium.js';
-      script.onload = () => { clearTimeout(timer); resolve(); };
-      script.onerror = () => { clearTimeout(timer); script.remove(); reject(new Error('global-engine-unavailable')); };
-      document.head.appendChild(script);
-    });
-    const css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = base + 'Widgets/widgets.css'; document.head.appendChild(css);
+    let lastEngineError = null;
+    for (let attempt = 0; attempt < 2 && !window.Cesium; attempt += 1) {
+      try {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          const timer = setTimeout(() => {
+            script.remove();
+            reject(new Error('global-engine-timeout'));
+          }, 25000);
+          script.src = base + 'Cesium.js' + (attempt ? '?retry=1' : '');
+          script.onload = () => { clearTimeout(timer); resolve(); };
+          script.onerror = () => {
+            clearTimeout(timer);
+            script.remove();
+            reject(new Error('global-engine-unavailable'));
+          };
+          document.head.appendChild(script);
+        });
+      } catch (error) {
+        lastEngineError = error;
+      }
+    }
+    if (!window.Cesium) throw lastEngineError || new Error('global-engine-unavailable');
+    if (!document.querySelector('link[data-aumara-cesium-css]')) {
+      const css = document.createElement('link');
+      css.dataset.aumaraCesiumCss = '1';
+      css.rel = 'stylesheet'; css.href = base + 'Widgets/widgets.css'; document.head.appendChild(css);
+    }
   }
   const C = window.Cesium;
   window.AUMARA_ION?.apply(C);
