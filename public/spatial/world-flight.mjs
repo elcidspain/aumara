@@ -1,6 +1,7 @@
 // Globe and parcel approach. The existing ion configuration owns credentials.
 let preparing;
 let runtime;
+const FLIGHT_SECONDS = 34;
 
 export function prepareAumaraWorldFlight() {
   if (runtime) return Promise.resolve(runtime);
@@ -52,10 +53,50 @@ async function build() {
   viewer.scene.screenSpaceCameraController.enableInputs = false;
   viewer.resolutionScale = Math.min(1, 1.5 / (devicePixelRatio || 1));
   let active = false, raf = 0, startedAt = 0, onFinish, onStage, failure;
+  let photoTiles = null, photoStatus = 'PENDING', siteTilesVisible = false;
+  let photoRequested = false, photoGeneration = 0;
+  async function loadPhotorealisticMap() {
+    if (photoRequested) return;
+    photoRequested = true;
+    const request = ++photoGeneration;
+    let timer;
+    try {
+      await window.AUMARA_ION?.ready;
+      if (!window.AUMARA_ION?.apply(C)) { photoStatus = 'UNCONFIGURED'; return; }
+      const candidate = C.createGooglePhotorealistic3DTileset().then(tiles => {
+        if (request !== photoGeneration || viewer.isDestroyed()) {
+          tiles.destroy();
+          throw new Error('map-tiles-expired');
+        }
+        return tiles;
+      });
+      const tiles = await Promise.race([
+        candidate,
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('map-tiles-timeout')), 12000); }),
+      ]);
+      if (request !== photoGeneration || viewer.isDestroyed()) { tiles.destroy(); return; }
+      photoTiles = tiles;
+      photoTiles.maximumScreenSpaceError = 12;
+      photoTiles.cacheBytes = 96 * 1024 * 1024;
+      photoTiles.maximumCacheOverflowBytes = 48 * 1024 * 1024;
+      photoTiles.showCreditsOnScreen = true;
+      photoTiles.show = false;
+      photoTiles.tileVisible.addEventListener(() => {
+        if (active && viewer.camera.positionCartographic.height < elevation + 1500) siteTilesVisible = true;
+      });
+      photoTiles.tileFailed.addEventListener(() => { photoStatus = 'PARTIAL'; });
+      viewer.scene.primitives.add(photoTiles);
+      photoStatus = 'READY';
+      viewer.scene.requestRender();
+    } catch (_) {
+      photoGeneration += 1;
+      photoStatus = 'UNAVAILABLE';
+    } finally { clearTimeout(timer); }
+  }
   const globalError = viewer.scene.renderError.addEventListener((scene, error) => {
     if (active) { stop(); failure?.(error); }
   });
-  // This local pose matches the first Three.js frame (east, up, -north).
+  // Retain the verified approach; keep the source map visible at the parcel.
   const endLon = origin.longitude + 60 / (111320 * Math.cos(origin.latitude * Math.PI / 180));
   const endLat = origin.latitude - 100 / 110540;
   const keys = [
@@ -63,19 +104,23 @@ async function build() {
     [6, -3, 40, 1100000, -90, 'España'],
     [11, -.25, 38.8, 65000, -80, 'Costa Blanca'],
     [16, origin.longitude, origin.latitude, 4500, -65, 'Benidoleig'],
-    [22, endLon, endLat, elevation + 85, -38.66, 'AUMARA'],
+    [22, endLon, endLat, elevation + 280, -69.4, 'AUMARA'],
   ];
   function stop() { active = false; cancelAnimationFrame(raf); }
   function frame(now) {
     if (!active) return;
-    const elapsed = Math.min(22, (now - startedAt) / 1000);
+    const elapsed = Math.min(22, (now - startedAt) / 1000 * (22 / FLIGHT_SECONDS));
     let i = keys.findIndex((key, index) => index < keys.length - 1 && elapsed < keys[index + 1][0]);
     if (i < 0) i = keys.length - 2;
     const a = keys[i], b = keys[i + 1];
     const u = Math.max(0, Math.min(1, (elapsed - a[0]) / (b[0] - a[0])));
     const e = u * u * (3 - 2 * u);
     const mix = (x, y) => x + (y - x) * e;
-    const height = Math.exp(mix(Math.log(a[3]), Math.log(b[3])));
+    const rawHeight = Math.exp(mix(Math.log(a[3]), Math.log(b[3])));
+    // A raster map is an aerial reference, not a ground-level 3D reconstruction.
+    const height = Math.max(rawHeight, elevation + 280);
+    if (photoTiles) photoTiles.show = height < 65000;
+    if (!photoRequested) loadPhotorealisticMap();
     viewer.camera.setView({
       destination:C.Cartesian3.fromDegrees(mix(a[1],b[1]), mix(a[2],b[2]), height),
       orientation:{ heading:0, pitch:C.Math.toRadians(mix(a[4],b[4])), roll:0 },
@@ -85,6 +130,14 @@ async function build() {
       window.__AUMARA.earthBasemapVisible = true;
       window.__AUMARA.globalImagerySource = imagerySource;
       window.__AUMARA.firstFrameRendered = true;
+      window.__AUMARA.provider = 'CESIUM_SOURCE_MAP';
+      window.__AUMARA.mapViewKind = siteTilesVisible ? 'PHOTOREALISTIC_3D_MAP' : 'SATELLITE_MAP';
+      window.__AUMARA.photorealisticMapStatus = photoStatus;
+      window.__AUMARA.aerialDurationSeconds = FLIGHT_SECONDS;
+      window.__AUMARA.aerialFlightComplete = elapsed === 22;
+      window.__AUMARA.flightComplete = elapsed === 22;
+      window.__AUMARA.fullSiteSourceSurface = false;
+      window.__AUMARA.waypointReached = null;
     }
     onStage?.(elapsed === 22 ? 'AUMARA' : a[5], elapsed / 22);
     if (elapsed < 22) raf = requestAnimationFrame(frame);
@@ -93,6 +146,7 @@ async function build() {
   function start({ complete, stage, error }) {
     stop(); onFinish = complete; onStage = stage; failure = error;
     const host = document.getElementById('c'); host.style.visibility = 'visible';
+    siteTilesVisible = false;
     active = true; startedAt = performance.now(); frame(startedAt);
   }
   // Wait for an actual imagery tile before revealing the globe.

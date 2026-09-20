@@ -1,12 +1,9 @@
-import { prepareAumaraGlbFlight } from "./glb-flight.mjs";
 import { prepareAumaraWorldFlight } from "./world-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let installed = false;
 let running = false;
 let generation = 0;
-let localRuntime = null;
 let worldRuntime = null;
 
 
@@ -52,7 +49,7 @@ function ensureUi(stage) {
     <div class="agf-frame agf-b"></div>
     <div class="agf-shade"></div>
     <div class="agf-copy">
-      <small>AUMARA &middot; Vuelo 3D</small>
+      <small>AUMARA &middot; Costa Blanca</small>
       <strong id="agf-label">Tierra</strong>
       <span id="agf-sub">Hacia la pen&iacute;nsula ib&eacute;rica</span>
     </div>
@@ -67,7 +64,7 @@ function showEndPanel(stage) {
   panel.id = "agf-end";
   panel.style.cssText = "position:absolute;left:max(22px,5vw);right:max(22px,5vw);bottom:max(28px,5vh);z-index:6;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:18px 20px;border:1px solid rgba(255,255,255,.16);border-radius:22px;background:rgba(6,16,9,.82);backdrop-filter:blur(14px);color:#f3ecde";
   panel.innerHTML = `
-    <div style="flex:1;min-width:220px"><div style="font:700 10px/1.2 system-ui;letter-spacing:.17em;text-transform:uppercase;color:#c49a64;margin-bottom:5px">AUMARA &middot; BENIDOLEIG</div><div style="font:500 clamp(20px,3vw,34px)/1.05 Georgia,serif;color:#f0ddb0">Elige tu casa.</div></div>
+    <div style="flex:1;min-width:220px"><div style="font:700 10px/1.2 system-ui;letter-spacing:.17em;text-transform:uppercase;color:#c49a64;margin-bottom:5px">AUMARA &middot; BENIDOLEIG</div><div style="font:500 clamp(20px,3vw,34px)/1.05 Georgia,serif;color:#f0ddb0">Elige tu casa.</div><div id="agf-source" style="margin-top:7px;font:12px/1.4 system-ui;opacity:.8"></div></div>
     <a class="btn ghost" href="/#houses">Ver las casas</a>
     <button class="btn ghost" id="agf-replay" type="button">Repetir el vuelo</button>
     <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Consultar disponibilidad</a>`;
@@ -86,7 +83,7 @@ async function startGuestFlight() {
   root.style.display = "block";
   root.style.removeProperty("opacity");
   root.classList.remove("off");
-  window.__AUMARA = { provider:"CESIUM_TO_TEXTURED_MODEL", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:0, flightComplete:false, events:[] };
+  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
   document.getElementById('flight-cover')?.classList.remove('off');
   const loadingText = document.querySelector('#flight-cover span');
@@ -103,44 +100,28 @@ async function startGuestFlight() {
 
   function fail(error) {
     if (token !== generation) return;
-    localRuntime?.stop(); worldRuntime?.stop(); running = false;
+    worldRuntime?.stop(); running = false;
     window.__AUMARA.fatalRenderError = true;
-    window.__AUMARA.renderError = String(error?.message || error).slice(0, 160);
+    window.__AUMARA.renderError = String(error?.message || error).replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
     window.__AUMARA.stage = 'ERROR';
     const cover = document.getElementById('flight-cover');
     cover?.classList.remove('off');
     if (loadingText) loadingText.textContent = 'Puedes volver a intentar el recorrido.';
     showEndPanel(stage);
   }
-  async function enterLocal() {
+  function finishAerial() {
     if (token !== generation) return;
     root.classList.add('off');
-    localRuntime.start({ complete: () => {
-      if (token === generation) showEndPanel(stage);
-    }, error: fail });
-    const deadline = performance.now() + 4500;
-    while (token === generation && !window.__AUMARA_LOCAL_FRAME_VISIBLE && performance.now() < deadline) await sleep(50);
-    if (token !== generation) return;
-    if (!window.__AUMARA_LOCAL_FRAME_VISIBLE) return fail(new Error('local-first-frame-timeout'));
-    document.getElementById('flight-cover')?.classList.add('off');
-    setTimeout(() => {
-      if (token === generation && window.__AUMARA_LOCAL_FRAME_VISIBLE && cesiumHost) cesiumHost.style.visibility = 'hidden';
-    }, 950);
+    showEndPanel(stage);
+    const source = document.getElementById('agf-source');
+    if (source) source.textContent = window.__AUMARA.mapViewKind === 'PHOTOREALISTIC_3D_MAP'
+      ? 'Vista aérea 3D de referencia' : 'Vista satélite de referencia';
   }
   try {
-    const [local, global] = await Promise.all([
-      prepareAumaraGlbFlight(),
-      prepareAumaraWorldFlight().catch((error) => {
-        if (token === generation) window.__AUMARA.globalFailure = String(error?.message || 'global-prepare-failed').replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
-        return null;
-      }),
-    ]);
+    const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
-    localRuntime = local; worldRuntime = global;
-    if (!global) { window.__AUMARA.globalFallback = true; await enterLocal(); return true; }
-    global.start({ complete: enterLocal, error: () => {
-      window.__AUMARA.globalFallback = true; enterLocal();
-    }, stage: (label, progress) => {
+    worldRuntime = global;
+    global.start({ complete: finishAerial, error: fail, stage: (label, progress) => {
       if (token !== generation) return;
       window.__AUMARA.stage = label;
       root.querySelector('#agf-label').textContent = label;
@@ -156,7 +137,7 @@ function stopGuestFlight(keepVisible = false) {
   running = false;
   const stage = document.getElementById("stage");
   if (stage && !keepVisible) stage.classList.remove("on", "local-world");
-  if (!keepVisible) { localRuntime?.stop(); worldRuntime?.stop(); }
+  worldRuntime?.stop();
   document.body.style.overflow = "";
   const cesiumHost = document.getElementById("c");
   if (cesiumHost) cesiumHost.style.visibility = "visible";
@@ -175,7 +156,7 @@ export function installAumaraGuestFlight() {
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "globe-to-six-house-model";
+  document.documentElement.dataset.aumaraFlightMode = "source-map-to-parcel";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
   if (document.getElementById('stage')) {
