@@ -19,28 +19,37 @@ const heroImage = `${SITE_URL}/media/hero/three-houses-01.webp`;
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AUMARA — Hay lugares que te dan más",
-  description: "Casas geodésicas independientes en Benidoleig, Marina Alta. Explora el lugar, comprueba disponibilidad real y reserva directamente.",
-  keywords: ["AUMARA", "Benidoleig", "Marina Alta", "Costa Blanca", "geodesic houses", "nature stay", "private chalet", "direct booking"],
+  description: "Casas independientes en Benidoleig, Marina Alta. Superior Chalet Ø9 para hasta 6 personas. Reserva directa en aumara.me, no en Booking.com.",
+  keywords: ["AUMARA", "Benidoleig", "Marina Alta", "Costa Blanca", "Dénia", "Superior Chalet", "6 guests", "direct booking", "private chalet"],
   robots: "index,follow,max-image-preview:large",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     title: "AUMARA — Hay lugares que te dan más",
-    description: "Casas geodésicas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real del lugar y reserva directa.",
+    description: "Casas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real del lugar y reserva directa en aumara.me.",
     url: SITE_URL,
     siteName: "AUMARA",
     locale: "es_ES",
-    images: [{ url: heroImage, width: 1920, height: 1080, alt: "AUMARA geodesic houses among pine trees in Benidoleig, Marina Alta" }],
+    images: [{ url: heroImage, width: 1920, height: 1080, alt: "AUMARA houses among pine trees in Benidoleig, Marina Alta" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AUMARA — Hay lugares que te dan más",
-    description: "Casas geodésicas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real y reserva directa.",
+    description: "Casas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real y reserva directa.",
     images: [heroImage],
   },
 };
 
 export const viewport: Viewport = { themeColor: "#f2eadc" };
+
+const address = {
+  "@type": "PostalAddress",
+  streetAddress: "Urb. Rincón del Silencio, 3",
+  postalCode: "03759",
+  addressLocality: "Benidoleig",
+  addressRegion: "Alicante",
+  addressCountry: "ES",
+};
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -49,7 +58,7 @@ const jsonLd = {
   legalName: "EL CID VENTURES BENIDOLEIG S.L.",
   taxID: "B53816989",
   url: SITE_URL,
-  description: "Independent geodesic houses among pine trees in Benidoleig, Marina Alta, Alicante, with direct booking through AUMARA.",
+  description: "Independent houses among pine trees in Benidoleig, Marina Alta, Alicante. Direct booking on aumara.me — not Booking.com.",
   image: [
     heroImage,
     `${SITE_URL}/media/hero/three-houses-02.webp`,
@@ -60,19 +69,32 @@ const jsonLd = {
   ],
   email: "elcidspain@gmail.com",
   telephone: "+34966579970",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Urb. Rincón del Silencio, 3",
-    postalCode: "03759",
-    addressLocality: "Benidoleig",
-    addressRegion: "Alicante",
-    addressCountry: "ES",
-  },
+  address,
   containsPlace: [
-    { "@type": "Accommodation", name: "Chalet Ø7", occupancy: { "@type": "QuantitativeValue", maxValue: 4 }, url: "https://beds24.com/booking2.php?propid=324882&roomid=674465" },
-    { "@type": "Accommodation", name: "Superior Chalet Ø9", occupancy: { "@type": "QuantitativeValue", maxValue: 6 }, url: "https://beds24.com/booking2.php?propid=324882&roomid=674466" },
+    {
+      "@type": "Accommodation",
+      name: "Chalet Ø7",
+      occupancy: { "@type": "QuantitativeValue", maxValue: 4 },
+      url: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
+      amenityFeature: [{ "@type": "LocationFeatureSpecification", name: "Entire house", value: true }],
+    },
+    {
+      "@type": "Accommodation",
+      name: "Superior Chalet Ø9",
+      description: "Complete house in Benidoleig for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me.",
+      occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
+      numberOfBedrooms: 1,
+      url: `${SITE_URL}/superior`,
+      image: `${SITE_URL}/media/stills/superior-living.jpg`,
+      address,
+      amenityFeature: [
+        { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Separate bedroom", value: true },
+      ],
+    },
   ],
-  potentialAction: { "@type": "ReserveAction", target: "https://beds24.com/booking2.php?propid=324882" },
+  potentialAction: { "@type": "ReserveAction", target: "https://beds24.com/booking2.php?propid=324882", name: "Book AUMARA directly" },
 };
 
 const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";

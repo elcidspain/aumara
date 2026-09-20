@@ -3,9 +3,14 @@
   <url>
     <loc>https://www.aumara.me/</loc>
     <changefreq>weekly</changefreq>
-    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-01.webp</image:loc><image:title>AUMARA geodesic houses in Benidoleig</image:title></image:image>
+    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-01.webp</image:loc><image:title>AUMARA houses in Benidoleig</image:title></image:image>
     <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-02.webp</image:loc><image:title>AUMARA houses among pine trees in Marina Alta</image:title></image:image>
     <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-03.webp</image:loc><image:title>AUMARA nature stay on the Costa Blanca</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://www.aumara.me/superior</loc>
+    <changefreq>weekly</changefreq>
+    <image:image><image:loc>https://www.aumara.me/media/stills/superior-living.jpg</image:loc><image:title>AUMARA Superior Chalet Ø9 living space in Benidoleig</image:title></image:image>
   </url>
   <url><loc>https://www.aumara.me/faq</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://www.aumara.me/terms</loc><changefreq>monthly</changefreq></url>
