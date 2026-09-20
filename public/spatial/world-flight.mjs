@@ -149,15 +149,24 @@ async function build() {
     siteTilesVisible = false;
     active = true; startedAt = performance.now(); frame(startedAt);
   }
-  // Wait for an actual imagery tile before revealing the globe.
+  // Warm up on rendered frames, not globe.tilesLoaded. Single-tile imagery can remain
+  // "loading" in headless/mobile even after a valid visible frame exists.
   await new Promise((resolve, reject) => {
+    let renderedFrames = 0;
     const timer = setTimeout(() => { off(); reject(new Error('global-imagery-timeout')); }, 15000);
     viewer.camera.setView({ destination:C.Cartesian3.fromDegrees(-12,29,18000000), orientation:{ heading:0, pitch:-Math.PI / 2, roll:0 } });
     const off = viewer.scene.postRender.addEventListener(() => {
-      if (window.__AUMARA) window.__AUMARA.globalWarmup = { rendered:true, tilesLoaded:viewer.scene.globe.tilesLoaded, width:viewer.scene.canvas.width, height:viewer.scene.canvas.height };
-      if (viewer.scene.globe.tilesLoaded && viewer.imageryLayers.length > 0) {
+      const canvasReady = viewer.scene.canvas.width > 0 && viewer.scene.canvas.height > 0;
+      const imageryReady = viewer.imageryLayers.length > 0;
+      if (canvasReady && imageryReady) renderedFrames += 1;
+      if (window.__AUMARA) window.__AUMARA.globalWarmup = {
+        rendered:true, renderedFrames, tilesLoaded:viewer.scene.globe.tilesLoaded,
+        width:viewer.scene.canvas.width, height:viewer.scene.canvas.height,
+      };
+      if (renderedFrames >= 2) {
         clearTimeout(timer); off(); resolve();
       }
+      viewer.scene.requestRender();
     });
     viewer.scene.requestRender();
   }).catch(error => { globalError(); viewer.destroy(); throw error; });
