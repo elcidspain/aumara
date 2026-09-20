@@ -54,14 +54,14 @@ const tools = [
   },
 ];
 
-const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
+const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
 
 const bookingOptions = {
   property: "AUMARA",
   location: "Rincón del Silencio, Benidoleig, Alicante, Spain",
   allAvailability: "https://beds24.com/booking2.php?propid=324882",
-  chalet7: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
-  superiorChalet9: "https://beds24.com/booking2.php?propid=324882&roomid=674466",
+  chalet: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
+  superiorChalet: "https://beds24.com/booking2.php?propid=324882&roomid=674466",
   website: "https://www.aumara.me/",
 };
 

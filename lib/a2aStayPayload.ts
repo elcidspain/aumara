@@ -23,13 +23,13 @@ export const AUMARA_PROPERTY = {
   rooms: {
     "674465": {
       id: "674465",
-      label: "Chalet Ø7",
+      label: "Chalet",
       guestsMax: 4,
       bookingUrl: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
     },
     "674466": {
       id: "674466",
-      label: "Superior Chalet Ø9",
+      label: "Superior Chalet",
       guestsMax: 6,
       bookingUrl: "https://beds24.com/booking2.php?propid=324882&roomid=674466",
     },
@@ -144,7 +144,7 @@ export function buildDiscoverStayPayload(receiptId?: string): AumaraStayPayload 
   const units = defaultUnits();
   const summary =
     `AUMARA is a stay of independent geodesic houses among pine trees in Benidoleig, Marina Alta, Alicante. ` +
-    `Chalet Ø7 is for up to 4 guests; Superior Chalet Ø9 is for up to 6. ` +
+    `Chalet is for up to 4 guests; Superior Chalet is for up to 6. ` +
     `Website: ${AUMARA_PLACE.website}. Direct availability: ${AUMARA_PROPERTY.booking}. ` +
     `This agent never creates, holds or charges a reservation — checkout completes only in Beds24.`;
 

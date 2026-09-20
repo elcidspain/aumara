@@ -19,7 +19,7 @@ const heroImage = `${SITE_URL}/media/hero/three-houses-01.webp`;
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "AUMARA — Hay lugares que te dan más",
-  description: "Casas independientes en Benidoleig, Marina Alta. Superior Chalet Ø9 para hasta 6 personas. Reserva directa en aumara.me, no en Booking.com.",
+  description: "Casas independientes en Benidoleig, Marina Alta. Superior Chalet para hasta 6 personas. Reserva directa en aumara.me, no en Booking.com.",
   keywords: ["AUMARA", "Benidoleig", "Marina Alta", "Costa Blanca", "Dénia", "Superior Chalet", "6 guests", "direct booking", "private chalet"],
   robots: "index,follow,max-image-preview:large",
   alternates: { canonical: SITE_URL },
@@ -73,14 +73,14 @@ const jsonLd = {
   containsPlace: [
     {
       "@type": "Accommodation",
-      name: "Chalet Ø7",
+      name: "Chalet",
       occupancy: { "@type": "QuantitativeValue", maxValue: 4 },
       url: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
       amenityFeature: [{ "@type": "LocationFeatureSpecification", name: "Entire house", value: true }],
     },
     {
       "@type": "Accommodation",
-      name: "Superior Chalet Ø9",
+      name: "Superior Chalet",
       description: "Complete house in Benidoleig for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me.",
       occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
       numberOfBedrooms: 1,

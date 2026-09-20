@@ -6,7 +6,7 @@ const pageUrl = `${SITE_URL}/superior`;
 const image = `${SITE_URL}/media/stills/superior-living.jpg`;
 
 export const metadata: Metadata = {
-  title: "Superior Chalet Ø9 — 6 guests in Benidoleig | AUMARA",
+  title: "Superior Chalet — 6 guests in Benidoleig | AUMARA",
   description:
     "Casa completa en Benidoleig para hasta 6 personas. Dormitorio separado, entrada propia. Reserva directa en aumara.me, no en Booking.com.",
   keywords: [
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: pageUrl },
   openGraph: {
     type: "website",
-    title: "Superior Chalet Ø9 — AUMARA, Benidoleig",
+    title: "Superior Chalet — AUMARA, Benidoleig",
     description: "Whole house for up to 6 guests. Direct booking on aumara.me, not Booking.com.",
     url: pageUrl,
     images: [{ url: image, alt: "AUMARA Superior Chalet living space in Benidoleig" }],
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Accommodation",
-  name: "Superior Chalet Ø9",
+  name: "Superior Chalet",
   identifier: "674466",
   url: pageUrl,
   image,
@@ -62,7 +62,7 @@ const jsonLd = {
   potentialAction: {
     "@type": "ReserveAction",
     target: BOOK_SUPERIOR,
-    name: "Book Superior Chalet Ø9 directly",
+    name: "Book Superior Chalet directly",
   },
 };
 
@@ -70,9 +70,9 @@ export default function SuperiorPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <InfoShell eyebrow="Superior Chalet Ø9" title="Casa completa para 6 en Benidoleig.">
+      <InfoShell eyebrow="Superior Chalet" title="Casa completa para 6 en Benidoleig.">
         <p>
-          AUMARA, Benidoleig, Marina Alta, Costa Blanca, cerca de Dénia. El Superior Chalet Ø9 es una casa
+          AUMARA, Benidoleig, Marina Alta, Costa Blanca, cerca de Dénia. El Superior Chalet es una casa
           independiente para hasta seis personas: estar amplio, dormitorio separado, entrada propia.
         </p>
         <p>
@@ -81,18 +81,18 @@ export default function SuperiorPage() {
         </p>
         <p>
           <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer">
-            Comprobar fechas del Superior Chalet Ø9
+            Comprobar fechas del Superior Chalet
           </a>
         </p>
         <h2>English</h2>
         <p>
-          AUMARA is in Benidoleig, Marina Alta, Costa Blanca, near Denia. Superior Chalet Ø9 is a complete house for up
+          AUMARA is in Benidoleig, Marina Alta, Costa Blanca, near Denia. Superior Chalet is a complete house for up
           to 6 guests: larger living space, a separate bedroom, own entrance. Direct booking on aumara.me — not
           Booking.com.
         </p>
         <h2>Русский</h2>
         <p>
-          AUMARA — место для отдыха в Бенидолеиге, Марина Альта, Коста-Бланка, рядом с Денией. Superior Chalet Ø9:
+          AUMARA — место для отдыха в Бенидолеиге, Марина Альта, Коста-Бланка, рядом с Денией. Superior Chalet:
           целый дом до 6 человек, отдельная спальня, свой вход. Прямое бронирование на aumara.me, не через Booking.com.
         </p>
         <p>

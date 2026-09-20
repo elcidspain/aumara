@@ -30,7 +30,7 @@
       "name": "Check live AUMARA availability",
       "description": "Check exact dates against the public Beds24 feed and return a structured aumara.stay.v1 data part with published total price, nightly value, remaining unit count, receiptId and a date-aware direct-booking link. Checkout is human-only in Beds24.",
       "tags": ["live availability", "price", "Beds24", "dates", "booking"],
-      "examples": ["AUMARA from 20 to 23 September for two adults", "what is available next weekend", "live price for Chalet Ø7"]
+      "examples": ["AUMARA from 20 to 23 September for two adults", "what is available next weekend", "live price for Chalet"]
     },
     {
       "id": "compare-stay-value",
@@ -44,7 +44,7 @@
       "name": "Find direct booking",
       "description": "Return canonical Beds24 booking routes as a structured aumara.stay.v1 data part without creating or modifying a reservation. Payment completes only in the human Beds24 UI.",
       "tags": ["direct booking", "availability", "Chalet", "Superior Chalet"],
-      "examples": ["book AUMARA directly", "find a Chalet Ø7 or Superior Chalet Ø9", "continue to the direct booking engine"]
+      "examples": ["book AUMARA directly", "find a Chalet or Superior Chalet", "continue to the direct booking engine"]
     }
   ]
 }

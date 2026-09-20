@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 const AUMARA_MARKDOWN = `# AUMARA
 
-Geodesic houses among pines in Benidoleig, Marina Alta, Alicante, Spain.
+Independent houses among pines in Benidoleig, Marina Alta, Alicante, Spain.
 
 ## Stay
 
-AUMARA has six physical geodesic houses. Five are currently offered for short stays: three Chalet Ø7 for up to four guests each, and two Superior Chalet Ø9 for up to six guests each.
+AUMARA has six physical houses. Five are currently offered for short stays: three Chalet for up to four guests each, and two Superior Chalet for up to six guests each.
 
 Each reservation is for a complete independent house. Live availability, rates, minimum stays, payment terms and reservation-specific cancellation conditions are authoritative in the direct Beds24 booking flow.
 
 ## Direct booking
 
 - All availability: https://beds24.com/booking2.php?propid=324882
-- Chalet Ø7: https://beds24.com/booking2.php?propid=324882&roomid=674465
-- Superior Chalet Ø9: https://beds24.com/booking2.php?propid=324882&roomid=674466
+- Chalet: https://beds24.com/booking2.php?propid=324882&roomid=674465
+- Superior Chalet: https://beds24.com/booking2.php?propid=324882&roomid=674466
 
 ## Location
 
