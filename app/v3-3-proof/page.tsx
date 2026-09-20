@@ -5,6 +5,15 @@ import styles from "./proof.module.css";
 
 type P = { x: number; y: number; z: number; r: number; g: number; b: number };
 type V3 = { x: number; y: number; z: number };
+type House = {
+  id: "A" | "B" | "C" | "D" | "E" | "F";
+  x: number;
+  y: number;
+  z: number;
+  d: number;
+  kind: "chalet" | "superior";
+  source: "in_clip" | "edge" | "no_source";
+};
 
 const MIN = [20, -12, -8];
 const MAX = [70, 20, 16];
@@ -21,10 +30,13 @@ const WPS: V3[] = [
   { x: 54.78, y: -0.116, z: 3.618 },
   { x: 56.995, y: 2.843, z: 3.475 },
 ];
-const HOUSES = [
-  { id: "A", x: 35.254, y: 0.845, z: 0.505, d: 7 },
-  { id: "B", x: 52.215, y: 4.961, z: -0.046, d: 9 },
-  { id: "C", x: 63.556, y: 13.969, z: -0.241, d: 7 },
+const HOUSES: House[] = [
+  { id: "A", x: 35.254, y: 0.845, z: 0.505, d: 7, kind: "chalet", source: "in_clip" },
+  { id: "B", x: 52.215, y: 4.961, z: -0.046, d: 9, kind: "superior", source: "in_clip" },
+  { id: "C", x: 63.556, y: 13.969, z: -0.241, d: 7, kind: "chalet", source: "in_clip" },
+  { id: "D", x: 67.204, y: 0.633, z: 0, d: 9, kind: "superior", source: "edge" },
+  { id: "E", x: 76.68, y: 9.566, z: 0, d: 7, kind: "chalet", source: "no_source" },
+  { id: "F", x: 84.133, y: 0.755, z: 0, d: 7, kind: "chalet", source: "no_source" },
 ];
 
 function concatDecodedChunks(parts: string[]): Uint8Array {
@@ -111,12 +123,12 @@ export default function V33Proof() {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const centre = { x: 46.2, y: 0.7, z: 3.8 };
+    const centre = { x: 54.2, y: 2.2, z: 3.8 };
     const cy = Math.cos(yaw);
     const sy = Math.sin(yaw);
     const cp = Math.cos(pitch);
     const sp = Math.sin(pitch);
-    const scale = Math.min(w / 52, h / 34) * zoom;
+    const scale = Math.min(w / 78, h / 38) * zoom;
     const project = (p: V3) => {
       const x = p.x - centre.x;
       const y = p.y - centre.y;
@@ -129,17 +141,17 @@ export default function V33Proof() {
     };
     ctx.strokeStyle = "rgba(196,154,100,.08)";
     ctx.lineWidth = 1;
-    for (let gx = 20; gx <= 70; gx += 5) {
+    for (let gx = 20; gx <= 90; gx += 5) {
       const a = project({ x: gx, y: -15, z: 0 });
-      const b = project({ x: gx, y: 20, z: 0 });
+      const b = project({ x: gx, y: 22, z: 0 });
       ctx.beginPath();
       ctx.moveTo(a.sx, a.sy);
       ctx.lineTo(b.sx, b.sy);
       ctx.stroke();
     }
-    for (let gy = -15; gy <= 20; gy += 5) {
+    for (let gy = -15; gy <= 22; gy += 5) {
       const a = project({ x: 20, y: gy, z: 0 });
-      const b = project({ x: 70, y: gy, z: 0 });
+      const b = project({ x: 90, y: gy, z: 0 });
       ctx.beginPath();
       ctx.moveTo(a.sx, a.sy);
       ctx.lineTo(b.sx, b.sy);
@@ -173,10 +185,20 @@ export default function V33Proof() {
       ctx.font = "600 11px ui-monospace,monospace";
       ctx.fillText(`WP${i}`, s.sx + 7, s.sy - 7);
     });
-    ctx.strokeStyle = "rgba(104,215,156,.9)";
-    ctx.fillStyle = "rgba(104,215,156,.08)";
-    ctx.lineWidth = 2;
     for (const hse of HOUSES) {
+      const dashed = hse.source !== "in_clip";
+      ctx.setLineDash(dashed ? [7, 6] : []);
+      ctx.strokeStyle =
+        hse.source === "no_source"
+          ? "rgba(104,215,156,.45)"
+          : hse.source === "edge"
+            ? "rgba(216,174,118,.9)"
+            : "rgba(104,215,156,.95)";
+      ctx.fillStyle =
+        hse.source === "no_source"
+          ? "rgba(104,215,156,.03)"
+          : "rgba(104,215,156,.08)";
+      ctx.lineWidth = 2;
       ctx.beginPath();
       for (let i = 0; i <= 40; i++) {
         const a = (i / 40) * Math.PI * 2;
@@ -190,11 +212,17 @@ export default function V33Proof() {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+      ctx.setLineDash([]);
       const s = project({ x: hse.x, y: hse.y, z: hse.z + 1 });
-      ctx.fillStyle = "#8fe4b2";
+      ctx.fillStyle = hse.source === "no_source" ? "#7fa88c" : "#8fe4b2";
       ctx.font = "700 13px system-ui";
-      ctx.fillText(hse.id, s.sx + 5, s.sy - 5);
-      ctx.fillStyle = "rgba(104,215,156,.08)";
+      const tag =
+        hse.source === "no_source"
+          ? `${hse.id} Ø${hse.d} NO SRC`
+          : hse.source === "edge"
+            ? `${hse.id} Ø${hse.d} EDGE`
+            : `${hse.id} Ø${hse.d}`;
+      ctx.fillText(tag, s.sx + 5, s.sy - 5);
     }
   }, [points, yaw, pitch, zoom]);
 
@@ -218,7 +246,10 @@ export default function V33Proof() {
         <div>
           <div className={styles.kicker}>AUMARA · V3.3 P0 REGISTERED SOURCE</div>
           <h1>Registered geometry from MASTER_C</h1>
-          <p>P0 32-frame / 25,700 cloud, clipped to WP0–WP10. Sandbox only — not the historical 40-frame page.</p>
+          <p>
+            Six plan houses A–F. Point cloud is still the WP0–WP10 clip only. E/F have no MASTER_C
+            source. Sandbox — not the historical 40-frame dense page.
+          </p>
         </div>
         <span className={styles.badge}>SANDBOX · OWNER QA</span>
       </header>
@@ -234,7 +265,11 @@ export default function V33Proof() {
             <span className={styles.dotRoute} />
             WP0–WP10
             <span className={styles.dotHouse} />
-            A/B/C footprints
+            A/B/C in clip
+            <span className={styles.dotEdge} />
+            D edge
+            <span className={styles.dotEmpty} />
+            E/F no source
           </div>
         </div>
         <canvas
@@ -246,43 +281,4 @@ export default function V33Proof() {
           onPointerCancel={up}
         />
         <div className={styles.controls}>
-          <button onClick={() => setZoom((v) => Math.max(0.55, v - 0.15))}>−</button>
-          <button
-            onClick={() => {
-              setYaw(-0.72);
-              setPitch(0.34);
-              setZoom(1);
-              setAuto(false);
-            }}
-          >
-            RESET
-          </button>
-          <button onClick={() => setAuto((v) => !v)}>{auto ? "PAUSE" : "ORBIT"}</button>
-          <button onClick={() => setZoom((v) => Math.min(2.1, v + 0.15))}>+</button>
-        </div>
-        <div className={styles.hint}>Drag to rotate · zoom with − / +</div>
-      </section>
-      <section className={styles.metrics}>
-        <article>
-          <span>SOURCE</span>
-          <strong>MASTER_C · 8.00 s · 32 frames</strong>
-          <p>P0 SPARSE_SFM_PASS. SHA fe9b2536…116452. 25,700 registered vertices.</p>
-        </article>
-        <article>
-          <span>CLIP</span>
-          <strong>25,700 → 9,451 points</strong>
-          <p>Envelope WP0–WP10 + A/B/C. Densify not applied. Independent check-transform not applied.</p>
-        </article>
-        <article>
-          <span>REGISTRATION</span>
-          <strong>WP0 → WP10 · XY 0.656 / Z 0.590 / 3D 0.882 m</strong>
-          <p>PCA + 2D Umeyama, c=1.368. Sandbox only; not survey-grade.</p>
-        </article>
-      </section>
-      <section className={styles.note}>
-        <strong>What you are looking at:</strong> clipped registered source points in canonical local metres;
-        gold is the guest route; green rings are plan-true A/B/C envelopes, not house shells. NOT_PASS until owner visual QA.
-      </section>
-    </main>
-  );
-}
+          <button onClick={() => setZoom((v) => Math.max(0.55, v - 0.15))}>{
