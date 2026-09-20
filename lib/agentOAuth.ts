@@ -34,9 +34,21 @@ type AccessClaims = {
   exp: number;
 };
 
-/** Always https://www.aumara.me — never echo Host (Radar apex/www mismatch). */
-export function requestAgentOrigin(_req?: Request): string {
-  return AGENT_ISSUER;
+/**
+ * Origin of the current request when it is aumara.me or www.aumara.me.
+ * RFC 9728 Protected Resource `resource` must match the scanned host:
+ * apex Radar/isitagentready treats www-only metadata as missing (8/9).
+ * Authorization-server issuer stays https://www.aumara.me (AGENT_ISSUER).
+ */
+export function requestAgentOrigin(req?: Request): string {
+  if (!req) return AGENT_ISSUER;
+  const rawHost = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "www.aumara.me")
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:443$/, "");
+  const host = AUMARA_HOSTS.has(rawHost) ? rawHost : "www.aumara.me";
+  return `https://${host}`;
 }
 
 export function isAumaraOrigin(value: string): boolean {
