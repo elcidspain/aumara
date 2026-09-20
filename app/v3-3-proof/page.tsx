@@ -194,10 +194,7 @@ export default function V33Proof() {
           : hse.source === "edge"
             ? "rgba(216,174,118,.9)"
             : "rgba(104,215,156,.95)";
-      ctx.fillStyle =
-        hse.source === "no_source"
-          ? "rgba(104,215,156,.03)"
-          : "rgba(104,215,156,.08)";
+      ctx.fillStyle = hse.source === "no_source" ? "rgba(104,215,156,.03)" : "rgba(104,215,156,.08)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       for (let i = 0; i <= 40; i++) {
@@ -281,4 +278,54 @@ export default function V33Proof() {
           onPointerCancel={up}
         />
         <div className={styles.controls}>
-          <button onClick={() => setZoom((v) => Math.max(0.55, v - 0.15))}>{
+          <button onClick={() => setZoom((v) => Math.max(0.55, v - 0.15))}>{'−'}</button>
+          <button
+            onClick={() => {
+              setYaw(-0.72);
+              setPitch(0.34);
+              setZoom(1);
+              setAuto(false);
+            }}
+          >
+            RESET
+          </button>
+          <button onClick={() => setAuto((v) => !v)}>{auto ? "PAUSE" : "ORBIT"}</button>
+          <button onClick={() => setZoom((v) => Math.min(2.1, v + 0.15))}>+</button>
+        </div>
+        <div className={styles.hint}>Drag to rotate · zoom with − / + · QA only A/B/C this pass</div>
+      </section>
+      <section className={styles.metrics}>
+        <article>
+          <span>SOURCE</span>
+          <strong>MASTER_C · 8.00 s · 32 frames</strong>
+          <p>P0 SPARSE_SFM_PASS. SHA fe9b2536…116452. 25,700 registered vertices. Not the 40-frame dense page.</p>
+        </article>
+        <article>
+          <span>CLIP</span>
+          <strong>25,700 → 9,451 points</strong>
+          <p>Envelope WP0–WP10 + A/B/C. D on clip edge. E/F outside source. No densify. No check-transform.</p>
+        </article>
+        <article>
+          <span>REGISTRATION</span>
+          <strong>WP0 → WP10 · XY 0.656 / Z 0.590 / 3D 0.882 m</strong>
+          <p>PCA + 2D Umeyama, c=1.368. Six plan centres from WORLD_GEOREFERENCE_v1. Not survey-grade.</p>
+        </article>
+      </section>
+      <section className={styles.qa}>
+        <strong>P0-WEST checklist</strong>
+        <p>Stand near WP5. Reply one line after looking at the real place:</p>
+        <ul>
+          <li>A north of the gold path, not sitting on the path.</li>
+          <li>B Ø9: path approaches from the southwest and does not cut the disk in half.</li>
+          <li>C may sit on the cloud edge. Fail only if the ring jumped to another house.</li>
+        </ul>
+        <p>Format: P0-WEST: PASS_A|FAIL_A · PASS_B|FAIL_B · PASS_C|FAIL_C</p>
+      </section>
+      <section className={styles.note}>
+        <strong>What you are looking at:</strong> clipped registered source points in canonical local
+        metres. Gold is WP0–WP10. Solid green rings are plan-true A/B/C. Gold-dashed D is on the clip
+        edge. Pale dashed E/F are plan centres with no MASTER_C points. NOT_PASS until owner visual QA.
+      </section>
+    </main>
+  );
+}
