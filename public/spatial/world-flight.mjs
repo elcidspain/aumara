@@ -10,8 +10,7 @@ export function prepareAumaraWorldFlight() {
 }
 
 async function build() {
-  await window.AUMARA_ION.ready;
-  if (!window.AUMARA_ION.resolve()) throw new Error('global-imagery-unavailable');
+  // The bundled globe starts independently of optional provider credentials.
   const base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
   if (!window.Cesium) {
     window.CESIUM_BASE_URL = base;
@@ -27,13 +26,20 @@ async function build() {
     css.rel = 'stylesheet'; css.href = base + 'Widgets/widgets.css'; document.head.appendChild(css);
   }
   const C = window.Cesium;
-  window.AUMARA_ION.apply(C);
+  window.AUMARA_ION?.apply(C);
   const response = await fetch('./AUMARA_WORLD_GEOREFERENCE_v1.json');
   if (!response.ok) throw new Error('georeference-unavailable');
   const geo = await response.json();
   const origin = geo.localOrigin.wgs84;
   const elevation = geo.verticalPolicy.projectReferenceElevationMslMetres;
+  const imagery = await C.SingleTileImageryProvider.fromUrl('./world/blue-marble-2048.jpg', { credit: 'Blue Marble' });
+  let imagerySource = 'LOCAL_BLUE_MARBLE';
+  const detail = C.ArcGisMapServerImageryProvider.fromUrl(
+    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
+  ).catch(() => null);
   const viewer = new C.Viewer('c', {
+    baseLayer: new C.ImageryLayer(imagery),
+    terrainProvider: new C.EllipsoidTerrainProvider(),
     animation:false, timeline:false, baseLayerPicker:false, geocoder:false,
     homeButton:false, sceneModePicker:false, navigationHelpButton:false,
     fullscreenButton:false, infoBox:false, selectionIndicator:false,
@@ -42,6 +48,7 @@ async function build() {
   });
   viewer.clock.shouldAnimate = false;
   viewer.scene.globe.enableLighting = false;
+  viewer.scene.globe.maximumScreenSpaceError = 4;
   viewer.scene.screenSpaceCameraController.enableInputs = false;
   viewer.resolutionScale = Math.min(1, 1.5 / (devicePixelRatio || 1));
   let active = false, raf = 0, startedAt = 0, onFinish, onStage, failure;
@@ -74,6 +81,11 @@ async function build() {
       orientation:{ heading:0, pitch:C.Math.toRadians(mix(a[4],b[4])), roll:0 },
     });
     viewer.scene.requestRender();
+    if (window.__AUMARA) {
+      window.__AUMARA.earthBasemapVisible = true;
+      window.__AUMARA.globalImagerySource = imagerySource;
+      window.__AUMARA.firstFrameRendered = true;
+    }
     onStage?.(elapsed === 22 ? 'AUMARA' : a[5], elapsed / 22);
     if (elapsed < 22) raf = requestAnimationFrame(frame);
     else { active = false; onFinish?.(); }
@@ -86,13 +98,21 @@ async function build() {
   // Wait for an actual imagery tile before revealing the globe.
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => { off(); reject(new Error('global-imagery-timeout')); }, 15000);
-    viewer.camera.setView({ destination:C.Cartesian3.fromDegrees(-12,29,18000000) });
+    viewer.camera.setView({ destination:C.Cartesian3.fromDegrees(-12,29,18000000), orientation:{ heading:0, pitch:-Math.PI / 2, roll:0 } });
     const off = viewer.scene.postRender.addEventListener(() => {
+      if (window.__AUMARA) window.__AUMARA.globalWarmup = { rendered:true, tilesLoaded:viewer.scene.globe.tilesLoaded, width:viewer.scene.canvas.width, height:viewer.scene.canvas.height };
       if (viewer.scene.globe.tilesLoaded && viewer.imageryLayers.length > 0) {
         clearTimeout(timer); off(); resolve();
       }
     });
     viewer.scene.requestRender();
   }).catch(error => { globalError(); viewer.destroy(); throw error; });
+  // Detailed imagery may refine during the flight; it never blocks the base globe.
+  detail.then(provider => {
+    if (!provider || viewer.isDestroyed()) return;
+    viewer.imageryLayers.addImageryProvider(provider);
+    imagerySource = 'BLUE_MARBLE_WITH_ESRI_DETAIL';
+    viewer.scene.requestRender();
+  });
   return { start, stop };
 }

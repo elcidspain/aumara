@@ -12,6 +12,16 @@ let worldRuntime = null;
 
 function ensureStyles() {
   if (document.getElementById("aumara-guest-flight-css")) return;
+  // Preserve credits; let Cesium open and close its attribution dialog normally.
+  for (const sheet of document.styleSheets) {
+    if (sheet.ownerNode?.tagName !== 'STYLE') continue;
+    for (const rule of sheet.cssRules) {
+      const selectors = rule.selectorText?.split(',').map(value => value.trim());
+      if (selectors?.length === 2 && selectors.includes('.cesium-widget-credits') && selectors.includes('.cesium-credit-lightbox-overlay')) {
+        rule.selectorText = '.cesium-widget-credits';
+      }
+    }
+  }
   const style = document.createElement("style");
   style.id = "aumara-guest-flight-css";
   style.textContent = `
@@ -74,7 +84,7 @@ async function startGuestFlight() {
   ensureStyles();
   const root = ensureUi(stage);
   root.style.display = "block";
-  root.style.opacity = "1";
+  root.style.removeProperty("opacity");
   root.classList.remove("off");
   window.__AUMARA = { provider:"CESIUM_TO_TEXTURED_MODEL", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:0, flightComplete:false, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
@@ -120,7 +130,10 @@ async function startGuestFlight() {
   try {
     const [local, global] = await Promise.all([
       prepareAumaraGlbFlight(),
-      prepareAumaraWorldFlight().catch(() => null),
+      prepareAumaraWorldFlight().catch((error) => {
+        if (token === generation) window.__AUMARA.globalFailure = String(error?.message || 'global-prepare-failed').replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
+        return null;
+      }),
     ]);
     if (token !== generation) return false;
     localRuntime = local; worldRuntime = global;
