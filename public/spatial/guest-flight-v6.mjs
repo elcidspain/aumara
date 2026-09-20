@@ -1,5 +1,4 @@
 import { prepareAumaraWorldFlight } from "./world-flight.mjs";
-import { prepareAumaraDenseFlight } from "./dense-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
 let installed = false;
@@ -7,6 +6,12 @@ let running = false;
 let generation = 0;
 let worldRuntime = null;
 let denseRuntime = null;
+let denseModulePromise = null;
+
+function prepareDenseRuntime() {
+  if (!denseModulePromise) denseModulePromise = import("./dense-flight.mjs").then((m) => m.prepareAumaraDenseFlight());
+  return denseModulePromise;
+}
 
 
 function ensureStyles() {
@@ -142,7 +147,7 @@ async function startGuestFlight() {
     } catch (error) { fail(error); }
   }
   try {
-    densePromise = prepareAumaraDenseFlight();
+    densePromise = prepareDenseRuntime();
     const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
     worldRuntime = global;
