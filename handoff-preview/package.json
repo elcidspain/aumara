@@ -1,0 +1,8 @@
+{
+  "name": "aumara-clean-local-handoff",
+  "private": true,
+  "scripts": {
+    "test": "node tests/ion-seal.test.mjs",
+    "start": "node tests/preview-server.mjs"
+  }
+}
