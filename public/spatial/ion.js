@@ -3,6 +3,8 @@
  * Never print or commit runtime credentials.
  */
 (function () {
+  // The guest controller owns start, cancellation and replay.
+  if (document.documentElement.dataset.aumaraFlightOwner === "guest") return;
   var autoFlight = location.hash === "#flight";
   if (autoFlight) {
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}

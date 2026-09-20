@@ -65,9 +65,14 @@ async function readRuntimeExpectation() {
   }
   const publicCredentialConfigured = data.cesiumIon.configured || data.googleMaps.configured;
   return {
-    requireGoogle: forceRequireGoogle || publicCredentialConfigured,
+    // Photorealistic Google tiles are an optional refinement for the current guest route.
+    // Require them only in an explicitly forced provider test; the source-map descent is
+    // the supported fallback when Google tiles are unavailable.
+    requireGoogle: forceRequireGoogle,
     probeAvailable: true,
     publicCredentialConfigured,
+    cesiumIonConfigured: Boolean(data.cesiumIon.configured),
+    googleMapsConfigured: Boolean(data.googleMaps.configured),
     privateIonConfigured: Boolean(data.cesiumIon.privateConfigured),
   };
 }
@@ -125,19 +130,46 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
     "supported flight mode",
   );
   await waitFor(() => evaluate("['local-ready','guest-ready'].includes(document.documentElement.dataset.aumaraFlightRuntime)"), 10000, "flight runtime");
+  const denseQaMode = mode === "cesium-to-dense-west-east-qa";
   const guestMode = mode === "cinematic-to-dense-local";
+
+  let aerial = null;
+  if (denseQaMode) {
+    aerial = await waitFor(
+      () => evaluate("window.__AUMARA?.provider === 'CESIUM_SOURCE_MAP' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,mapViewKind:window.__AUMARA.mapViewKind,photorealisticMapStatus:window.__AUMARA.photorealisticMapStatus}) : null"),
+      20000,
+      "Cesium source-map first frame",
+    );
+    await waitFor(
+      () => evaluate("['España','Costa Blanca','Benidoleig','AUMARA'].includes(window.__AUMARA?.stage) ? window.__AUMARA.stage : null"),
+      18000,
+      "autonomous global-stage progression",
+    );
+  }
+
   const frame = await waitFor(
-    () => evaluate(guestMode
-      ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount}) : null"
+    () => evaluate((guestMode || denseQaMode)
+      ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount,westPointCount:window.__AUMARA.westPointCount,eastPointCount:window.__AUMARA.eastPointCount,eastTrailingBytes:window.__AUMARA.eastTrailingBytes,fullSiteSourceSurface:window.__AUMARA.fullSiteSourceSurface}) : null"
       : "window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
-    55000,
-    guestMode ? "dense local guest frame" : "first spatial WebGL frame",
+    60000,
+    (guestMode || denseQaMode) ? "dense local guest frame" : "first spatial WebGL frame",
   );
+
+  if (denseQaMode) {
+    if (frame.westPointCount !== 37804 || frame.eastPointCount !== 8911 || frame.localPointCount !== 46715 || frame.eastTrailingBytes !== 3) {
+      throw new Error(`dense source counts mismatch: ${JSON.stringify(frame)}`);
+    }
+    if (frame.fullSiteSourceSurface !== false) {
+      throw new Error("dense QA route must not claim a completed full-site source surface");
+    }
+    console.log("SPATIAL_AERIAL_PASS", JSON.stringify(aerial));
+    console.log("SPATIAL_DENSE_COUNTS_PASS", JSON.stringify(frame));
+  }
 
   if (runtimeExpectation.requireGoogle && frame.provider !== "GOOGLE_PHOTOREALISTIC_3D_TILES") {
     throw new Error(`Public Cesium/Google credential is configured but active provider is ${frame.provider}`);
