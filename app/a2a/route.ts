@@ -6,6 +6,13 @@ import {
   payloadHash,
 } from "@/lib/a2aReceipts";
 import {
+  extractParty,
+  extractStayDates,
+  findIsoDates,
+  wantsBooking,
+  wantsCompare,
+} from "@/lib/a2aDates";
+import {
   buildAvailabilityStayPayload,
   buildCompareStayPayload,
   buildDirectBookingStayPayload,
@@ -30,19 +37,6 @@ const SKILL_METHODS = new Set([
 
 function serializedInput(input: unknown) {
   return JSON.stringify(input ?? "");
-}
-
-function findIsoDates(input: unknown) {
-  return Array.from(new Set(serializedInput(input).match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? []));
-}
-
-function findInteger(input: unknown, keys: string[]) {
-  const value = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
-  for (const key of keys) {
-    const candidate = value[key];
-    if (Number.isInteger(candidate)) return candidate as number;
-  }
-  return undefined;
 }
 
 function successResult(payload: AumaraStayPayload, receiptId: string) {
@@ -76,14 +70,19 @@ function recordReceipt(
   });
 }
 
+function objectInt(input: unknown, key: string) {
+  if (!input || typeof input !== "object") return undefined;
+  const value = (input as Record<string, unknown>)[key];
+  return Number.isInteger(value) ? (value as number) : undefined;
+}
+
 async function resolveSkill(
   method: string,
   input: unknown,
   receiptId: string
 ): Promise<AumaraStayPayload> {
-  const dates = findIsoDates(input);
-  const adults = findInteger(input, ["adults", "numAdults", "guests"]);
-  const children = findInteger(input, ["children", "numChildren"]);
+  const dates = extractStayDates(input);
+  const { adults, children } = extractParty(input);
   const serialized = serializedInput(input).toLowerCase();
 
   if (method === "skills/discover-aumara-stay") {
@@ -93,21 +92,21 @@ async function resolveSkill(
     return buildDirectBookingStayPayload(receiptId);
   }
   if (method === "skills/compare-stay-value") {
-    if (!dates[0]) throw new Error("compare-stay-value requires checkIn as YYYY-MM-DD");
+    if (!dates[0]) throw new Error("compare-stay-value requires checkIn as YYYY-MM-DD or a dated phrase");
     return buildCompareStayPayload(
       {
         checkIn: dates[0],
         adults,
         children,
-        minNights: findInteger(input, ["minNights"]) ?? 2,
-        maxNights: findInteger(input, ["maxNights"]) ?? 6,
+        minNights: objectInt(input, "minNights") ?? 2,
+        maxNights: objectInt(input, "maxNights") ?? 6,
       },
       receiptId
     );
   }
   if (method === "skills/check-live-availability") {
     if (dates.length < 2) {
-      throw new Error("check-live-availability requires checkIn and checkOut as YYYY-MM-DD");
+      throw new Error("check-live-availability requires checkIn and checkOut, ISO or natural dates");
     }
     return buildAvailabilityStayPayload(
       { checkIn: dates[0], checkOut: dates[1], adults, children },
@@ -115,20 +114,17 @@ async function resolveSkill(
     );
   }
 
-  // SendMessage / message/send — route by content heuristics (unchanged behaviour, structured payload)
-  if (serialized.includes("compare") || serialized.includes("value") || serialized.includes("longer") || serialized.includes("nightly")) {
-    if (dates[0]) {
-      return buildCompareStayPayload(
-        {
-          checkIn: dates[0],
-          adults,
-          children,
-          minNights: findInteger(input, ["minNights"]) ?? 2,
-          maxNights: findInteger(input, ["maxNights"]) ?? 6,
-        },
-        receiptId
-      );
-    }
+  if (wantsCompare(serialized) && dates[0]) {
+    return buildCompareStayPayload(
+      {
+        checkIn: dates[0],
+        adults,
+        children,
+        minNights: objectInt(input, "minNights") ?? 2,
+        maxNights: objectInt(input, "maxNights") ?? 6,
+      },
+      receiptId
+    );
   }
 
   if (dates.length >= 2) {
@@ -138,7 +134,7 @@ async function resolveSkill(
     );
   }
 
-  if (serialized.includes("book") || serialized.includes("reserv") || serialized.includes("direct")) {
+  if (wantsBooking(serialized)) {
     return buildDirectBookingStayPayload(receiptId);
   }
 
@@ -192,7 +188,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Availability lookup failed";
-    // Honest JSON-RPC error for availability/compare failures (no fake success)
     return NextResponse.json(
       {
         jsonrpc: "2.0",

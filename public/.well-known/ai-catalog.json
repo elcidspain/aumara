@@ -22,7 +22,7 @@
       "type": "application/json",
       "url": "https://www.aumara.me/.well-known/agent-card.json",
       "representativeQueries": [
-        "find a geodesic house in Marina Alta",
+        "find an independent house in Marina Alta",
         "show a private chalet among pine trees on the Costa Blanca",
         "how do I book AUMARA directly"
       ]

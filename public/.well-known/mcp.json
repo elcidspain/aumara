@@ -35,6 +35,39 @@
         "properties": {},
         "additionalProperties": false
       }
+    },
+    {
+      "name": "aumara_live_availability",
+      "title": "AUMARA live availability and price",
+      "description": "Check live AUMARA availability and published Beds24 pricing for exact dates. Read-only; does not hold inventory or create a reservation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "checkIn": { "type": "string", "description": "Arrival date in YYYY-MM-DD" },
+          "checkOut": { "type": "string", "description": "Departure date in YYYY-MM-DD" },
+          "adults": { "type": "integer", "minimum": 1, "maximum": 20, "default": 2 },
+          "children": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 }
+        },
+        "required": ["checkIn", "checkOut"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "aumara_compare_stay_lengths",
+      "title": "AUMARA stay-length value finder",
+      "description": "Compare live published totals and nightly value across nearby stay lengths. Read-only; never invents or applies a discount.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "checkIn": { "type": "string", "description": "Arrival date in YYYY-MM-DD" },
+          "adults": { "type": "integer", "minimum": 1, "maximum": 20, "default": 2 },
+          "children": { "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+          "minNights": { "type": "integer", "minimum": 1, "maximum": 14, "default": 2 },
+          "maxNights": { "type": "integer", "minimum": 1, "maximum": 14, "default": 6 }
+        },
+        "required": ["checkIn"],
+        "additionalProperties": false
+      }
     }
   ]
 }
