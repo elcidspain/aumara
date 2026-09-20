@@ -101,7 +101,46 @@ async function buildRuntime() {
   const pointGeo = new THREE.BufferGeometry();
   pointGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   pointGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  const points = new THREE.Points(pointGeo, new THREE.PointsMaterial({ size: mobile ? .095 : .07, vertexColors:true, transparent:true, opacity:.97, sizeAttenuation:true }));
+  const pointMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uPointScale: { value: mobile ? 2.25 : 1.95 },
+      uFogColor: { value: new THREE.Color(0x07110c) },
+    },
+    vertexColors: true,
+    transparent: true,
+    depthTest: true,
+    depthWrite: true,
+    vertexShader: `
+      varying vec3 vColor;
+      varying float vDepth;
+      uniform float uPointScale;
+      void main() {
+        vColor = color;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vDepth = max(0.0, -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+        float perspectiveScale = clamp(7.5 / max(1.0, vDepth), 0.72, 3.0);
+        gl_PointSize = clamp(uPointScale * perspectiveScale, 1.35, 6.25);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vDepth;
+      uniform vec3 uFogColor;
+      void main() {
+        vec2 p = gl_PointCoord - vec2(0.5);
+        float radius = length(p);
+        if (radius > 0.5) discard;
+        float edge = 1.0 - smoothstep(0.32, 0.50, radius);
+        float fog = smoothstep(58.0, 145.0, vDepth);
+        vec3 color = mix(vColor, uFogColor, fog);
+        float alpha = 0.97 * edge * mix(1.0, 0.42, fog);
+        if (alpha < 0.025) discard;
+        gl_FragColor = vec4(color, alpha);
+      }
+    `,
+  });
+  const points = new THREE.Points(pointGeo, pointMaterial);
   scene.add(points);
   for (const h of geo.houses) addHouseFootprint(scene, h);
   const route = flight.waypoints.map(routePoint);
