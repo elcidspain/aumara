@@ -1,6 +1,17 @@
 export const SITE_URL = "https://www.aumara.me";
 export const EL_CID_URL = "https://elcidspain.com/";
 
+export const PLACE = {
+  streetAddress: "Urb. Rincón del Silencio, 3",
+  postalCode: "03759",
+  addressLocality: "Benidoleig",
+  addressRegion: "Alicante",
+  addressCountry: "ES",
+  latitude: 38.79353655,
+  longitude: -0.02037598,
+  maps: "https://maps.app.goo.gl/Ppyb5PX7nbvazpUR6",
+} as const;
+
 export const FLIGHT = {
   video: "/media/flight/flight.mp4",
   poster: "/media/flight/poster.jpg",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BOOK_SUPERIOR } from "@/lib/guest";
+import { BOOK_CHALET, BOOK_SUPERIOR } from "@/lib/guest";
 
 export default function DirectStayFacts() {
   return (
@@ -17,24 +17,30 @@ export default function DirectStayFacts() {
           Benidoleig · Marina Alta · Costa Blanca
         </p>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px,4vw,42px)", fontWeight: 500, letterSpacing: "-.03em", margin: "10px 0 16px" }}>
-          Superior Chalet — casa completa para 6.
+          Chalet y Superior Chalet en Benidoleig.
         </h2>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
-          AUMARA en Benidoleig, cerca de Dénia. El Superior Chalet es una casa independiente para hasta seis personas:
-          estar amplio, dormitorio separado, entrada propia. Reserva directa en aumara.me — no en Booking.com.
+          AUMARA, cerca de Dénia. Chalet: casa independiente para hasta 4 personas. Superior Chalet: casa independiente
+          para hasta 6, con dormitorio separado. Reserva directa en aumara.me — no en Booking.com.
         </p>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
-          Whole house for up to 6 guests. Direct booking on aumara.me, not Booking.com.
+          Independent houses in Benidoleig. Chalet up to 4 guests. Superior Chalet up to 6. Direct booking on aumara.me.
         </p>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 18px" }}>
-          Целый дом до 6 человек в Бенидолеиге. Прямое бронирование на aumara.me, не через Booking.com.
+          Бенидолеиг, рядом с Денией. Chalet до 4 человек, Superior Chalet до 6. Прямое бронирование на aumara.me.
         </p>
         <p style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 14 }}>
+          <Link href="/chalet" style={{ color: "#173629", fontWeight: 700 }}>
+            Chalet
+          </Link>
           <Link href="/superior" style={{ color: "#173629", fontWeight: 700 }}>
             Superior Chalet
           </Link>
+          <a href={BOOK_CHALET} target="_blank" rel="noreferrer" style={{ color: "#173629", fontWeight: 700 }}>
+            Fechas Chalet
+          </a>
           <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer" style={{ color: "#173629", fontWeight: 700 }}>
-            Comprobar fechas
+            Fechas Superior
           </a>
         </p>
       </div>

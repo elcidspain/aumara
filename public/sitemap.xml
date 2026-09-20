@@ -2,19 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://www.aumara.me/</loc>
+    <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
-    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-01.webp</image:loc><image:title>AUMARA houses in Benidoleig</image:title></image:image>
-    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-02.webp</image:loc><image:title>AUMARA houses among pine trees in Marina Alta</image:title></image:image>
-    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-03.webp</image:loc><image:title>AUMARA nature stay on the Costa Blanca</image:title></image:image>
+    <priority>1.0</priority>
+    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-01.webp</image:loc><image:title>Casas de AUMARA en Benidoleig</image:title></image:image>
+    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-02.webp</image:loc><image:title>Casas de AUMARA entre pinos en Marina Alta</image:title></image:image>
+    <image:image><image:loc>https://www.aumara.me/media/hero/three-houses-03.webp</image:loc><image:title>Estancia en la naturaleza, Costa Blanca</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://www.aumara.me/chalet</loc>
+    <lastmod>2026-09-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image><image:loc>https://www.aumara.me/media/stills/chalet-mezzanine.jpg</image:loc><image:title>AUMARA Chalet en Benidoleig</image:title></image:image>
   </url>
   <url>
     <loc>https://www.aumara.me/superior</loc>
+    <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
-    <image:image><image:loc>https://www.aumara.me/media/stills/superior-living.jpg</image:loc><image:title>AUMARA Superior Chalet living space in Benidoleig</image:title></image:image>
+    <priority>0.9</priority>
+    <image:image><image:loc>https://www.aumara.me/media/stills/superior-living.jpg</image:loc><image:title>AUMARA Superior Chalet en Benidoleig</image:title></image:image>
   </url>
-  <url><loc>https://www.aumara.me/faq</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://www.aumara.me/terms</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://www.aumara.me/privacy</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://www.aumara.me/cookies</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://www.aumara.me/legal</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://www.aumara.me/faq</loc><lastmod>2026-09-20</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.aumara.me/terms</loc><lastmod>2026-09-20</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://www.aumara.me/privacy</loc><lastmod>2026-09-20</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://www.aumara.me/cookies</loc><lastmod>2026-09-20</lastmod><changefreq>monthly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://www.aumara.me/legal</loc><lastmod>2026-09-20</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
 </urlset>

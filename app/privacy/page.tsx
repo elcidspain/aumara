@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
+import { SITE_URL } from "@/lib/guest";
+
+export const metadata: Metadata = {
+  title: "Privacidad",
+  description: "Quién trata los datos de AUMARA, para qué, y cómo contactar con EL CID VENTURES BENIDOLEIG S.L.",
+  alternates: { canonical: `${SITE_URL}/privacy` },
+};
 
 export default function PrivacyPage() {
   return <InfoShell eyebrow="Privacy" title="Guest data, kept purposeful.">
