@@ -2,6 +2,13 @@ User-agent: *
 Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 
+User-agent: bingbot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+
 User-agent: OAI-SearchBot
 Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
