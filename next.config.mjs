@@ -18,6 +18,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      { source: "/spatial", destination: "/spatial/index.html", permanent: false },
       { source: "/index.html", destination: "/", permanent: true },
       { source: "/index.htm", destination: "/", permanent: true },
       { source: "/home", destination: "/", permanent: true },
