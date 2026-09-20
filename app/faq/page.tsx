@@ -4,11 +4,11 @@ import { BOOK_DIRECT, BOOK_SUPERIOR } from "@/lib/guest";
 export default function FaqPage() {
   return <InfoShell eyebrow="Guest FAQ" title="Before you arrive.">
     <h2>What can I book?</h2>
-    <p>AUMARA has six physical geodesic houses. Five are offered in the current guest rental inventory: three Chalet Ø7 houses and two Superior Chalet Ø9 houses. Live inventory in the booking engine is authoritative for a specific date.</p>
+    <p>AUMARA has six physical geodesic houses. Five are offered in the current guest rental inventory: three Chalet ×7 houses and two Superior Chalet ×9 houses. Live inventory in the booking engine is authoritative for a specific date.</p>
     <h2>Where is AUMARA?</h2>
     <p>AUMARA is in Benidoleig, Marina Alta, Alicante, Spain, on the Costa Blanca near Dénia. The website's spatial experience and real recorded routes are designed to show the relationship between the houses, paths and surrounding valley before you book.</p>
     <h2>Is there a house for 6 guests with direct booking?</h2>
-    <p>Yes. Superior Chalet Ø9 is a complete independent house for up to six guests, with a separate bedroom and its own entrance. Booking is direct on aumara.me — not Booking.com. See <a href="/superior">the Superior Chalet page</a> and the <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer">live dates for Ø9</a>.</p>
+    <p>Yes. Superior Chalet ×9 is a complete independent house for up to six guests, with a separate bedroom and its own entrance. Booking is direct on aumara.me — not Booking.com. See <a href="/superior">the Superior Chalet page</a> and the <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer">live dates for ×9</a>.</p>
     <h2>How do I check availability?</h2>
     <p>Use the <a href={BOOK_DIRECT} target="_blank" rel="noreferrer">direct booking engine</a>. It shows current room types, dates, rates and booking conditions. Beds24 is AUMARA's own checkout, not an OTA listing.</p>
     <h2>Where are the final price and cancellation conditions?</h2>
