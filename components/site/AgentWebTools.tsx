@@ -34,8 +34,8 @@ export default function AgentWebTools() {
           property: "AUMARA",
           location: "Benidoleig, Alicante, Spain",
           rentableInventory: [
-            { type: "Chalet Ø7", count: 3, maxGuests: 4, url: "https://beds24.com/booking2.php?propid=324882&roomid=674465" },
-            { type: "Superior Chalet Ø9", count: 2, maxGuests: 6, url: "https://beds24.com/booking2.php?propid=324882&roomid=674466" }
+            { type: "Chalet", count: 3, maxGuests: 4, url: "https://beds24.com/booking2.php?propid=324882&roomid=674465" },
+            { type: "Superior Chalet", count: 2, maxGuests: 6, url: "https://beds24.com/booking2.php?propid=324882&roomid=674466" }
           ],
           allAvailability: "https://beds24.com/booking2.php?propid=324882"
         }),

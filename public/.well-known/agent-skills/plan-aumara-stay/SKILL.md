@@ -10,7 +10,7 @@ Use public information from https://www.aumara.me/ and https://www.aumara.me/llm
 ## Rules
 
 - Treat AUMARA and EL CID Country Club as separate accommodation products.
-- The public AUMARA inventory is 3 Chalet Ø7 units for up to 4 guests each and 2 Superior Chalet Ø9 units for up to 6 guests each.
+- The public AUMARA inventory is 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each.
 - Do not invent live availability, prices, minimum-stay rules, cancellation terms, or services that are not published.
 - For current availability and price, use the direct Beds24 booking links exposed by AUMARA.
 - For policy or guest-information questions, prefer the canonical AUMARA site and its machine-readable guide.
@@ -19,5 +19,5 @@ Use public information from https://www.aumara.me/ and https://www.aumara.me/llm
 ## Direct booking
 
 - All availability: https://beds24.com/booking2.php?propid=324882
-- Chalet Ø7: https://beds24.com/booking2.php?propid=324882&roomid=674465
-- Superior Chalet Ø9: https://beds24.com/booking2.php?propid=324882&roomid=674466
+- Chalet: https://beds24.com/booking2.php?propid=324882&roomid=674465
+- Superior Chalet: https://beds24.com/booking2.php?propid=324882&roomid=674466

@@ -118,7 +118,7 @@ function housePhoto(id) {
   const m = MEDIA && MEDIA.houses && MEDIA.houses[id];
   return m ? pic(m.id) : pic("1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO");
 }
-function houseKind(h) { return h.diameterMetres === 9 ? "Superior" : "Chalet"; }
+function houseKind(h) { return h.diameterMetres === 9 ? "Superior Chalet" : "Chalet"; }
 function housePrice(h) { return "AUMARA spatial house"; }
 Promise.all([
   fetch("./AUMARA_WORLD_GEOREFERENCE_v1.json").then((r) => r.json()),
@@ -129,7 +129,7 @@ Promise.all([
     const a = document.createElement("a");
     a.className = "card"; a.href = BOOK; a.target = "_blank"; a.rel = "noreferrer";
     a.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt="Casa ${h.spatialId}"/><div>
-      <div class="meta">Ø${h.diameterMetres} · ${houseKind(h)} · physical house</div>
+      <div class="meta">${houseKind(h)}</div>
       <h2>Casa ${h.spatialId}</h2><p>${housePrice(h)}</p></div>`;
     housesEl.appendChild(a);
   });
@@ -163,7 +163,7 @@ function openSheet(h) {
   sheet.className = "on";
   sheet.innerHTML = `<img src="${housePhoto(h.spatialId)}" alt=""/>
     <div style="flex:1"><h3>Casa ${h.spatialId}</h3>
-    <p>${houseKind(h)} · Ø${h.diameterMetres} · ${housePrice(h)}</p>
+    <p>${houseKind(h)} · ${housePrice(h)}</p>
     <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Ver disponibilidad</a></div>`;
 }
 let started = false;

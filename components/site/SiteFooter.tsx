@@ -36,7 +36,7 @@ export default function SiteFooter() {
           aria-label="Guest information"
           style={{ display: "flex", gap: 18, flexWrap: "wrap" }}
         >
-          <Link href="/superior" style={linkStyle}>Superior Ø9</Link>
+          <Link href="/superior" style={linkStyle}>Superior Chalet</Link>
           <Link href="/faq" style={linkStyle}>FAQ</Link>
           <Link href="/terms" style={linkStyle}>Booking terms</Link>
           <Link href="/privacy" style={linkStyle}>Privacy</Link>

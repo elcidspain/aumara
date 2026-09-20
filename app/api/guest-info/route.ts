@@ -9,8 +9,8 @@ export function GET() {
     inventory: {
       physicalHouses: 6,
       shortStayHouses: 5,
-      chalet: { count: 3, diameterMetres: 7, maxGuests: 4 },
-      superiorChalet: { count: 2, diameterMetres: 9, maxGuests: 6 }
+      chalet: { name: "Chalet", count: 3, maxGuests: 4 },
+      superiorChalet: { name: "Superior Chalet", count: 2, maxGuests: 6 }
     },
     booking: {
       all: "https://beds24.com/booking2.php?propid=324882",

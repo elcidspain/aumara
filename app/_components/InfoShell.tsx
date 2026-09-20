@@ -19,7 +19,7 @@ export default function InfoShell({ eyebrow, title, children }: { eyebrow: strin
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(42px,8vw,72px)", lineHeight: .98, letterSpacing: "-.045em", margin: "16px 0 34px", fontWeight: 500 }}>{title}</h1>
         <div style={body}>{children}</div>
         <nav style={{ marginTop: 56, paddingTop: 24, borderTop: "1px solid rgba(23,54,41,.18)", display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13 }}>
-          <Link href="/superior" style={link}>Superior Ø9</Link><Link href="/faq" style={link}>FAQ</Link><Link href="/terms" style={link}>Booking terms</Link><Link href="/privacy" style={link}>Privacy</Link><Link href="/cookies" style={link}>Cookies</Link><Link href="/legal" style={link}>Legal notice</Link>
+          <Link href="/superior" style={link}>Superior Chalet</Link><Link href="/faq" style={link}>FAQ</Link><Link href="/terms" style={link}>Booking terms</Link><Link href="/privacy" style={link}>Privacy</Link><Link href="/cookies" style={link}>Cookies</Link><Link href="/legal" style={link}>Legal notice</Link>
         </nav>
       </div>
     </main>

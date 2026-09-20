@@ -17,13 +17,13 @@ export const INVENTORY = {
   rentableHouses: 5,
   chalet: {
     count: 3,
-    label: "Ø7 Chalet",
+    label: "Chalet",
     roomId: BEDS24.chaletRoomId,
     maxGuests: 4,
   },
   superior: {
     count: 2,
-    label: "Ø9 Superior Chalet",
+    label: "Superior Chalet",
     roomId: BEDS24.superiorRoomId,
     maxGuests: 6,
   },

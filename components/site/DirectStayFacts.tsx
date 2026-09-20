@@ -17,10 +17,10 @@ export default function DirectStayFacts() {
           Benidoleig · Marina Alta · Costa Blanca
         </p>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px,4vw,42px)", fontWeight: 500, letterSpacing: "-.03em", margin: "10px 0 16px" }}>
-          Superior Chalet Ø9 — casa completa para 6.
+          Superior Chalet — casa completa para 6.
         </h2>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
-          AUMARA en Benidoleig, cerca de Dénia. El Superior Chalet Ø9 es una casa independiente para hasta seis personas:
+          AUMARA en Benidoleig, cerca de Dénia. El Superior Chalet es una casa independiente para hasta seis personas:
           estar amplio, dormitorio separado, entrada propia. Reserva directa en aumara.me — no en Booking.com.
         </p>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
@@ -31,7 +31,7 @@ export default function DirectStayFacts() {
         </p>
         <p style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 14 }}>
           <Link href="/superior" style={{ color: "#173629", fontWeight: 700 }}>
-            Superior Ø9
+            Superior Chalet
           </Link>
           <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer" style={{ color: "#173629", fontWeight: 700 }}>
             Comprobar fechas
