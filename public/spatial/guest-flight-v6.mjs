@@ -1,28 +1,14 @@
-import { prepareAumaraDenseFlight } from "./dense-flight.mjs";
+import { prepareAumaraGlbFlight } from "./glb-flight.mjs";
+import { prepareAumaraWorldFlight } from "./world-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
-const FRAMES = [
-  { src: "./world/blue-marble-2048.jpg", label: "Tierra", sub: "Hacia la pen\u00ednsula ib\u00e9rica", pos: "50% 48%" },
-  { src: "./world/flight-iberia.jpg", label: "Iberia", sub: "Mediterr\u00e1neo \u00b7 Espa\u00f1a", pos: "51% 51%" },
-  { src: "./world/flight-costa-blanca.jpg", label: "Costa Blanca", sub: "Alicante \u00b7 Comunitat Valenciana", pos: "53% 52%" },
-  { src: "./world/flight-marina-alta.jpg", label: "Marina Alta", sub: "Valle de la Rector\u00eda", pos: "49% 50%" },
-  { src: "./world/flight-benidoleig.jpg", label: "Benidoleig", sub: "Rinc\u00f3n del Silencio", pos: "46% 58%" },
-  { src: "./world/flight-aumara.jpg", label: "AUMARA", sub: "Has llegado", pos: "47% 63%" },
-];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let installed = false;
 let running = false;
 let generation = 0;
+let localRuntime = null;
+let worldRuntime = null;
 
-function preload(src) {
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => resolve(true);
-    image.onerror = () => resolve(false);
-    image.src = src;
-  });
-}
 
 function ensureStyles() {
   if (document.getElementById("aumara-guest-flight-css")) return;
@@ -31,7 +17,7 @@ function ensureStyles() {
   style.textContent = `
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Playfair+Display:wght@500;600&display=swap");
 #stage #close{z-index:7!important;display:inline-flex!important}
-#aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:#061009 url("/media/hero/three-houses-01.webp") center/cover no-repeat;color:#f3ecde;opacity:1;transition:opacity .8s ease}
+#aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:transparent;pointer-events:none;color:#f3ecde;opacity:1;transition:opacity .8s ease}
 #aumara-guest-flight.off{opacity:0;pointer-events:none}
 .agf-frame{position:absolute;inset:-3%;opacity:0;background-position:center;background-size:cover;filter:saturate(.92) contrast(1.04);will-change:transform,opacity}
 .agf-frame.on{opacity:1;animation:agfZoom 3.6s cubic-bezier(.2,.55,.25,1) both}
@@ -65,23 +51,6 @@ function ensureUi(stage) {
   return root;
 }
 
-function showFrame(root, index, slotIndex) {
-  const slots = [root.querySelector(".agf-a"), root.querySelector(".agf-b")];
-  const current = slots[slotIndex % 2];
-  const previous = slots[(slotIndex + 1) % 2];
-  const frame = FRAMES[index];
-  current.style.backgroundImage = `url("${frame.src}")`;
-  current.style.backgroundPosition = frame.pos;
-  current.classList.remove("on");
-  void current.offsetWidth;
-  current.classList.add("on");
-  previous.classList.remove("on");
-  const state = window.__AUMARA || (window.__AUMARA = {});
-  state.provider = "AUMARA_CINEMATIC"; state.stage = frame.label.toUpperCase().replace(/\s+/g, "_"); state.firstFrameRendered = true; state.fatalRenderError = false;
-  root.querySelector("#agf-label").textContent = frame.label;
-  root.querySelector("#agf-sub").textContent = frame.sub;
-  root.querySelector("#agf-progress-bar").style.width = `${((index + 1) / FRAMES.length) * 100}%`;
-}
 function showEndPanel(stage) {
   if (document.getElementById("agf-end")) return;
   const panel = document.createElement("div");
@@ -90,68 +59,91 @@ function showEndPanel(stage) {
   panel.innerHTML = `
     <div style="flex:1;min-width:220px"><div style="font:700 10px/1.2 system-ui;letter-spacing:.17em;text-transform:uppercase;color:#c49a64;margin-bottom:5px">AUMARA &middot; BENIDOLEIG</div><div style="font:500 clamp(20px,3vw,34px)/1.05 Georgia,serif;color:#f0ddb0">Elige tu casa.</div></div>
     <a class="btn ghost" href="/#houses">Ver las casas</a>
+    <button class="btn ghost" id="agf-replay" type="button">Repetir el vuelo</button>
     <a class="btn gold" href="${BOOK}" target="_blank" rel="noreferrer">Consultar disponibilidad</a>`;
   stage.appendChild(panel);
+  panel.querySelector('#agf-replay').onclick = () => { stopGuestFlight(); startGuestFlight(); };
 }
 
-async function runCinematic(root, token) {
-  const restReady = Promise.all(FRAMES.slice(1).map((frame) => preload(frame.src)));
-  await preload(FRAMES[0].src);
-  if (token !== generation) return false;
-  showFrame(root, 0, 0);
-  root.style.opacity = "1";
-  const cover = document.getElementById("flight-cover");
-  if (cover) cover.classList.add("off");
-  await sleep(2200);
-  await restReady;
-  for (let i = 1; i < FRAMES.length; i += 1) {
-    if (token !== generation) return false;
-    showFrame(root, i, i);
-    await sleep(i === FRAMES.length - 1 ? 2200 : 2450);
-  }
-  return token === generation;
-}
 async function startGuestFlight() {
   if (running) return true;
   running = true;
   const token = ++generation;
   const stage = document.getElementById("stage");
-  if (!stage) return false;
+  if (!stage) { running = false; return false; }
   ensureStyles();
   const root = ensureUi(stage);
   root.style.display = "block";
-  root.style.opacity = "0";
+  root.style.opacity = "1";
   root.classList.remove("off");
-  window.__AUMARA = { provider:"AUMARA_CINEMATIC", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:0, flightComplete:false, events:[] };
+  window.__AUMARA = { provider:"CESIUM_TO_TEXTURED_MODEL", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:0, flightComplete:false, events:[] };
+  window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
+  document.getElementById('flight-cover')?.classList.remove('off');
+  const loadingText = document.querySelector('#flight-cover span');
+  if (loadingText) loadingText.textContent = 'Preparando el vuelo 3D…';
   stage.classList.add("on");
   document.body.style.overflow = "hidden";
   stage.classList.remove("local-world");
   const cesiumHost = document.getElementById("c");
-  if (cesiumHost) cesiumHost.style.visibility = "hidden";
+  if (cesiumHost) cesiumHost.style.visibility = "visible";
   const legacyOverlay = document.getElementById("overlay");
   if (legacyOverlay) legacyOverlay.style.display = "none";
   const oldEnd = document.getElementById("agf-end");
   if (oldEnd) oldEnd.remove();
 
-  const densePromise = prepareAumaraDenseFlight().catch(() => null);
-  const cinematicOk = await runCinematic(root, token);
-  if (!cinematicOk) return false;
-  const dense = await densePromise;
-  if (token !== generation || !dense) return false;
-  dense.start();
-  const deadline = performance.now() + 4500;
-  while (!window.__AUMARA_LOCAL_FRAME_VISIBLE && performance.now() < deadline) await sleep(50);
-  if (token !== generation) return false;
-  root.classList.add("off");
-  setTimeout(() => { if (root.classList.contains("off")) root.style.display = "none"; }, 900);
-  setTimeout(() => { if (token === generation) showEndPanel(stage); }, 23500);
-  return true;
+  function fail(error) {
+    if (token !== generation) return;
+    localRuntime?.stop(); worldRuntime?.stop(); running = false;
+    window.__AUMARA.fatalRenderError = true;
+    window.__AUMARA.renderError = String(error?.message || error).slice(0, 160);
+    window.__AUMARA.stage = 'ERROR';
+    const cover = document.getElementById('flight-cover');
+    cover?.classList.remove('off');
+    if (loadingText) loadingText.textContent = 'Puedes volver a intentar el recorrido.';
+    showEndPanel(stage);
+  }
+  async function enterLocal() {
+    if (token !== generation) return;
+    root.classList.add('off');
+    localRuntime.start({ complete: () => {
+      if (token === generation) showEndPanel(stage);
+    }, error: fail });
+    const deadline = performance.now() + 4500;
+    while (token === generation && !window.__AUMARA_LOCAL_FRAME_VISIBLE && performance.now() < deadline) await sleep(50);
+    if (token !== generation) return;
+    if (!window.__AUMARA_LOCAL_FRAME_VISIBLE) return fail(new Error('local-first-frame-timeout'));
+    document.getElementById('flight-cover')?.classList.add('off');
+    setTimeout(() => {
+      if (token === generation && window.__AUMARA_LOCAL_FRAME_VISIBLE && cesiumHost) cesiumHost.style.visibility = 'hidden';
+    }, 950);
+  }
+  try {
+    const [local, global] = await Promise.all([
+      prepareAumaraGlbFlight(),
+      prepareAumaraWorldFlight().catch(() => null),
+    ]);
+    if (token !== generation) return false;
+    localRuntime = local; worldRuntime = global;
+    if (!global) { window.__AUMARA.globalFallback = true; await enterLocal(); return true; }
+    global.start({ complete: enterLocal, error: () => {
+      window.__AUMARA.globalFallback = true; enterLocal();
+    }, stage: (label, progress) => {
+      if (token !== generation) return;
+      window.__AUMARA.stage = label;
+      root.querySelector('#agf-label').textContent = label;
+      root.querySelector('#agf-sub').textContent = label === 'AUMARA' ? 'Casas entre pinos y vistas al valle' : 'Destino AUMARA · Costa Blanca';
+      root.querySelector('#agf-progress-bar').style.width = `${progress * 100}%`;
+      document.getElementById('flight-cover')?.classList.add('off');
+    } });
+    return true;
+  } catch (error) { fail(error); return false; }
 }
-function stopGuestFlight() {
+function stopGuestFlight(keepVisible = false) {
   generation += 1;
   running = false;
   const stage = document.getElementById("stage");
-  if (stage) stage.classList.remove("on", "local-world");
+  if (stage && !keepVisible) stage.classList.remove("on", "local-world");
+  if (!keepVisible) { localRuntime?.stop(); worldRuntime?.stop(); }
   document.body.style.overflow = "";
   const cesiumHost = document.getElementById("c");
   if (cesiumHost) cesiumHost.style.visibility = "visible";
@@ -165,14 +157,15 @@ export function installAumaraGuestFlight() {
   const close = document.getElementById("close");
   if (close) close.onclick = (event) => {
     event.preventDefault();
-    stopGuestFlight();
+    // Keep the last frame on screen until navigation replaces the document.
+    stopGuestFlight(true);
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "cinematic-to-dense-local";
+  document.documentElement.dataset.aumaraFlightMode = "globe-to-six-house-model";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
-  if (hashFlight || window.__AUMARA_AUTO_FLIGHT || window.__AUMARA_PENDING_FLIGHT) {
+  if (document.getElementById('stage')) {
     window.__AUMARA_PENDING_FLIGHT = false;
     startGuestFlight();
   }

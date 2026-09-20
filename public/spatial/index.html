@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-aumara-flight-owner="guest">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -55,6 +55,7 @@
   .cesium-widget-credits,.cesium-credit-lightbox-overlay{display:block!important;visibility:visible!important;z-index:6}
   #stage:not(.dbg) .cesium-widget-errorPanel{display:none!important}
 </style>
+<script src="./ion.js"></script>
 <script type="module" src="./guest-flight-v6.mjs"></script>
 </head>
 <body>
@@ -70,12 +71,12 @@
 <section class="hero">
   <img src="https://lh3.googleusercontent.com/d/1wdC_rqzts2T_PRgF3fNWdCOm_7pn3oRO=w2200" alt="AUMARA · Benidoleig"/>
   <p class="kicker">Benidoleig · Marina Alta</p>
-  <h1>Geodesic houses on this land.</h1>
-  <p class="lead">Seis casas físicas. Un paisaje continuo.</p>
+  <h1>Casas geodésicas en la Costa Blanca.</h1>
+  <p class="lead">Entre pinos y vistas al valle, en Benidoleig.</p>
   <div class="row" style="margin-top:18px">
     <a class="btn gold" href="https://beds24.com/booking2.php?propid=324882" target="_blank" rel="noreferrer">Disponibilidad</a>
-    <button class="btn ghost" id="flight" type="button">3D tour / FLIGHT</button>
-    <button class="btn ghost" id="ionbtn" type="button">Ion</button>
+    <button class="btn ghost" id="flight" type="button">Explorar AUMARA en 3D</button>
+    <button class="btn ghost" id="ionbtn" type="button" hidden style="display:none">Ion</button>
   </div>
 </section>
 <section class="grid" id="houses"></section>
@@ -85,7 +86,7 @@
   <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a> ·
   <a href="https://wa.me/34663592733">+34 663 592 733</a>
 </section>
-<div id="stage">
+<div id="stage" class="on">
   <div id="c"></div>
   <div id="flight-cover"><div><strong>AUMARA</strong><span>Preparando el vuelo 3D…</span></div></div>
   <div id="overlay"></div>
@@ -168,7 +169,7 @@ function openSheet(h) {
 }
 let started = false;
 document.getElementById("flight").onclick = () => startFlight();
-document.getElementById("close").onclick = () => { document.getElementById("stage").classList.remove("on"); sheet.className = ""; window.location.replace("/"); };
+document.getElementById("close").onclick = () => { window.location.replace("/"); };
 document.getElementById("ionbtn").onclick = () => {
   const next = prompt("Cesium ion token", "");
   if (!next) return;
