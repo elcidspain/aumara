@@ -41,6 +41,17 @@ function addDays(isoDate: string, days: number) {
   return `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
 }
 
+function collectMatches(text: string, pattern: RegExp) {
+  const matches: RegExpExecArray[] = [];
+  const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    matches.push(match);
+    if (match[0] === "") re.lastIndex += 1;
+  }
+  return matches;
+}
+
 export function flattenAgentInput(input: unknown): string {
   if (typeof input === "string") return input;
   if (!input) return "";
@@ -78,16 +89,14 @@ function parseNaturalDates(text: string): string[] {
     }
   }
 
-  const named = lower.matchAll(/\b(\d{1,2})\s+(?:de\s+)?([a-zа-яё.]+)\s+(\d{4})\b/gi);
-  for (const match of named) {
+  for (const match of collectMatches(lower, /\b(\d{1,2})\s+(?:de\s+)?([a-zа-яё.]+)\s+(\d{4})\b/gi)) {
     const month = parseMonthToken(match[2]);
     if (!month) continue;
     const date = iso(Number(match[3]), month, Number(match[1]));
     if (date) found.push(date);
   }
 
-  const slash = lower.matchAll(/\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b/g);
-  for (const match of slash) {
+  for (const match of collectMatches(lower, /\b(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})\b/g)) {
     const day = Number(match[1]);
     const month = Number(match[2]);
     const year = Number(match[3]);
