@@ -4,7 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import GuestActivation from "@/components/site/GuestActivation";
 import AgentWebTools from "@/components/site/AgentWebTools";
-import { SITE_URL } from "@/lib/guest";
+import { PLACE, SITE_URL } from "@/lib/guest";
 import {
   GA_MEASUREMENT_ID,
   GOOGLE_ADS_TAG_ID,
@@ -18,24 +18,38 @@ const heroImage = `${SITE_URL}/media/hero/three-houses-01.webp`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "AUMARA — Hay lugares que te dan más",
-  description: "Casas independientes en Benidoleig, Marina Alta. Superior Chalet para hasta 6 personas. Reserva directa en aumara.me, no en Booking.com.",
-  keywords: ["AUMARA", "Benidoleig", "Marina Alta", "Costa Blanca", "Dénia", "Superior Chalet", "6 guests", "direct booking", "private chalet"],
+  title: {
+    default: "AUMARA | Casas en Benidoleig, cerca de Dénia",
+    template: "%s | AUMARA",
+  },
+  description:
+    "Casas independientes en Benidoleig, Marina Alta, Costa Blanca. Chalet para 4 y Superior Chalet para 6. Reserva directa en aumara.me, no en Booking.com.",
+  keywords: [
+    "AUMARA",
+    "Benidoleig",
+    "Marina Alta",
+    "Costa Blanca",
+    "Dénia",
+    "Chalet",
+    "Superior Chalet",
+    "casa 6 personas",
+    "reserva directa",
+  ],
   robots: "index,follow,max-image-preview:large",
-  alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
-    title: "AUMARA — Hay lugares que te dan más",
-    description: "Casas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real del lugar y reserva directa en aumara.me.",
+    title: "AUMARA | Casas en Benidoleig, cerca de Dénia",
+    description:
+      "Casas independientes entre pinos en Benidoleig, Marina Alta. Chalet y Superior Chalet. Reserva directa en aumara.me.",
     url: SITE_URL,
     siteName: "AUMARA",
     locale: "es_ES",
-    images: [{ url: heroImage, width: 1920, height: 1080, alt: "AUMARA houses among pine trees in Benidoleig, Marina Alta" }],
+    images: [{ url: heroImage, width: 1920, height: 1080, alt: "Casas de AUMARA entre pinos en Benidoleig, Marina Alta" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AUMARA — Hay lugares que te dan más",
-    description: "Casas independientes entre pinos en Benidoleig, Marina Alta. Recorrido real y reserva directa.",
+    title: "AUMARA | Casas en Benidoleig, cerca de Dénia",
+    description: "Chalet para 4 y Superior Chalet para 6. Reserva directa en aumara.me.",
     images: [heroImage],
   },
 };
@@ -44,11 +58,11 @@ export const viewport: Viewport = { themeColor: "#f2eadc" };
 
 const address = {
   "@type": "PostalAddress",
-  streetAddress: "Urb. Rincón del Silencio, 3",
-  postalCode: "03759",
-  addressLocality: "Benidoleig",
-  addressRegion: "Alicante",
-  addressCountry: "ES",
+  streetAddress: PLACE.streetAddress,
+  postalCode: PLACE.postalCode,
+  addressLocality: PLACE.addressLocality,
+  addressRegion: PLACE.addressRegion,
+  addressCountry: PLACE.addressCountry,
 };
 
 const jsonLd = {
@@ -70,12 +84,26 @@ const jsonLd = {
   email: "elcidspain@gmail.com",
   telephone: "+34966579970",
   address,
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: PLACE.latitude,
+    longitude: PLACE.longitude,
+  },
+  hasMap: PLACE.maps,
+  currenciesAccepted: "EUR",
+  areaServed: [
+    { "@type": "Place", name: "Benidoleig" },
+    { "@type": "Place", name: "Marina Alta" },
+    { "@type": "Place", name: "Dénia" },
+    { "@type": "Place", name: "Costa Blanca" },
+  ],
   containsPlace: [
     {
       "@type": "Accommodation",
       name: "Chalet",
       occupancy: { "@type": "QuantitativeValue", maxValue: 4 },
-      url: "https://beds24.com/booking2.php?propid=324882&roomid=674465",
+      url: `${SITE_URL}/chalet`,
+      image: `${SITE_URL}/media/stills/chalet-mezzanine.jpg`,
       amenityFeature: [{ "@type": "LocationFeatureSpecification", name: "Entire house", value: true }],
     },
     {

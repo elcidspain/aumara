@@ -1,19 +1,114 @@
+import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
-import { BOOK_DIRECT, BOOK_SUPERIOR } from "@/lib/guest";
+import { BOOK_CHALET, BOOK_DIRECT, BOOK_SUPERIOR, SITE_URL } from "@/lib/guest";
+
+const pageUrl = `${SITE_URL}/faq`;
+
+export const metadata: Metadata = {
+  title: "Preguntas frecuentes",
+  description:
+    "Casas Chalet y Superior Chalet en Benidoleig. Reserva directa en aumara.me. Precio y cancelación salen en el checkout de AUMARA.",
+  alternates: { canonical: pageUrl },
+  openGraph: {
+    title: "Preguntas frecuentes | AUMARA",
+    description: "Dónde está AUMARA, qué casas hay y cómo se reserva directo.",
+    url: pageUrl,
+  },
+};
+
+const faqs = [
+  {
+    q: "Qué casas se pueden reservar en AUMARA?",
+    a: "Chalet para hasta 4 personas y Superior Chalet para hasta 6. Cada reserva es una casa completa, con entrada propia. Las fechas vivas las confirma el motor de reserva de AUMARA.",
+  },
+  {
+    q: "Dónde está AUMARA?",
+    a: "En Benidoleig, Marina Alta, Alicante, Costa Blanca, cerca de Dénia. Urb. Rincón del Silencio, 3, 03759 Benidoleig.",
+  },
+  {
+    q: "Hay una casa para 6 personas con reserva directa?",
+    a: "Sí. Superior Chalet es una casa independiente para hasta seis personas, con dormitorio separado y entrada propia. La reserva es directa en aumara.me, no en Booking.com.",
+  },
+  {
+    q: "Hay una casa para 4 personas?",
+    a: "Sí. Chalet es una casa independiente para hasta cuatro personas, con entrada propia, zona de dormir y altillo. Reserva directa en aumara.me.",
+  },
+  {
+    q: "Cómo se consulta disponibilidad y precio?",
+    a: "En el motor de reserva directa de AUMARA. Beds24 es el checkout de AUMARA, no un anuncio de OTA. Precio, estancia mínima y cancelación salen para las fechas elegidas, antes de confirmar.",
+  },
+];
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "AUMARA", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Preguntas frecuentes", item: pageUrl },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  },
+];
 
 export default function FaqPage() {
-  return <InfoShell eyebrow="Guest FAQ" title="Before you arrive.">
-    <h2>What can I book?</h2>
-    <p>AUMARA has six physical houses. Five are offered in the current guest rental inventory: three Chalet houses and two Superior Chalet houses. Live inventory in the booking engine is authoritative for a specific date.</p>
-    <h2>Where is AUMARA?</h2>
-    <p>AUMARA is in Benidoleig, Marina Alta, Alicante, Spain, on the Costa Blanca near Dénia. The spatial experience and recorded routes on the site are designed to show the relationship between the houses, paths and surrounding valley before you book.</p>
-    <h2>Is there a house for 6 guests with direct booking?</h2>
-    <p>Yes. Superior Chalet is a complete independent house for up to six guests, with a separate bedroom and its own entrance. Booking is direct on aumara.me — not Booking.com. See <a href="/superior">the Superior Chalet page</a> and the <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer">live dates for Superior Chalet</a>.</p>
-    <h2>How do I check availability?</h2>
-    <p>Use the <a href={BOOK_DIRECT} target="_blank" rel="noreferrer">direct booking engine</a>. It shows current room types, dates, rates and booking conditions. Beds24 is the AUMARA checkout, not an OTA listing.</p>
-    <h2>Where are the final price and cancellation conditions?</h2>
-    <p>The AUMARA booking flow displays the price and reservation conditions that apply to your selected dates before confirmation. Those live conditions take precedence over general website copy.</p>
-    <h2>Can an AI assistant read the public stay information?</h2>
-    <p>Yes. Public guest information is exposed through normal HTML plus machine-readable discovery files. Automated clients should treat the booking engine as the source of truth for real-time availability and rates.</p>
-  </InfoShell>;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <InfoShell eyebrow="Preguntas frecuentes" title="Antes de llegar.">
+        <h2>Qué casas se pueden reservar en AUMARA?</h2>
+        <p>
+          Chalet para hasta 4 personas y Superior Chalet para hasta 6. Cada reserva es una casa completa, con entrada
+          propia. Las fechas vivas las confirma el motor de reserva de AUMARA.
+        </p>
+        <h2>Dónde está AUMARA?</h2>
+        <p>
+          AUMARA está en Benidoleig, Marina Alta, Alicante, Costa Blanca, cerca de Dénia. Urb. Rincón del Silencio, 3,
+          03759 Benidoleig. El recorrido del sitio enseña la relación entre las casas, los caminos y el valle antes de
+          reservar.
+        </p>
+        <h2>Hay una casa para 6 personas con reserva directa?</h2>
+        <p>
+          Sí. Superior Chalet es una casa independiente para hasta seis personas, con dormitorio separado y entrada
+          propia. Reserva directa en aumara.me — no en Booking.com.{" "}
+          <a href="/superior">Página del Superior Chalet</a> ·{" "}
+          <a href={BOOK_SUPERIOR} target="_blank" rel="noreferrer">
+            fechas vivas
+          </a>
+          .
+        </p>
+        <h2>Hay una casa para 4 personas?</h2>
+        <p>
+          Sí. Chalet es una casa independiente para hasta cuatro personas.{" "}
+          <a href="/chalet">Página del Chalet</a> ·{" "}
+          <a href={BOOK_CHALET} target="_blank" rel="noreferrer">
+            fechas vivas
+          </a>
+          .
+        </p>
+        <h2>Cómo se consulta disponibilidad y precio?</h2>
+        <p>
+          En el{" "}
+          <a href={BOOK_DIRECT} target="_blank" rel="noreferrer">
+            motor de reserva directa
+          </a>
+          . Beds24 es el checkout de AUMARA, no un anuncio de OTA. Precio y cancelación salen para las fechas elegidas,
+          antes de confirmar.
+        </p>
+        <h2>English</h2>
+        <p>
+          AUMARA is in Benidoleig, near Denia. Book Chalet (up to 4) or Superior Chalet (up to 6) directly on aumara.me
+          — not Booking.com. Live dates, price and cancellation sit in the AUMARA checkout.
+        </p>
+      </InfoShell>
+    </>
+  );
 }

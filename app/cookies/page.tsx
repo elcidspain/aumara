@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
+import { SITE_URL } from "@/lib/guest";
+
+export const metadata: Metadata = {
+  title: "Cookies",
+  description: "Cookies y almacenamiento en AUMARA: lo esencial primero. Medición de Google, denegada por defecto.",
+  alternates: { canonical: `${SITE_URL}/cookies` },
+};
 
 export default function CookiesPage() {
   return <InfoShell eyebrow="Cookies & browser storage" title="Essential first. Optional only when allowed.">

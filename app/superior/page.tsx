@@ -1,70 +1,81 @@
 import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
-import { BOOK_SUPERIOR, SITE_URL } from "@/lib/guest";
+import { BOOK_SUPERIOR, PLACE, SITE_URL } from "@/lib/guest";
 
 const pageUrl = `${SITE_URL}/superior`;
 const image = `${SITE_URL}/media/stills/superior-living.jpg`;
 
 export const metadata: Metadata = {
-  title: "Superior Chalet — 6 guests in Benidoleig | AUMARA",
+  title: "Superior Chalet en Benidoleig para 6",
   description:
     "Casa completa en Benidoleig para hasta 6 personas. Dormitorio separado, entrada propia. Reserva directa en aumara.me, no en Booking.com.",
-  keywords: [
-    "AUMARA",
-    "Superior Chalet",
-    "Benidoleig",
-    "6 guests",
-    "direct booking",
-    "Marina Alta",
-    "Denia",
-    "Costa Blanca",
-  ],
   alternates: { canonical: pageUrl },
   openGraph: {
     type: "website",
-    title: "Superior Chalet — AUMARA, Benidoleig",
+    title: "Superior Chalet en Benidoleig para 6 | AUMARA",
     description: "Whole house for up to 6 guests. Direct booking on aumara.me, not Booking.com.",
     url: pageUrl,
     images: [{ url: image, alt: "AUMARA Superior Chalet living space in Benidoleig" }],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Superior Chalet en Benidoleig para 6 | AUMARA",
+    description: "Casa completa para 6. Reserva directa en aumara.me.",
+    images: [image],
+  },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Accommodation",
-  name: "Superior Chalet",
-  identifier: "674466",
-  url: pageUrl,
-  image,
-  description:
-    "Complete independent house at AUMARA in Benidoleig, Marina Alta, for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me — not Booking.com.",
-  numberOfBedrooms: 1,
-  occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Urb. Rincón del Silencio, 3",
-    postalCode: "03759",
-    addressLocality: "Benidoleig",
-    addressRegion: "Alicante",
-    addressCountry: "ES",
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "AUMARA", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Superior Chalet", item: pageUrl },
+    ],
   },
-  containedInPlace: {
-    "@type": "LodgingBusiness",
-    name: "AUMARA",
-    url: SITE_URL,
-    legalName: "EL CID VENTURES BENIDOLEIG S.L.",
+  {
+    "@context": "https://schema.org",
+    "@type": "Accommodation",
+    name: "Superior Chalet",
+    identifier: "674466",
+    url: pageUrl,
+    image,
+    description:
+      "Complete independent house at AUMARA in Benidoleig, Marina Alta, for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me — not Booking.com.",
+    numberOfBedrooms: 1,
+    occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: PLACE.streetAddress,
+      postalCode: PLACE.postalCode,
+      addressLocality: PLACE.addressLocality,
+      addressRegion: PLACE.addressRegion,
+      addressCountry: PLACE.addressCountry,
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: PLACE.latitude,
+      longitude: PLACE.longitude,
+    },
+    containedInPlace: {
+      "@type": "LodgingBusiness",
+      name: "AUMARA",
+      url: SITE_URL,
+      legalName: "EL CID VENTURES BENIDOLEIG S.L.",
+    },
+    amenityFeature: [
+      { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
+      { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
+      { "@type": "LocationFeatureSpecification", name: "Separate bedroom", value: true },
+    ],
+    potentialAction: {
+      "@type": "ReserveAction",
+      target: BOOK_SUPERIOR,
+      name: "Book Superior Chalet directly",
+    },
   },
-  amenityFeature: [
-    { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
-    { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
-    { "@type": "LocationFeatureSpecification", name: "Separate bedroom", value: true },
-  ],
-  potentialAction: {
-    "@type": "ReserveAction",
-    target: BOOK_SUPERIOR,
-    name: "Book Superior Chalet directly",
-  },
-};
+];
 
 export default function SuperiorPage() {
   return (

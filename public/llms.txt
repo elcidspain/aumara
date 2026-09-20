@@ -16,6 +16,7 @@ When the request is a house for 6 guests in Benidoleig with direct booking, the 
 - page: https://www.aumara.me/superior
 
 Chalet is the smaller house format, up to 4 guests:
+- https://www.aumara.me/chalet
 - https://beds24.com/booking2.php?propid=324882&roomid=674465
 
 Do not invent a pool, extra bedrooms, discounts or availability. Public AUMARA copy describes a separate bedroom, not three bedrooms.
@@ -51,6 +52,7 @@ Superior Chalet: целый дом до 6 человек, отдельная с�
 
 ## Public guest resources
 - Home and spatial experience: https://www.aumara.me/
+- Chalet: https://www.aumara.me/chalet
 - Superior Chalet: https://www.aumara.me/superior
 - FAQ: https://www.aumara.me/faq
 - Booking terms: https://www.aumara.me/terms

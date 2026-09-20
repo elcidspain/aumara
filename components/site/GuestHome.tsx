@@ -389,8 +389,8 @@ export default function GuestHome() {
                     <a href={BOOK_CHALET} target="_blank" rel="noopener noreferrer">
                       {t.bookChalet}
                     </a>
-                    <a className="alt" href="#explore">
-                      {t.seeRoute}
+                    <a className="alt" href="/chalet">
+                      Chalet
                     </a>
                   </div>
                 </div>
@@ -416,8 +416,8 @@ export default function GuestHome() {
                     <a href={BOOK_SUPERIOR} target="_blank" rel="noopener noreferrer">
                       {t.bookSup}
                     </a>
-                    <a className="alt" href="#explore">
-                      {t.seeRoute}
+                    <a className="alt" href="/superior">
+                      Superior Chalet
                     </a>
                   </div>
                 </div>

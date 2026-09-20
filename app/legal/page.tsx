@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
+import { SITE_URL } from "@/lib/guest";
+
+export const metadata: Metadata = {
+  title: "Aviso legal",
+  description:
+    "AUMARA es la marca de alojamiento. Operador: EL CID VENTURES BENIDOLEIG S.L., NIF B53816989, Benidoleig, Alicante.",
+  alternates: { canonical: `${SITE_URL}/legal` },
+};
 
 export default function LegalPage() {
   return <InfoShell eyebrow="Aviso legal · Legal notice" title="AUMARA, clearly identified.">
