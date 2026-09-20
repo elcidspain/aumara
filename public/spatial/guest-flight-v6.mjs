@@ -1,10 +1,10 @@
-import { prepareAumaraWorldFlight } from "./world-flight.mjs";
+import { prepareAumaraWorldFlight } from "./world-flight.mjs";\nimport { prepareAumaraDenseFlight } from "./dense-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
 let installed = false;
 let running = false;
 let generation = 0;
-let worldRuntime = null;
+let worldRuntime = null;\nlet denseRuntime = null;
 
 
 function ensureStyles() {
@@ -83,7 +83,7 @@ async function startGuestFlight() {
   root.style.display = "block";
   root.style.removeProperty("opacity");
   root.classList.remove("off");
-  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, events:[] };
+  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
   document.getElementById('flight-cover')?.classList.remove('off');
   const loadingText = document.querySelector('#flight-cover span');
@@ -98,9 +98,9 @@ async function startGuestFlight() {
   const oldEnd = document.getElementById("agf-end");
   if (oldEnd) oldEnd.remove();
 
-  function fail(error) {
+  let densePromise = null;\n\n  function fail(error) {
     if (token !== generation) return;
-    worldRuntime?.stop(); running = false;
+    worldRuntime?.stop(); denseRuntime?.stop(); running = false;
     window.__AUMARA.fatalRenderError = true;
     window.__AUMARA.renderError = String(error?.message || error).replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
     window.__AUMARA.stage = 'ERROR';
@@ -109,19 +109,40 @@ async function startGuestFlight() {
     if (loadingText) loadingText.textContent = 'Puedes volver a intentar el recorrido.';
     showEndPanel(stage);
   }
-  function finishAerial() {
+  async function enterDense() {
     if (token !== generation) return;
-    root.classList.add('off');
-    showEndPanel(stage);
-    const source = document.getElementById('agf-source');
-    if (source) source.textContent = window.__AUMARA.mapViewKind === 'PHOTOREALISTIC_3D_MAP'
-      ? 'Vista aérea 3D de referencia' : 'Vista satélite de referencia';
+    try {
+      const dense = await densePromise;
+      if (token !== generation) return;
+      if (!dense) throw new Error("dense-runtime-unavailable");
+      denseRuntime = dense;
+      dense.start({
+        complete: () => {
+          if (token !== generation) return;
+          running = false;
+          showEndPanel(stage);
+          const source = document.getElementById("agf-source");
+          if (source) source.textContent = "Recorrido espacial AUMARA";
+        },
+        error: fail,
+      });
+      const deadline = performance.now() + 5000;
+      while (token === generation && !window.__AUMARA_LOCAL_FRAME_VISIBLE && performance.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      if (token !== generation) return;
+      if (!window.__AUMARA_LOCAL_FRAME_VISIBLE) throw new Error("dense-first-frame-timeout");
+      root.classList.add("off");
+      document.getElementById("flight-cover")?.classList.add("off");
+      setTimeout(() => { if (token === generation && root.classList.contains("off")) root.style.display = "none"; }, 900);
+    } catch (error) { fail(error); }
   }
   try {
+    densePromise = prepareAumaraDenseFlight();
     const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
     worldRuntime = global;
-    global.start({ complete: finishAerial, error: fail, stage: (label, progress) => {
+    global.start({ complete: () => { void enterDense(); }, error: fail, stage: (label, progress) => {
       if (token !== generation) return;
       window.__AUMARA.stage = label;
       root.querySelector('#agf-label').textContent = label;
@@ -138,6 +159,7 @@ function stopGuestFlight(keepVisible = false) {
   const stage = document.getElementById("stage");
   if (stage && !keepVisible) stage.classList.remove("on", "local-world");
   worldRuntime?.stop();
+  denseRuntime?.stop();
   document.body.style.overflow = "";
   const cesiumHost = document.getElementById("c");
   if (cesiumHost) cesiumHost.style.visibility = "visible";
@@ -156,7 +178,7 @@ export function installAumaraGuestFlight() {
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "source-map-to-parcel";
+  document.documentElement.dataset.aumaraFlightMode = "cesium-to-dense-west-east-qa";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
   if (document.getElementById('stage')) {

@@ -125,12 +125,12 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
     "supported flight mode",
   );
   await waitFor(() => evaluate("['local-ready','guest-ready'].includes(document.documentElement.dataset.aumaraFlightRuntime)"), 10000, "flight runtime");
-  const guestMode = mode === "cinematic-to-dense-local";
+  const guestMode = ["cinematic-to-dense-local","cesium-to-dense-west-east-qa"].includes(mode);
   const frame = await waitFor(
     () => evaluate(guestMode
       ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount}) : null"
