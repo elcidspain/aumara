@@ -12,19 +12,27 @@ export function prepareAumaraWorldFlight() {
 
 async function build() {
   // The bundled globe starts independently of optional provider credentials.
-  const base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
+  let base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
   if (!window.Cesium) {
-    window.CESIUM_BASE_URL = base;
+    const engineBases = [
+      'https://unpkg.com/cesium@1.134.0/Build/Cesium/',
+      'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/',
+      'https://cdn.jsdelivr.net/npm/cesium@1.134.0/Build/Cesium/',
+    ];
     let lastEngineError = null;
-    for (let attempt = 0; attempt < 2 && !window.Cesium; attempt += 1) {
+    for (const candidateBase of engineBases) {
+      if (window.Cesium) break;
+      window.CESIUM_BASE_URL = candidateBase;
       try {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
           const timer = setTimeout(() => {
+            script.onerror = script.onload = null;
             script.remove();
             reject(new Error('global-engine-timeout'));
-          }, 25000);
-          script.src = base + 'Cesium.js' + (attempt ? '?retry=1' : '');
+          }, 7000);
+          script.src = candidateBase + 'Cesium.js';
+          script.dataset.aumaraCesiumEngine = candidateBase;
           script.onload = () => { clearTimeout(timer); resolve(); };
           script.onerror = () => {
             clearTimeout(timer);
@@ -33,11 +41,13 @@ async function build() {
           };
           document.head.appendChild(script);
         });
+        if (window.Cesium) base = candidateBase;
       } catch (error) {
         lastEngineError = error;
       }
     }
     if (!window.Cesium) throw lastEngineError || new Error('global-engine-unavailable');
+    window.CESIUM_BASE_URL = base;
     if (!document.querySelector('link[data-aumara-cesium-css]')) {
       const css = document.createElement('link');
       css.dataset.aumaraCesiumCss = '1';
