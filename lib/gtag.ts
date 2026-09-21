@@ -6,6 +6,7 @@ export const GOOGLE_ADS_TAG_ID = (process.env.NEXT_PUBLIC_GOOGLE_ADS_TAG_ID ?? "
 
 /**
  * Optional Google Ads conversion destination for the outbound Beds24 booking click.
+ * Vercel config should provide this in Preview and Production; an absent value remains fail-closed.
  * Format: AW-123456789/AbCdEfGhIj. Keep empty until the exact conversion label exists in Google Ads.
  */
 export const GOOGLE_ADS_BOOKING_CLICK_SEND_TO = (
