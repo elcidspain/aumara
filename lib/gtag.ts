@@ -4,12 +4,25 @@ export const GA_MEASUREMENT_ID = (process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "
 /** Public Google Ads tag for the connected AUMARA advertiser. Safe to expose client-side. */
 export const GOOGLE_ADS_TAG_ID = (process.env.NEXT_PUBLIC_GOOGLE_ADS_TAG_ID ?? "AW-11392880991").trim();
 
+/**
+ * Optional Google Ads conversion destination for the outbound Beds24 booking click.
+ * Vercel config should provide this in Preview and Production; an absent value remains fail-closed.
+ * Format: AW-123456789/AbCdEfGhIj. Keep empty until the exact conversion label exists in Google Ads.
+ */
+export const GOOGLE_ADS_BOOKING_CLICK_SEND_TO = (
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_BOOKING_CLICK_SEND_TO ?? ""
+).trim();
+
 export function isGaMeasurementId(id: string): boolean {
   return /^G-[A-Z0-9]{6,12}$/.test(id);
 }
 
 export function isGoogleAdsTagId(id: string): boolean {
   return /^AW-\d{6,15}$/.test(id);
+}
+
+export function isGoogleAdsConversionSendTo(value: string): boolean {
+  return /^AW-\d{6,15}\/[A-Za-z0-9_-]+$/.test(value);
 }
 
 export function trackEvent(name: string, params: Record<string, unknown> = {}): void {
@@ -19,4 +32,12 @@ export function trackEvent(name: string, params: Record<string, unknown> = {}): 
   }).gtag;
   if (typeof gtag !== "function") return;
   gtag("event", name, params);
+}
+
+export function trackGoogleAdsConversion(
+  sendTo: string,
+  params: Record<string, unknown> = {},
+): void {
+  if (!isGoogleAdsConversionSendTo(sendTo)) return;
+  trackEvent("conversion", { ...params, send_to: sendTo });
 }
