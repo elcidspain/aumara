@@ -140,3 +140,20 @@ export const COPY: Record<Lang, Copy> = {
   uk: { ...EN, h1: "Є місця, які дають більше.\nВ AUMARA ти знову знаходиш себе." },
   sv: { ...EN, h1: "Det finns platser som ger mer.\nPå AUMARA hittar du dig själv igen." },
 };
+
+const STORAGE = "aumara-lang";
+
+export function detectLang(): Lang {
+  if (typeof window === "undefined") return "es";
+  const saved = window.localStorage.getItem(STORAGE);
+  if (saved && LANGS.some((l) => l.id === saved)) return saved as Lang;
+  const nav = (window.navigator.language || "es").slice(0, 2).toLowerCase();
+  const hit = LANGS.find((l) => l.id === nav);
+  return hit ? hit.id : "es";
+}
+
+export function persistLang(lang: Lang) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STORAGE, lang);
+  document.documentElement.lang = lang;
+}
