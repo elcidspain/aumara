@@ -25,9 +25,9 @@ export const BEDS24 = {
 
 export const INVENTORY = {
   totalHouses: 6,
-  rentableHouses: 5,
+  rentableHouses: 6,
   chalet: {
-    count: 3,
+    count: 4,
     label: "Chalet",
     roomId: BEDS24.chaletRoomId,
     maxGuests: 4,
