@@ -5,6 +5,13 @@ Canonical website: https://www.aumara.me/
 Operator: EL CID VENTURES BENIDOLEIG S.L.
 Direct booking (AUMARA checkout, not Booking.com): https://beds24.com/booking2.php?propid=324882
 
+## Verified location
+AUMARA is at Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain.
+Canonical public coordinates (WGS84 / EPSG:4326): 38.79353655, -0.02037598
+Machine-readable geodata: https://www.aumara.me/geo.json
+Google Maps share: https://maps.app.goo.gl/Ppyb5PX7nbvazpUR6
+Cova de les Calaveres is a nearby landmark only and must not be used as the AUMARA location.
+
 ## Direct stay facts
 AUMARA is booked on aumara.me. The checkout runs on Beds24 as AUMARA's own booking engine. It is not a Booking.com listing and not an OTA storefront.
 
