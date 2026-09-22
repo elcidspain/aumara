@@ -54,7 +54,7 @@ const tools = [
   },
 ];
 
-const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
+const guestGuide = `AUMARA is a separate accommodation product in Benidoleig, Alicante, Spain. Public inventory: 4 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
 
 const bookingOptions = {
   property: "AUMARA",
