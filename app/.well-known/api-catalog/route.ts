@@ -8,7 +8,8 @@ const catalog = {
       anchor: "https://www.aumara.me/api/guest-info",
       "service-doc": [
         { href: "https://www.aumara.me/openapi.json", type: "application/json" },
-        { href: "https://www.aumara.me/llms.txt", type: "text/plain" }
+        { href: "https://www.aumara.me/llms.txt", type: "text/plain" },
+        { href: "https://www.aumara.me/geo.json", type: "application/json" }
       ],
       "service-meta": [
         { href: "https://www.aumara.me/.well-known/agent-skills/index.json", type: "application/json" },
