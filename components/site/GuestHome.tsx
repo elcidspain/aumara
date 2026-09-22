@@ -589,7 +589,9 @@ export default function GuestHome() {
                 <div className="identity-row">
                   <strong>{t.rowTel}</strong>
                   <span>
-                    <a href="tel:+34966579970">+34 966 57 99 70</a>
+                    Valeria · <a href="tel:+34622537748">+34 622 537 748</a><br />
+                    Elena Semina · <a href="tel:+34649242159">+34 649 242 159</a><br />
+                    Ilya · <a href="tel:+34622914323">+34 622 914 323</a>
                   </span>
                 </div>
               </div>
