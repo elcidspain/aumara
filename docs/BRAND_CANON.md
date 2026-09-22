@@ -64,9 +64,14 @@ Public WhatsApp contacts, in display priority: Elena Semina +34 649 242 159; Ily
 Airbnb: owner asked whether to switch it on. Default = off until explicit yes.
 Do not use Booking.com as the owned conversion destination anymore.
 
-### Site gap
+### Conversion loop verified 2026-09-22
 
-`app/layout.tsx` on aumara.me has schema.org ReserveAction → Beds24, but **no Google tag / gtag / GTM**. dataLayer events exist only on the old COOKBOOK static landing. Tag must be installed on the Vercel project that serves www.aumara.me before Maximize conversions can work.
+- Google Ads tag `AW-11392880991` is live on www.aumara.me.
+- AUMARA → Beds24 outbound click fires the secondary Google Ads conversion `AW-11392880991/ueyGCKmOnoAdEN-ixrgq`.
+- Beds24 property 324882 has `Booking Return URL = https://www.aumara.me/booking-confirmed`.
+- The return route accepts Beds24 booking parameters including `bookid`, `propid`, `status`, `price`, `firstnight`, and `checkout`; status 1 or 2 is treated as confirmed.
+- A confirmed payload fires the primary Purchase conversion `AW-11392880991/Y5EvCLLtp4AdEN-ixrgq` with EUR value and transaction_id.
+- Runtime proof intercepted the outbound Google conversion request before delivery, so no synthetic purchase was recorded in Google Ads.
 
 ## Identity chain (do not collapse)
 
