@@ -1,4 +1,5 @@
 import { prepareAumaraWorldFlight } from "./world-flight.mjs";
+import { prepareAumaraGlbFlight } from "./glb-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
 let installed = false;
@@ -11,6 +12,20 @@ let denseModulePromise = null;
 function prepareDenseRuntime() {
   if (!denseModulePromise) denseModulePromise = import("./dense-flight.mjs").then((m) => m.prepareAumaraDenseFlight());
   return denseModulePromise;
+}
+
+async function preparePreferredLocalRuntime() {
+  try {
+    const glb = await prepareAumaraGlbFlight();
+    return { runtime: glb, kind: "textured-glb" };
+  } catch (error) {
+    const dense = await prepareDenseRuntime();
+    return {
+      runtime: dense,
+      kind: "dense-fallback",
+      fallbackReason: String(error?.message || error).slice(0, 120),
+    };
+  }
 }
 
 
@@ -121,11 +136,13 @@ async function startGuestFlight() {
   async function enterDense() {
     if (token !== generation) return;
     try {
-      const dense = await densePromise;
+      const prepared = await densePromise;
       if (token !== generation) return;
-      if (!dense) throw new Error("dense-runtime-unavailable");
-      denseRuntime = dense;
-      dense.start({
+      if (!prepared?.runtime) throw new Error("local-runtime-unavailable");
+      denseRuntime = prepared.runtime;
+      window.__AUMARA.localRuntimeKind = prepared.kind;
+      if (prepared.fallbackReason) window.__AUMARA.localFallbackReason = prepared.fallbackReason;
+      denseRuntime.start({
         complete: () => {
           if (token !== generation) return;
           running = false;
@@ -147,7 +164,7 @@ async function startGuestFlight() {
     } catch (error) { fail(error); }
   }
   try {
-    densePromise = prepareDenseRuntime();
+    densePromise = preparePreferredLocalRuntime();
     const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
     worldRuntime = global;
@@ -187,7 +204,7 @@ export function installAumaraGuestFlight() {
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "cesium-to-dense-west-east-qa";
+  document.documentElement.dataset.aumaraFlightMode = "cesium-to-textured-site";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
   if (document.getElementById('stage')) {
