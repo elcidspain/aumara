@@ -11,8 +11,11 @@ export const AUMARA_AGENT_CARD_VERSION = "1.2.0-sandbox" as const;
 
 export const AUMARA_PLACE = {
   name: "AUMARA",
-  address: "Rincón del Silencio, Benidoleig, Alicante, Spain",
+  address: "Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain",
+  latitude: 38.79353655,
+  longitude: -0.02037598,
   mapsShare: "https://maps.app.goo.gl/Ppyb5PX7nbvazpUR6",
+  geoResource: "https://www.aumara.me/geo.json",
   website: "https://www.aumara.me/",
 } as const;
 
@@ -59,7 +62,10 @@ export type AumaraStayPayload = {
   place: {
     name: string;
     address: string;
+    latitude: number;
+    longitude: number;
     mapsShare: string;
+    geoResource: string;
     website: string;
   };
   dates: { checkIn: string; checkOut: string; nights: number } | null;
