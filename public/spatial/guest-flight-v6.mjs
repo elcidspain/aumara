@@ -6,26 +6,11 @@ let installed = false;
 let running = false;
 let generation = 0;
 let worldRuntime = null;
-let denseRuntime = null;
-let denseModulePromise = null;
-
-function prepareDenseRuntime() {
-  if (!denseModulePromise) denseModulePromise = import("./dense-flight.mjs").then((m) => m.prepareAumaraDenseFlight());
-  return denseModulePromise;
-}
+let localRuntime = null;
 
 async function preparePreferredLocalRuntime() {
-  try {
-    const glb = await prepareAumaraGlbFlight();
-    return { runtime: glb, kind: "textured-glb" };
-  } catch (error) {
-    const dense = await prepareDenseRuntime();
-    return {
-      runtime: dense,
-      kind: "dense-fallback",
-      fallbackReason: String(error?.message || error).slice(0, 120),
-    };
-  }
+  const glb = await prepareAumaraGlbFlight();
+  return { runtime: glb, kind: "textured-glb" };
 }
 
 
@@ -124,7 +109,7 @@ async function startGuestFlight() {
 
   function fail(error) {
     if (token !== generation) return;
-    worldRuntime?.stop(); denseRuntime?.stop(); running = false;
+    worldRuntime?.stop(); localRuntime?.stop(); running = false;
     window.__AUMARA.fatalRenderError = true;
     window.__AUMARA.renderError = String(error?.message || error).replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
     window.__AUMARA.stage = 'ERROR';
@@ -139,10 +124,10 @@ async function startGuestFlight() {
       const prepared = await densePromise;
       if (token !== generation) return;
       if (!prepared?.runtime) throw new Error("local-runtime-unavailable");
-      denseRuntime = prepared.runtime;
+      localRuntime = prepared.runtime;
       window.__AUMARA.localRuntimeKind = prepared.kind;
       if (prepared.fallbackReason) window.__AUMARA.localFallbackReason = prepared.fallbackReason;
-      denseRuntime.start({
+      localRuntime.start({
         complete: () => {
           if (token !== generation) return;
           running = false;
@@ -185,7 +170,7 @@ function stopGuestFlight(keepVisible = false) {
   const stage = document.getElementById("stage");
   if (stage && !keepVisible) stage.classList.remove("on", "local-world");
   worldRuntime?.stop();
-  denseRuntime?.stop();
+  localRuntime?.stop();
   document.body.style.overflow = "";
   const cesiumHost = document.getElementById("c");
   if (cesiumHost) cesiumHost.style.visibility = "visible";
