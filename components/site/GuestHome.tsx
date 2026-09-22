@@ -587,11 +587,11 @@ export default function GuestHome() {
                   </span>
                 </div>
                 <div className="identity-row">
-                  <strong>{t.rowTel}</strong>
+                  <strong>WhatsApp</strong>
                   <span>
-                    Valeria · <a href="tel:+34622537748">+34 622 537 748</a><br />
-                    Elena Semina · <a href="tel:+34649242159">+34 649 242 159</a><br />
-                    Ilya · <a href="tel:+34622914323">+34 622 914 323</a>
+                    <a href="https://wa.me/34649242159" target="_blank" rel="noopener noreferrer">Elena Semina · +34 649 242 159</a><br />
+                    <a href="https://wa.me/34622914323" target="_blank" rel="noopener noreferrer">Ilya · +34 622 914 323</a><br />
+                    <a href="https://wa.me/34622537748" target="_blank" rel="noopener noreferrer">Lera · +34 622 537 748</a>
                   </span>
                 </div>
               </div>
