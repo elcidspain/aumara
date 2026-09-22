@@ -1,0 +1,68 @@
+{
+  "schema": "aumara.public-geo.v1",
+  "crs": "EPSG:4326",
+  "property": {
+    "name": "AUMARA",
+    "address": "Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain",
+    "latitude": 38.79353655,
+    "longitude": -0.02037598,
+    "cadastralReference": "8982501YH5988S",
+    "maps": "https://maps.app.goo.gl/Ppyb5PX7nbvazpUR6"
+  },
+  "verificationAnchor": {
+    "latitude": 38.7936312,
+    "longitude": -0.0194621,
+    "note": "Inside the official AUMARA parcel; wooded eastern glamping/action zone. Not a house centre."
+  },
+  "houses": [
+    {
+      "id": "AUMARA-A",
+      "type": "Chalet",
+      "diameterMetres": 7,
+      "latitude": 38.7935338083,
+      "longitude": -0.0199702712
+    },
+    {
+      "id": "AUMARA-B",
+      "type": "Superior Chalet",
+      "diameterMetres": 9,
+      "latitude": 38.7935658666,
+      "longitude": -0.0197736797
+    },
+    {
+      "id": "AUMARA-C",
+      "type": "Chalet",
+      "diameterMetres": 7,
+      "latitude": 38.7936436045,
+      "longitude": -0.0196398854
+    },
+    {
+      "id": "AUMARA-D",
+      "type": "Superior Chalet",
+      "diameterMetres": 9,
+      "latitude": 38.7935225178,
+      "longitude": -0.019602944
+    },
+    {
+      "id": "AUMARA-E",
+      "type": "Chalet",
+      "diameterMetres": 7,
+      "latitude": 38.7936001295,
+      "longitude": -0.0194906232
+    },
+    {
+      "id": "AUMARA-F",
+      "type": "Chalet",
+      "diameterMetres": 7,
+      "latitude": 38.7935186435,
+      "longitude": -0.0194082168
+    }
+  ],
+  "nearbyReference": {
+    "name": "Cova de les Calaveres",
+    "latitude": 38.7931506,
+    "longitude": -0.0173104,
+    "relation": "Nearby landmark only. Do not identify AUMARA as being at the cave."
+  },
+  "source": "AUMARA_WORLD_GEOREFERENCE_v1.json; official cadastral parcel 8982501YH5988S; Google Maps verification 2026-09-22"
+}
