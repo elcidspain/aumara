@@ -13,6 +13,12 @@ export const GOOGLE_ADS_BOOKING_CLICK_SEND_TO = (
   process.env.NEXT_PUBLIC_GOOGLE_ADS_BOOKING_CLICK_SEND_TO ?? ""
 ).trim();
 
+/** Confirmed Beds24 reservation conversion. Verified in Google Ads on 2026-09-22. */
+export const GOOGLE_ADS_CONFIRMED_BOOKING_SEND_TO = (
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_CONFIRMED_BOOKING_SEND_TO ??
+  "AW-11392880991/Y5EvCLLtp4AdEN-ixrgq"
+).trim();
+
 export function isGaMeasurementId(id: string): boolean {
   return /^G-[A-Z0-9]{6,12}$/.test(id);
 }
