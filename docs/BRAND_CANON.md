@@ -59,7 +59,7 @@ Primary: website visit on www.aumara.me + direct book on Beds24 property **32488
 - Conversion 1 (primary, Purchase/Book): destination contains `beds24.com/booking2.php`
 - Conversion 2 (secondary, observe): click out to Beds24 `propid=324882`
 
-Not primary: phone +34 966 57 99 70. Keep the call asset. Do not bid to calls.
+Public contacts: Valeria +34 622 537 748; Elena Semina +34 649 242 159; Ilya +34 622 914 323. Calls are not a primary conversion goal; do not bid to calls.
 
 Airbnb: owner asked whether to switch it on. Default = off until explicit yes.
 Do not use Booking.com as the owned conversion destination anymore.
