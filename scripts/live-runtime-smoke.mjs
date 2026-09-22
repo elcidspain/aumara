@@ -130,16 +130,17 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa','cesium-to-textured-site'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
     "supported flight mode",
   );
   await waitFor(() => evaluate("['local-ready','guest-ready'].includes(document.documentElement.dataset.aumaraFlightRuntime)"), 10000, "flight runtime");
   const denseQaMode = mode === "cesium-to-dense-west-east-qa";
   const guestMode = mode === "cinematic-to-dense-local";
+  const texturedMode = mode === "cesium-to-textured-site";
 
   let aerial = null;
-  if (denseQaMode) {
+  if (denseQaMode || texturedMode) {
     aerial = await waitFor(
       () => evaluate("window.__AUMARA?.provider === 'CESIUM_SOURCE_MAP' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,mapViewKind:window.__AUMARA.mapViewKind,photorealisticMapStatus:window.__AUMARA.photorealisticMapStatus}) : null"),
       20000,
@@ -153,11 +154,13 @@ try {
   }
 
   const frame = await waitFor(
-    () => evaluate((guestMode || denseQaMode)
-      ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount,westPointCount:window.__AUMARA.westPointCount,eastPointCount:window.__AUMARA.eastPointCount,eastTrailingBytes:window.__AUMARA.eastTrailingBytes,fullSiteSourceSurface:window.__AUMARA.fullSiteSourceSurface}) : null"
-      : "window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null"),
+    () => evaluate(texturedMode
+      ? "window.__AUMARA?.provider === 'AUMARA_TEXTURED_MODEL' && window.__AUMARA?.firstFrameRendered && window.__AUMARA?.houseCount === 6 && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,waypointReached:window.__AUMARA.waypointReached,houseCount:window.__AUMARA.houseCount,localRenderer:window.__AUMARA.localRenderer}) : null"
+      : ((guestMode || denseQaMode)
+        ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount,westPointCount:window.__AUMARA.westPointCount,eastPointCount:window.__AUMARA.eastPointCount,eastTrailingBytes:window.__AUMARA.eastTrailingBytes,fullSiteSourceSurface:window.__AUMARA.fullSiteSourceSurface}) : null"
+        : "window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null")),
     60000,
-    (guestMode || denseQaMode) ? "dense local guest frame" : "first spatial WebGL frame",
+    texturedMode ? "textured six-house guest frame" : ((guestMode || denseQaMode) ? "dense local guest frame" : "first spatial WebGL frame"),
   );
 
   if (denseQaMode) {
@@ -176,7 +179,17 @@ try {
   }
 
   let autonomous;
-  if (frame.provider === "AUMARA_RGB_POINTCLOUD") {
+  if (frame.provider === "AUMARA_TEXTURED_MODEL") {
+    if (frame.houseCount !== 6 || frame.localRenderer !== "THREE_GLTF") {
+      throw new Error(`textured AUMARA model incomplete: ${JSON.stringify(frame)}`);
+    }
+    autonomous = await waitFor(
+      () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, houseCount:window.__AUMARA.houseCount,localRenderer:window.__AUMARA.localRenderer}) : null"),
+      10000,
+      "autonomous textured local waypoint progression",
+    );
+    console.log("SPATIAL_TEXTURED_GUEST_PASS", JSON.stringify(autonomous));
+  } else if (frame.provider === "AUMARA_RGB_POINTCLOUD") {
     autonomous = await waitFor(
       () => evaluate("window.__AUMARA?.waypointReached >= 1 ? ({provider:window.__AUMARA.provider, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount}) : null"),
       10000,
