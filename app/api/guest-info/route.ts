@@ -8,8 +8,8 @@ export function GET() {
     location: "Benidoleig, Marina Alta, Alicante, Spain",
     inventory: {
       physicalHouses: 6,
-      shortStayHouses: 5,
-      chalet: { name: "Chalet", count: 3, maxGuests: 4 },
+      shortStayHouses: 6,
+      chalet: { name: "Chalet", count: 4, maxGuests: 4 },
       superiorChalet: { name: "Superior Chalet", count: 2, maxGuests: 6 }
     },
     booking: {
