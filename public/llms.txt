@@ -47,7 +47,7 @@ Superior Chalet: целый дом до 6 человек, отдельная с�
 - 6 houses are in the current short-stay rental inventory.
 - 4 × Chalet, up to 4 guests per house.
 - 2 × Superior Chalet, up to 6 guests per house.
-- One physical house is not offered in the current short-stay rental inventory.
+- All 6 physical houses are currently offered in the short-stay rental inventory.
 - Live availability, rates, minimum stays and reservation-specific cancellation/payment conditions are authoritative in the AUMARA booking flow for the dates selected.
 
 ## Public guest resources
