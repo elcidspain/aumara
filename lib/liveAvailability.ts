@@ -3,7 +3,7 @@ const BEDS24_AVAILABILITY_URL = "https://api.beds24.com/json/getAvailabilities";
 const PROPERTY_ID = "324882";
 const AGENT_REFERRER = "AUMARA_AI_AGENT";
 const ROOM_TYPES = {
-  "674465": { name: "Chalet", totalUnits: 3, maxGuests: 4 },
+  "674465": { name: "Chalet", totalUnits: 4, maxGuests: 4 },
   "674466": { name: "Superior Chalet", totalUnits: 2, maxGuests: 6 },
 } as const;
 
