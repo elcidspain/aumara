@@ -127,6 +127,15 @@ async function buildRuntime() {
   function start(options = {}) {
     stop(); onComplete = options.complete; onError = options.error;
     active = true; firstLocalFrame = false; window.__AUMARA_LOCAL_FRAME_VISIBLE = false; startedAt = performance.now(); renderer.domElement.style.display = 'block';
+    if (window.__AUMARA) {
+      window.__AUMARA.advanceTo = (seconds) => {
+        if (!active) return false;
+        const s = Math.max(0, Number(seconds) || 0);
+        startedAt = performance.now() - (s * 1000);
+        render(performance.now());
+        return true;
+      };
+    }
     raf = requestAnimationFrame(render); return true;
   }
   function stop() {
