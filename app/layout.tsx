@@ -82,7 +82,7 @@ const jsonLd = {
     `${SITE_URL}/media/stills/superior-living.jpg`,
   ],
   email: "elcidspain@gmail.com",
-  telephone: "+34966579970",
+  telephone: "+34622914323",
   address,
   geo: {
     "@type": "GeoCoordinates",
