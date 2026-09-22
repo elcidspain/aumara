@@ -5,7 +5,14 @@ export const dynamic = "force-static";
 export function GET() {
   return NextResponse.json({
     brand: "AUMARA",
-    location: "Benidoleig, Marina Alta, Alicante, Spain",
+    location: {
+      label: "Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain",
+      latitude: 38.79353655,
+      longitude: -0.02037598,
+      maps: "https://maps.app.goo.gl/Ppyb5PX7nbvazpUR6",
+      geoResource: "https://www.aumara.me/geo.json",
+      note: "These coordinates identify AUMARA. Cova de les Calaveres is a nearby landmark, not the AUMARA location."
+    },
     inventory: {
       physicalHouses: 6,
       shortStayHouses: 6,
