@@ -13,6 +13,12 @@ function prepareDenseRuntime() {
   return denseModulePromise;
 }
 
+function isMobileSafeMode() {
+  const ua = navigator.userAgent || "";
+  const coarse = globalThis.matchMedia?.("(pointer: coarse)")?.matches;
+  const narrow = Math.min(innerWidth || 9999, innerHeight || 9999) < 900;
+  return !!(coarse || narrow || /iPhone|iPad|iPod|Android/i.test(ua));
+}
 
 function ensureStyles() {
   if (document.getElementById("aumara-guest-flight-css")) return;
@@ -85,6 +91,7 @@ async function startGuestFlight() {
   if (running) return true;
   running = true;
   const token = ++generation;
+  const mobileSafeMode = isMobileSafeMode();
   const stage = document.getElementById("stage");
   if (!stage) { running = false; return false; }
   ensureStyles();
@@ -92,7 +99,7 @@ async function startGuestFlight() {
   root.style.display = "block";
   root.style.removeProperty("opacity");
   root.classList.remove("off", "world-live");
-  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, events:[] };
+  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, mobileSafeMode, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
   document.getElementById('flight-cover')?.classList.remove('off');
   const loadingText = document.querySelector('#flight-cover span');
@@ -120,6 +127,28 @@ async function startGuestFlight() {
     if (loadingText) loadingText.textContent = 'Puedes volver a intentar el recorrido.';
     showEndPanel(stage);
   }
+  function finishAtParcel() {
+    if (token !== generation) return;
+    running = false;
+    root.classList.add("off");
+    document.getElementById("flight-cover")?.classList.add("off");
+    const state = window.__AUMARA || (window.__AUMARA = {});
+    state.provider = "CESIUM_SOURCE_MAP";
+    state.stage = "PARCEL_READY";
+    state.flightComplete = true;
+    state.localSkippedForMobile = true;
+    state.localTwinVisible = false;
+    state.localTwinLoaded = false;
+    state.fatalRenderError = false;
+    state.renderError = null;
+    showEndPanel(stage);
+    const source = document.getElementById("agf-source");
+    if (source) source.textContent = "Vista aérea AUMARA · Costa Blanca";
+    setTimeout(() => {
+      if (token === generation && root.classList.contains("off")) root.style.display = "none";
+    }, 900);
+  }
+
   async function enterDense() {
     if (token !== generation) return;
     try {
@@ -149,11 +178,11 @@ async function startGuestFlight() {
     } catch (error) { fail(error); }
   }
   try {
-    densePromise = prepareDenseRuntime();
+    densePromise = mobileSafeMode ? null : prepareDenseRuntime();
     const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
     worldRuntime = global;
-    global.start({ complete: () => { void enterDense(); }, error: fail, stage: (label, progress) => {
+    global.start({ complete: () => { if (mobileSafeMode) finishAtParcel(); else void enterDense(); }, error: fail, stage: (label, progress) => {
       if (token !== generation) return;
       window.__AUMARA.stage = label;
       root.classList.add("world-live");
@@ -190,7 +219,7 @@ export function installAumaraGuestFlight() {
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "cesium-to-dense-west-east-qa";
+  document.documentElement.dataset.aumaraFlightMode = "cesium-parcel-mobile-dense-desktop";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
   if (document.getElementById('stage')) {
