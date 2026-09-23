@@ -9,3 +9,5 @@ Guest website for [aumara.me](https://www.aumara.me/) — private houses in Beni
 - Twin / mill (`/twin`, `twin/terrain_real.json`, `AUMARA_TWIN_LOCK.json`) is historical and unlisted. Do not put Gaussian splat, depth maps, or mill diagnostics on guest pages.
 
 Guest copy must not advertise physical-vs-bookable inventory counts (`npm run assert-copy`).
+
+Operator dark-web / breach checks use `SERUS_API_KEY` (never on guest pages). See `docs/SERUS.md` and `npm run serus -- hello`.
