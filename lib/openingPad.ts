@@ -1,4 +1,4 @@
-/** Dusk pad under the opening film. Original, not a licensed track. */
+/** Original AUMARA ambient score for the opening film. */
 
 export type PadHandle = {
   start: () => Promise<void>;
@@ -6,19 +6,18 @@ export type PadHandle = {
   playing: () => boolean;
 };
 
-type Partial = [number, OscillatorType, number];
 type SoundState = "idle" | "starting" | "running" | "stopping" | "stopped" | "error";
 type SoundTelemetry = { state: SoundState; contextState: AudioContextState | null; error: string | null };
 
-const PARTIALS: Partial[] = [
-  [73.42, "sine", 0.12],
-  [110, "sine", 0.09],
-  [146.83, "triangle", 0.055],
-  [174.61, "sine", 0.045],
-  [220, "sine", 0.035],
-  [293.66, "triangle", 0.025],
-  [349.23, "triangle", 0.02],
-];
+const CHORDS = [
+  [38, 45, 50, 53, 57, 64], // Dm9
+  [34, 41, 46, 50, 53, 57], // Bbmaj7
+  [41, 48, 53, 57, 60, 67], // Fadd9
+  [36, 43, 48, 52, 57, 62], // C6/9
+] as const;
+const MELODY = [74, 77, 81, 76, 72, 77, 69, 74] as const;
+const BAR_SECONDS = 7.6;
+const midiToHz = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
 function telemetry(state: SoundState, ctx: AudioContext | null, error: string | null = null) {
   const target = window as unknown as { __AUMARA_SOUND?: SoundTelemetry };
@@ -29,8 +28,62 @@ export function createOpeningPad(): PadHandle {
   let ctx: AudioContext | null = null;
   let master: GainNode | null = null;
   let playing = false;
+  let timer: number | null = null;
+  let chordIndex = 0;
   const nodes: AudioScheduledSourceNode[] = [];
   telemetry("idle", null);
+
+  function removeNode(node: AudioScheduledSourceNode) {
+    const index = nodes.indexOf(node);
+    if (index >= 0) nodes.splice(index, 1);
+  }
+
+  function voice(
+    midi: number,
+    when: number,
+    length: number,
+    amount: number,
+    type: OscillatorType,
+    detune = 0,
+  ) {
+    if (!ctx || !master) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(midiToHz(midi), when);
+    osc.detune.value = detune;
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(amount, when + Math.min(1.6, length * 0.28));
+    gain.gain.setValueAtTime(amount, Math.max(when + 0.2, when + length - 1.4));
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + length);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.onended = () => removeNode(osc);
+    nodes.push(osc);
+    osc.start(when);
+    osc.stop(when + length + 0.05);
+  }
+
+  function scheduleBar() {
+    if (!ctx || !master || !playing) return;
+    const startAt = ctx.currentTime + 0.08;
+    const chord = CHORDS[chordIndex % CHORDS.length];
+    chord.forEach((note, index) => {
+      voice(
+        note,
+        startAt + index * 0.035,
+        BAR_SECONDS + 1.2,
+        index < 2 ? 0.027 : 0.015,
+        index % 3 === 0 ? "triangle" : "sine",
+        (index - 2.5) * 1.2,
+      );
+    });
+    for (let beat = 0; beat < 4; beat += 1) {
+      const note = MELODY[(chordIndex * 2 + beat) % MELODY.length];
+      voice(note, startAt + 1.05 + beat * 1.55, 2.1, 0.0105, "sine", beat % 2 ? 2.5 : -2.5);
+    }
+    chordIndex = (chordIndex + 1) % CHORDS.length;
+  }
 
   async function start() {
     if (playing && ctx?.state === "running") return;
@@ -47,55 +100,32 @@ export function createOpeningPad(): PadHandle {
 
       master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, ctx.currentTime);
-      const lp = ctx.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.value = 1150;
-      lp.Q.value = 0.4;
-      master.connect(lp);
-      lp.connect(ctx.destination);
 
-      for (const [freq, type, amp] of PARTIALS) {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const lfo = ctx.createOscillator();
-        const lfoGain = ctx.createGain();
-        osc.type = type;
-        osc.frequency.value = freq;
-        osc.detune.value = (Math.random() - 0.5) * 3;
-        gain.gain.value = amp;
-        lfo.type = "sine";
-        lfo.frequency.value = 0.06 + Math.random() * 0.05;
-        lfoGain.gain.value = amp * 0.16;
-        lfo.connect(lfoGain);
-        lfoGain.connect(gain.gain);
-        osc.connect(gain);
-        gain.connect(master);
-        osc.start();
-        lfo.start();
-        nodes.push(osc, lfo);
-      }
+      const warm = ctx.createBiquadFilter();
+      warm.type = "lowpass";
+      warm.frequency.value = 1500;
+      warm.Q.value = 0.28;
 
-      const seconds = 3;
-      const noiseBuffer = ctx.createBuffer(1, seconds * ctx.sampleRate, ctx.sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.22;
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      noise.loop = true;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0.024;
-      const band = ctx.createBiquadFilter();
-      band.type = "bandpass";
-      band.frequency.value = 720;
-      band.Q.value = 0.5;
-      noise.connect(band);
-      band.connect(noiseGain);
-      noiseGain.connect(master);
-      noise.start();
-      nodes.push(noise);
+      const delay = ctx.createDelay(1.2);
+      delay.delayTime.value = 0.37;
+      const feedback = ctx.createGain();
+      feedback.gain.value = 0.14;
+      const wet = ctx.createGain();
+      wet.gain.value = 0.12;
 
-      master.gain.linearRampToValueAtTime(0.42, ctx.currentTime + 0.65);
+      master.connect(warm);
+      warm.connect(ctx.destination);
+      warm.connect(delay);
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(wet);
+      wet.connect(ctx.destination);
+
       playing = true;
+      chordIndex = 0;
+      scheduleBar();
+      timer = window.setInterval(scheduleBar, BAR_SECONDS * 1000);
+      master.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 1.15);
       telemetry("running", ctx);
     } catch (error) {
       playing = false;
@@ -109,6 +139,10 @@ export function createOpeningPad(): PadHandle {
   }
 
   function stop() {
+    if (timer !== null) {
+      window.clearInterval(timer);
+      timer = null;
+    }
     if (!ctx || !master) {
       playing = false;
       telemetry("stopped", ctx);
@@ -122,7 +156,7 @@ export function createOpeningPad(): PadHandle {
     try {
       currentMaster.gain.cancelScheduledValues(now);
       currentMaster.gain.setValueAtTime(Math.max(0.0001, currentMaster.gain.value), now);
-      currentMaster.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      currentMaster.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
     } catch {}
 
     window.setTimeout(() => {
@@ -131,7 +165,7 @@ export function createOpeningPad(): PadHandle {
       }
       current.close().catch(() => undefined);
       telemetry("stopped", null);
-    }, 420);
+    }, 720);
     ctx = null;
     master = null;
   }
