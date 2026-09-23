@@ -234,7 +234,7 @@ async function build() {
     const destination = C.Cartesian3.fromDegrees(mix(a[1],b[1]), mix(a[2],b[2]), height);
     viewer.camera.setView({
       destination,
-      orientation: targetLockedOrientation(destination),
+      orientation: { heading: 0, pitch: -Math.PI / 2, roll: 0 },
     });
     viewer.scene.requestRender();
     if (window.__AUMARA) {
@@ -267,8 +267,8 @@ async function build() {
   await new Promise((resolve, reject) => {
     let renderedFrames = 0;
     const timer = setTimeout(() => { off(); reject(new Error('global-imagery-timeout')); }, 15000);
-    const warmDestination = C.Cartesian3.fromDegrees(origin.longitude, origin.latitude, 18000000);
-    viewer.camera.setView({ destination:warmDestination, orientation:targetLockedOrientation(warmDestination) });
+    const warmDestination = C.Cartesian3.fromDegrees(parcelCenter.longitude, parcelCenter.latitude, 18000000);
+    viewer.camera.setView({ destination:warmDestination, orientation:{ heading:0, pitch:-Math.PI / 2, roll:0 } });
     const off = viewer.scene.postRender.addEventListener(() => {
       const canvasReady = viewer.scene.canvas.width > 0 && viewer.scene.canvas.height > 0;
       const imageryReady = viewer.imageryLayers.length > 0;

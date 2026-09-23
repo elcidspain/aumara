@@ -40,6 +40,8 @@ function ensureStyles() {
 #aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:transparent;pointer-events:none;color:#f3ecde;opacity:1;transition:opacity .8s ease}
 #aumara-guest-flight::before{content:"";position:absolute;inset:-2%;background:#07110c url("./world/blue-marble-2048.jpg") center/cover no-repeat;filter:saturate(.88) contrast(1.02) brightness(.72);transform:scale(1.03);opacity:1;transition:opacity .75s ease}
 #aumara-guest-flight.world-live::before{opacity:0}
+#aumara-guest-flight.arrived::before{opacity:1;background-image:linear-gradient(180deg,rgba(3,10,7,.02),rgba(3,10,7,.12) 52%,rgba(3,10,7,.60)),url('/media/hero/three-houses-01.webp');background-position:center 54%;filter:saturate(.96) contrast(1.03) brightness(.94);transform:scale(1.01)}
+#aumara-guest-flight.arrived .agf-shade{background:linear-gradient(180deg,rgba(3,10,7,.02),rgba(3,10,7,.04) 50%,rgba(3,10,7,.58))}
 #aumara-guest-flight.off{opacity:0;pointer-events:none}
 .agf-frame{position:absolute;inset:-3%;opacity:0;background-position:center;background-size:cover;filter:saturate(.92) contrast(1.04);will-change:transform,opacity}
 .agf-frame.on{opacity:1;animation:agfZoom 3.6s cubic-bezier(.2,.55,.25,1) both}
@@ -130,7 +132,12 @@ async function startGuestFlight() {
   function finishAtParcel() {
     if (token !== generation) return;
     running = false;
-    root.classList.add("off");
+    root.classList.remove("off", "world-live");
+    root.classList.add("arrived");
+    root.style.display = "block";
+    root.querySelector('#agf-label').textContent = "AUMARA";
+    root.querySelector('#agf-sub').textContent = "Casas geodésicas · Benidoleig";
+    root.querySelector('#agf-progress-bar').style.width = "100%";
     document.getElementById("flight-cover")?.classList.add("off");
     const state = window.__AUMARA || (window.__AUMARA = {});
     state.provider = "CESIUM_SOURCE_MAP";
@@ -143,10 +150,8 @@ async function startGuestFlight() {
     state.renderError = null;
     showEndPanel(stage);
     const source = document.getElementById("agf-source");
-    if (source) source.textContent = "Vista aérea AUMARA · Costa Blanca";
-    setTimeout(() => {
-      if (token === generation && root.classList.contains("off")) root.style.display = "none";
-    }, 900);
+    if (source) source.textContent = "AUMARA · Benidoleig · Costa Blanca";
+    state.mobileFinalVisual = "VERIFIED_PROPERTY_PHOTO";
   }
 
   async function enterDense() {
