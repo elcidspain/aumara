@@ -101,7 +101,46 @@ async function buildRuntime() {
   const pointGeo = new THREE.BufferGeometry();
   pointGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   pointGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  const points = new THREE.Points(pointGeo, new THREE.PointsMaterial({ size: mobile ? .095 : .07, vertexColors:true, transparent:true, opacity:.97, sizeAttenuation:true }));
+  const pointMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uPointScale: { value: mobile ? 2.25 : 1.95 },
+      uFogColor: { value: new THREE.Color(0x07110c) },
+    },
+    vertexColors: true,
+    transparent: true,
+    depthTest: true,
+    depthWrite: true,
+    vertexShader: `
+      varying vec3 vColor;
+      varying float vDepth;
+      uniform float uPointScale;
+      void main() {
+        vColor = color;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vDepth = max(0.0, -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+        float perspectiveScale = clamp(7.5 / max(1.0, vDepth), 0.72, 3.0);
+        gl_PointSize = clamp(uPointScale * perspectiveScale, 1.35, 6.25);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vDepth;
+      uniform vec3 uFogColor;
+      void main() {
+        vec2 p = gl_PointCoord - vec2(0.5);
+        float radius = length(p);
+        if (radius > 0.5) discard;
+        float edge = 1.0 - smoothstep(0.32, 0.50, radius);
+        float fog = smoothstep(58.0, 145.0, vDepth);
+        vec3 color = mix(vColor, uFogColor, fog);
+        float alpha = 0.97 * edge * mix(1.0, 0.42, fog);
+        if (alpha < 0.025) discard;
+        gl_FragColor = vec4(color, alpha);
+      }
+    `,
+  });
+  const points = new THREE.Points(pointGeo, pointMaterial);
   scene.add(points);
   for (const h of geo.houses) addHouseFootprint(scene, h);
   const route = flight.waypoints.map(routePoint);
@@ -111,7 +150,7 @@ async function buildRuntime() {
     renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
   };
   resize(); addEventListener("resize", resize);
-  let active = false, raf = 0, startedAt = 0, firstFrame = false, onFinish = null, failure = null;
+  let active = false, raf = 0, startedAt = 0, firstFrame = false, onFinish = null, failure = null, cesiumHideTimer = 0;
   const duration = 36000;
   const approachDuration = 5200;
   const overviewFrom = new THREE.Vector3(24, 22, 28);
@@ -132,9 +171,13 @@ async function buildRuntime() {
     try { renderer.render(scene, camera); } catch (error) { active = false; failure?.(error); return; }
     if (!firstFrame) {
       firstFrame = true; window.__AUMARA_LOCAL_FRAME_VISIBLE = true;
+      // Crossfade over the still-valid map frame. Never expose a blank/grey handoff.
       canvas.style.opacity = "1";
       const cesium = document.querySelector("#c canvas:not([data-aumara-glb-flight])");
-      if (cesium) cesium.style.visibility = "hidden";
+      clearTimeout(cesiumHideTimer);
+      if (cesium) cesiumHideTimer = setTimeout(() => {
+        if (active && firstFrame) cesium.style.visibility = "hidden";
+      }, 650);
     }
     const state = window.__AUMARA || (window.__AUMARA = {});
     state.provider = "AUMARA_RGB_POINTCLOUD"; state.stage = "LOCAL_GUEST_FLIGHT";
@@ -158,7 +201,7 @@ async function buildRuntime() {
     raf = requestAnimationFrame(render); return true;
   }
   function stop() {
-    active = false; cancelAnimationFrame(raf); onFinish = null; failure = null; canvas.style.display = "none"; canvas.style.opacity = "0"; host.classList.remove("local-world");
+    active = false; cancelAnimationFrame(raf); clearTimeout(cesiumHideTimer); onFinish = null; failure = null; canvas.style.display = "none"; canvas.style.opacity = "0"; host.classList.remove("local-world");
     const cesium = document.querySelector("#c canvas:not([data-aumara-glb-flight])");
     if (cesium) cesium.style.visibility = "visible";
   }

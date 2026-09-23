@@ -31,7 +31,9 @@ function ensureStyles() {
   style.textContent = `
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Playfair+Display:wght@500;600&display=swap");
 #stage #close{z-index:7!important;display:inline-flex!important}
-#aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:transparent;pointer-events:none;color:#f3ecde;opacity:1;transition:opacity .8s ease}
+#aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:#07110c;pointer-events:none;color:#f3ecde;opacity:1;transition:opacity .8s ease}
+#aumara-guest-flight::before{content:"";position:absolute;inset:-2%;background:#07110c url("./world/blue-marble-2048.jpg") center/cover no-repeat;filter:saturate(.88) contrast(1.02) brightness(.72);transform:scale(1.03);opacity:1;transition:opacity .75s ease}
+#aumara-guest-flight.world-live::before{opacity:0}
 #aumara-guest-flight.off{opacity:0;pointer-events:none}
 .agf-frame{position:absolute;inset:-3%;opacity:0;background-position:center;background-size:cover;filter:saturate(.92) contrast(1.04);will-change:transform,opacity}
 .agf-frame.on{opacity:1;animation:agfZoom 3.6s cubic-bezier(.2,.55,.25,1) both}
@@ -89,7 +91,7 @@ async function startGuestFlight() {
   const root = ensureUi(stage);
   root.style.display = "block";
   root.style.removeProperty("opacity");
-  root.classList.remove("off");
+  root.classList.remove("off", "world-live");
   window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
   document.getElementById('flight-cover')?.classList.remove('off');
@@ -154,6 +156,7 @@ async function startGuestFlight() {
     global.start({ complete: () => { void enterDense(); }, error: fail, stage: (label, progress) => {
       if (token !== generation) return;
       window.__AUMARA.stage = label;
+      root.classList.add("world-live");
       root.querySelector('#agf-label').textContent = label;
       root.querySelector('#agf-sub').textContent = label === 'AUMARA' ? 'Casas entre pinos y vistas al valle' : 'Destino AUMARA · Costa Blanca';
       root.querySelector('#agf-progress-bar').style.width = `${progress * 100}%`;

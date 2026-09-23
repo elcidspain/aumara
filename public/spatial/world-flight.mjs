@@ -12,19 +12,27 @@ export function prepareAumaraWorldFlight() {
 
 async function build() {
   // The bundled globe starts independently of optional provider credentials.
-  const base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
+  let base = 'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/';
   if (!window.Cesium) {
-    window.CESIUM_BASE_URL = base;
+    const engineBases = [
+      'https://unpkg.com/cesium@1.134.0/Build/Cesium/',
+      'https://cesium.com/downloads/cesiumjs/releases/1.134/Build/Cesium/',
+      'https://cdn.jsdelivr.net/npm/cesium@1.134.0/Build/Cesium/',
+    ];
     let lastEngineError = null;
-    for (let attempt = 0; attempt < 2 && !window.Cesium; attempt += 1) {
+    for (const candidateBase of engineBases) {
+      if (window.Cesium) break;
+      window.CESIUM_BASE_URL = candidateBase;
       try {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
           const timer = setTimeout(() => {
+            script.onerror = script.onload = null;
             script.remove();
             reject(new Error('global-engine-timeout'));
-          }, 25000);
-          script.src = base + 'Cesium.js' + (attempt ? '?retry=1' : '');
+          }, 7000);
+          script.src = candidateBase + 'Cesium.js';
+          script.dataset.aumaraCesiumEngine = candidateBase;
           script.onload = () => { clearTimeout(timer); resolve(); };
           script.onerror = () => {
             clearTimeout(timer);
@@ -33,11 +41,13 @@ async function build() {
           };
           document.head.appendChild(script);
         });
+        if (window.Cesium) base = candidateBase;
       } catch (error) {
         lastEngineError = error;
       }
     }
     if (!window.Cesium) throw lastEngineError || new Error('global-engine-unavailable');
+    window.CESIUM_BASE_URL = base;
     if (!document.querySelector('link[data-aumara-cesium-css]')) {
       const css = document.createElement('link');
       css.dataset.aumaraCesiumCss = '1';
@@ -114,16 +124,32 @@ async function build() {
   const globalError = viewer.scene.renderError.addEventListener((scene, error) => {
     if (active) { stop(); failure?.(error); }
   });
-  // Retain the verified approach; keep the source map visible at the parcel.
-  const endLon = origin.longitude + 60 / (111320 * Math.cos(origin.latitude * Math.PI / 180));
-  const endLat = origin.latitude - 100 / 110540;
+  // Keep AUMARA as the visual anchor for the entire descent.
+  // The camera descends over the verified site coordinates instead of panning
+  // across Spain and only reacquiring the parcel at the end.
+  const endLon = origin.longitude + 45 / (111320 * Math.cos(origin.latitude * Math.PI / 180));
+  const endLat = origin.latitude - 70 / 110540;
   const keys = [
-    [0, -12, 29, 18000000, -90, 'Tierra'],
-    [6, -3, 40, 1100000, -90, 'España'],
-    [11, -.25, 38.8, 65000, -80, 'Costa Blanca'],
-    [16, origin.longitude, origin.latitude, 4500, -65, 'Benidoleig'],
-    [22, endLon, endLat, elevation + 280, -69.4, 'AUMARA'],
+    [0, origin.longitude, origin.latitude, 18000000, 'Tierra'],
+    [6, origin.longitude, origin.latitude, 1100000, 'España'],
+    [11, origin.longitude, origin.latitude, 65000, 'Costa Blanca'],
+    [16, origin.longitude, origin.latitude, 4500, 'Benidoleig'],
+    [22, endLon, endLat, elevation + 280, 'AUMARA'],
   ];
+  const targetCartesian = C.Cartesian3.fromDegrees(origin.longitude, origin.latitude, elevation + 8);
+  function targetLockedOrientation(destination) {
+    const direction = C.Cartesian3.subtract(targetCartesian, destination, new C.Cartesian3());
+    C.Cartesian3.normalize(direction, direction);
+    let seed = C.Ellipsoid.WGS84.geodeticSurfaceNormal(destination, new C.Cartesian3());
+    let right = C.Cartesian3.cross(direction, seed, new C.Cartesian3());
+    if (C.Cartesian3.magnitudeSquared(right) < 1e-10) {
+      right = C.Cartesian3.cross(direction, C.Cartesian3.UNIT_Z, right);
+    }
+    C.Cartesian3.normalize(right, right);
+    const up = C.Cartesian3.cross(right, direction, new C.Cartesian3());
+    C.Cartesian3.normalize(up, up);
+    return { direction, up };
+  }
   function stop() { active = false; cancelAnimationFrame(raf); }
   function frame(now) {
     if (!active) return;
@@ -139,9 +165,10 @@ async function build() {
     const height = Math.max(rawHeight, elevation + 280);
     if (photoTiles) photoTiles.show = height < 65000;
     if (!photoRequested) loadPhotorealisticMap();
+    const destination = C.Cartesian3.fromDegrees(mix(a[1],b[1]), mix(a[2],b[2]), height);
     viewer.camera.setView({
-      destination:C.Cartesian3.fromDegrees(mix(a[1],b[1]), mix(a[2],b[2]), height),
-      orientation:{ heading:0, pitch:C.Math.toRadians(mix(a[4],b[4])), roll:0 },
+      destination,
+      orientation: targetLockedOrientation(destination),
     });
     viewer.scene.requestRender();
     if (window.__AUMARA) {
@@ -157,7 +184,7 @@ async function build() {
       window.__AUMARA.fullSiteSourceSurface = false;
       window.__AUMARA.waypointReached = null;
     }
-    onStage?.(elapsed === 22 ? 'AUMARA' : a[5], elapsed / 22);
+    onStage?.(elapsed === 22 ? 'AUMARA' : a[4], elapsed / 22);
     if (elapsed < 22) raf = requestAnimationFrame(frame);
     else { active = false; onFinish?.(); }
   }
@@ -172,7 +199,8 @@ async function build() {
   await new Promise((resolve, reject) => {
     let renderedFrames = 0;
     const timer = setTimeout(() => { off(); reject(new Error('global-imagery-timeout')); }, 15000);
-    viewer.camera.setView({ destination:C.Cartesian3.fromDegrees(-12,29,18000000), orientation:{ heading:0, pitch:-Math.PI / 2, roll:0 } });
+    const warmDestination = C.Cartesian3.fromDegrees(origin.longitude, origin.latitude, 18000000);
+    viewer.camera.setView({ destination:warmDestination, orientation:targetLockedOrientation(warmDestination) });
     const off = viewer.scene.postRender.addEventListener(() => {
       const canvasReady = viewer.scene.canvas.width > 0 && viewer.scene.canvas.height > 0;
       const imageryReady = viewer.imageryLayers.length > 0;
