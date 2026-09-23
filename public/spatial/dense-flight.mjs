@@ -150,7 +150,7 @@ async function buildRuntime() {
     renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
   };
   resize(); addEventListener("resize", resize);
-  let active = false, raf = 0, startedAt = 0, firstFrame = false, onFinish = null, failure = null;
+  let active = false, raf = 0, startedAt = 0, firstFrame = false, onFinish = null, failure = null, cesiumHideTimer = 0;
   const duration = 36000;
   const approachDuration = 5200;
   const overviewFrom = new THREE.Vector3(24, 22, 28);
@@ -171,9 +171,13 @@ async function buildRuntime() {
     try { renderer.render(scene, camera); } catch (error) { active = false; failure?.(error); return; }
     if (!firstFrame) {
       firstFrame = true; window.__AUMARA_LOCAL_FRAME_VISIBLE = true;
+      // Crossfade over the still-valid map frame. Never expose a blank/grey handoff.
       canvas.style.opacity = "1";
       const cesium = document.querySelector("#c canvas:not([data-aumara-glb-flight])");
-      if (cesium) cesium.style.visibility = "hidden";
+      clearTimeout(cesiumHideTimer);
+      if (cesium) cesiumHideTimer = setTimeout(() => {
+        if (active && firstFrame) cesium.style.visibility = "hidden";
+      }, 650);
     }
     const state = window.__AUMARA || (window.__AUMARA = {});
     state.provider = "AUMARA_RGB_POINTCLOUD"; state.stage = "LOCAL_GUEST_FLIGHT";
@@ -197,7 +201,7 @@ async function buildRuntime() {
     raf = requestAnimationFrame(render); return true;
   }
   function stop() {
-    active = false; cancelAnimationFrame(raf); onFinish = null; failure = null; canvas.style.display = "none"; canvas.style.opacity = "0"; host.classList.remove("local-world");
+    active = false; cancelAnimationFrame(raf); clearTimeout(cesiumHideTimer); onFinish = null; failure = null; canvas.style.display = "none"; canvas.style.opacity = "0"; host.classList.remove("local-world");
     const cesium = document.querySelector("#c canvas:not([data-aumara-glb-flight])");
     if (cesium) cesium.style.visibility = "visible";
   }
