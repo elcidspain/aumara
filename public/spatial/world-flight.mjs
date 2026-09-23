@@ -61,6 +61,15 @@ async function build() {
   const geo = await response.json();
   const origin = geo.localOrigin.wgs84;
   const elevation = geo.verticalPolicy.projectReferenceElevationMslMetres;
+  const parcelRing = (geo.officialParcelBoundary?.geometry?.coordinates?.[0] || []).slice(0, -1);
+  if (parcelRing.length < 3) throw new Error('parcel-boundary-unavailable');
+  const parcelCenter = parcelRing.reduce((acc, coordinate) => {
+    acc.longitude += coordinate[0];
+    acc.latitude += coordinate[1];
+    return acc;
+  }, { longitude: 0, latitude: 0 });
+  parcelCenter.longitude /= parcelRing.length;
+  parcelCenter.latitude /= parcelRing.length;
   const imagery = await C.SingleTileImageryProvider.fromUrl('./world/blue-marble-2048.jpg', { credit: 'Blue Marble' });
   let imagerySource = 'LOCAL_BLUE_MARBLE';
   const detail = C.ArcGisMapServerImageryProvider.fromUrl(
@@ -80,6 +89,60 @@ async function build() {
   viewer.scene.globe.maximumScreenSpaceError = 4;
   viewer.scene.screenSpaceCameraController.enableInputs = false;
   viewer.resolutionScale = Math.min(1, 1.5 / (devicePixelRatio || 1));
+  const mobileView = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+  const parcelFlat = parcelRing.flatMap(([longitude, latitude]) => [longitude, latitude]);
+  const parcelOutline = viewer.entities.add({
+    show: false,
+    polyline: {
+      positions: C.Cartesian3.fromDegreesArray(parcelFlat),
+      width: 4,
+      material: C.Color.fromCssColorString('#d5b276').withAlpha(0.98),
+      clampToGround: true,
+    },
+  });
+  const parcelFill = viewer.entities.add({
+    show: false,
+    polygon: {
+      hierarchy: C.Cartesian3.fromDegreesArray(parcelFlat),
+      material: C.Color.fromCssColorString('#d5b276').withAlpha(0.10),
+      outline: false,
+    },
+  });
+  const houseMarkers = (geo.houses || []).map((house) => viewer.entities.add({
+    show: false,
+    position: C.Cartesian3.fromDegrees(house.wgs84.longitude, house.wgs84.latitude, elevation + 4),
+    point: {
+      pixelSize: 9,
+      color: C.Color.fromCssColorString('#f0ddb0'),
+      outlineColor: C.Color.fromCssColorString('#0a1a14'),
+      outlineWidth: 2,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+    label: {
+      text: house.spatialId,
+      font: '700 14px sans-serif',
+      fillColor: C.Color.fromCssColorString('#f3ecde'),
+      outlineColor: C.Color.fromCssColorString('#0a1a14'),
+      outlineWidth: 4,
+      style: C.LabelStyle.FILL_AND_OUTLINE,
+      pixelOffset: new C.Cartesian2(0, -18),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  }));
+  const siteLabel = viewer.entities.add({
+    show: false,
+    position: C.Cartesian3.fromDegrees(parcelCenter.longitude, parcelCenter.latitude, elevation + 8),
+    label: {
+      text: 'AUMARA',
+      font: '700 18px sans-serif',
+      fillColor: C.Color.fromCssColorString('#f0ddb0'),
+      outlineColor: C.Color.fromCssColorString('#0a1a14'),
+      outlineWidth: 5,
+      style: C.LabelStyle.FILL_AND_OUTLINE,
+      pixelOffset: new C.Cartesian2(0, 28),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
   let active = false, raf = 0, startedAt = 0, onFinish, onStage, failure;
   let photoTiles = null, photoStatus = 'PENDING', siteTilesVisible = false;
   let photoRequested = false, photoGeneration = 0;
@@ -127,16 +190,14 @@ async function build() {
   // Keep AUMARA as the visual anchor for the entire descent.
   // The camera descends over the verified site coordinates instead of panning
   // across Spain and only reacquiring the parcel at the end.
-  const endLon = origin.longitude + 45 / (111320 * Math.cos(origin.latitude * Math.PI / 180));
-  const endLat = origin.latitude - 70 / 110540;
   const keys = [
-    [0, origin.longitude, origin.latitude, 18000000, 'Tierra'],
-    [6, origin.longitude, origin.latitude, 1100000, 'España'],
-    [11, origin.longitude, origin.latitude, 65000, 'Costa Blanca'],
-    [16, origin.longitude, origin.latitude, 4500, 'Benidoleig'],
-    [22, endLon, endLat, elevation + 280, 'AUMARA'],
+    [0, parcelCenter.longitude, parcelCenter.latitude, 18000000, 'Tierra'],
+    [6, parcelCenter.longitude, parcelCenter.latitude, 1100000, 'España'],
+    [11, parcelCenter.longitude, parcelCenter.latitude, 65000, 'Costa Blanca'],
+    [16, parcelCenter.longitude, parcelCenter.latitude, 4500, 'Benidoleig'],
+    [22, parcelCenter.longitude, parcelCenter.latitude, elevation + 420, 'AUMARA'],
   ];
-  const targetCartesian = C.Cartesian3.fromDegrees(origin.longitude, origin.latitude, elevation + 8);
+  const targetCartesian = C.Cartesian3.fromDegrees(parcelCenter.longitude, parcelCenter.latitude, elevation + 8);
   function targetLockedOrientation(destination) {
     const direction = C.Cartesian3.subtract(targetCartesian, destination, new C.Cartesian3());
     C.Cartesian3.normalize(direction, direction);
@@ -162,9 +223,14 @@ async function build() {
     const mix = (x, y) => x + (y - x) * e;
     const rawHeight = Math.exp(mix(Math.log(a[3]), Math.log(b[3])));
     // A raster map is an aerial reference, not a ground-level 3D reconstruction.
-    const height = Math.max(rawHeight, elevation + 280);
-    if (photoTiles) photoTiles.show = height < 65000;
-    if (!photoRequested) loadPhotorealisticMap();
+    const height = Math.max(rawHeight, elevation + 420);
+    if (photoTiles) photoTiles.show = !mobileView && height < 65000;
+    if (!photoRequested && !mobileView) loadPhotorealisticMap();
+    const siteOverlayVisible = height < 2600;
+    parcelOutline.show = siteOverlayVisible;
+    parcelFill.show = siteOverlayVisible;
+    siteLabel.show = siteOverlayVisible;
+    for (const marker of houseMarkers) marker.show = siteOverlayVisible;
     const destination = C.Cartesian3.fromDegrees(mix(a[1],b[1]), mix(a[2],b[2]), height);
     viewer.camera.setView({
       destination,
@@ -177,7 +243,9 @@ async function build() {
       window.__AUMARA.firstFrameRendered = true;
       window.__AUMARA.provider = 'CESIUM_SOURCE_MAP';
       window.__AUMARA.mapViewKind = siteTilesVisible ? 'PHOTOREALISTIC_3D_MAP' : 'SATELLITE_MAP';
-      window.__AUMARA.photorealisticMapStatus = photoStatus;
+      window.__AUMARA.photorealisticMapStatus = mobileView ? 'DISABLED_MOBILE' : photoStatus;
+      window.__AUMARA.parcelOverlayVisible = siteOverlayVisible;
+      window.__AUMARA.parcelCenter = { latitude: parcelCenter.latitude, longitude: parcelCenter.longitude };
       window.__AUMARA.aerialDurationSeconds = FLIGHT_SECONDS;
       window.__AUMARA.aerialFlightComplete = elapsed === 22;
       window.__AUMARA.flightComplete = elapsed === 22;
