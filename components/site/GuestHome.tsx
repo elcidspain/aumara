@@ -5,7 +5,6 @@ import {
   BOOK_CHALET,
   BOOK_DIRECT,
   BOOK_SUPERIOR,
-  EL_CID_URL,
   NODE_POSITIONS,
   WALK_NODES,
   beds24Url,
@@ -164,9 +163,6 @@ export default function GuestHome() {
             <a href="#explore">{t.navWalk}</a>
             <a href="#houses">{t.navHouses}</a>
             <a href="#retreats">{t.navRetreats}</a>
-            <a className="elcid" href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-              El Cid
-            </a>
             <a href="#operator">{t.navOperator}</a>
             <a className="book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
               {t.navBook}
@@ -538,14 +534,6 @@ export default function GuestHome() {
                 <h3>AUMARA</h3>
                 <p>{t.brandP}</p>
                 <div className="identity-row">
-                  <strong>{t.rowElcid}</strong>
-                  <span>
-                    <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-                      {t.rowElcidV}
-                    </a>
-                  </span>
-                </div>
-                <div className="identity-row">
                   <strong>{t.rowBook}</strong>
                   <span>
                     <a href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
@@ -565,13 +553,7 @@ export default function GuestHome() {
               <div className="identity-card">
                 <p className="eyebrow">{t.legalEyebrow}</p>
                 <h3>EL CID VENTURES BENIDOLEIG S.L.</h3>
-                <p>
-                  {t.legalP}{" "}
-                  <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-                    El Cid
-                  </a>
-                  .
-                </p>
+                <p>{t.legalP}</p>
                 <div className="identity-row">
                   <strong>{t.rowCif}</strong>
                   <span>B53816989</span>
@@ -622,9 +604,6 @@ export default function GuestHome() {
             <strong>AUMARA</strong> · {t.footerOp}
           </div>
           <div className="footer-links">
-            <a href={EL_CID_URL} target="_blank" rel="noopener noreferrer">
-              El Cid · elcidspain.com
-            </a>
             <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a>
           </div>
         </div>
