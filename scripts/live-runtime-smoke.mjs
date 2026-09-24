@@ -115,6 +115,14 @@ try {
   });
   await call("Runtime.enable");
   await call("Page.enable");
+  await call("Emulation.setDeviceMetricsOverride", {
+    width: 1440,
+    height: 1000,
+    deviceScaleFactor: 1,
+    mobile: false,
+    screenWidth: 1440,
+    screenHeight: 1000,
+  });
 
   await navigate(base + "/");
   await waitFor(() => evaluate("!!document.querySelector('.sound-btn')"), 10000, "sound button");
@@ -130,7 +138,7 @@ try {
 
   await navigate(base + "/spatial/#flight");
   const mode = await waitFor(
-    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa','cesium-to-textured-site'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
+    () => evaluate("['cesium-first-local-fallback','cinematic-to-dense-local','cesium-to-dense-west-east-qa','cesium-to-textured-site','cesium-parcel-mobile-dense-desktop'].includes(document.documentElement.dataset.aumaraFlightMode) ? document.documentElement.dataset.aumaraFlightMode : null"),
     10000,
     "supported flight mode",
   );
@@ -138,9 +146,10 @@ try {
   const denseQaMode = mode === "cesium-to-dense-west-east-qa";
   const guestMode = mode === "cinematic-to-dense-local";
   const texturedMode = mode === "cesium-to-textured-site";
+  const adaptiveMode = mode === "cesium-parcel-mobile-dense-desktop";
 
   let aerial = null;
-  if (denseQaMode || texturedMode) {
+  if (denseQaMode || texturedMode || adaptiveMode) {
     aerial = await waitFor(
       () => evaluate("window.__AUMARA?.provider === 'CESIUM_SOURCE_MAP' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,mapViewKind:window.__AUMARA.mapViewKind,photorealisticMapStatus:window.__AUMARA.photorealisticMapStatus}) : null"),
       20000,
@@ -156,14 +165,14 @@ try {
   const frame = await waitFor(
     () => evaluate(texturedMode
       ? "window.__AUMARA?.provider === 'AUMARA_TEXTURED_MODEL' && window.__AUMARA?.firstFrameRendered && window.__AUMARA?.houseCount === 6 && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,waypointReached:window.__AUMARA.waypointReached,houseCount:window.__AUMARA.houseCount,localRenderer:window.__AUMARA.localRenderer}) : null"
-      : ((guestMode || denseQaMode)
+      : ((guestMode || denseQaMode || adaptiveMode)
         ? "window.__AUMARA?.provider === 'AUMARA_RGB_POINTCLOUD' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, waypointReached:window.__AUMARA.waypointReached, localPointCount:window.__AUMARA.localPointCount,westPointCount:window.__AUMARA.westPointCount,eastPointCount:window.__AUMARA.eastPointCount,eastTrailingBytes:window.__AUMARA.eastTrailingBytes,fullSiteSourceSurface:window.__AUMARA.fullSiteSourceSurface}) : null"
         : "window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider, stage:window.__AUMARA.stage, globalTilesVisible:window.__AUMARA.globalTilesVisible, waypointReached:window.__AUMARA.waypointReached}) : null")),
     60000,
-    texturedMode ? "textured six-house guest frame" : ((guestMode || denseQaMode) ? "dense local guest frame" : "first spatial WebGL frame"),
+    texturedMode ? "textured six-house guest frame" : ((guestMode || denseQaMode || adaptiveMode) ? "dense local guest frame" : "first spatial WebGL frame"),
   );
 
-  if (denseQaMode) {
+  if (denseQaMode || adaptiveMode) {
     if (frame.westPointCount !== 37804 || frame.eastPointCount !== 8911 || frame.localPointCount !== 46715 || frame.eastTrailingBytes !== 3) {
       throw new Error(`dense source counts mismatch: ${JSON.stringify(frame)}`);
     }
@@ -230,6 +239,41 @@ try {
   console.log("SPATIAL_FIRST_FRAME_PASS", JSON.stringify(frame));
   console.log("SPATIAL_AUTONOMOUS_PROGRESS_PASS", JSON.stringify(autonomous));
   console.log("SPATIAL_WP27_PASS", JSON.stringify(complete));
+
+  if (adaptiveMode) {
+    await call("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 3,
+      mobile: true,
+      screenWidth: 390,
+      screenHeight: 844,
+    });
+    await navigate(base + "/spatial/?smoke=mobile#flight");
+    await waitFor(
+      () => evaluate("document.documentElement.dataset.aumaraFlightMode === 'cesium-parcel-mobile-dense-desktop' ? true : null"),
+      10000,
+      "adaptive mobile flight mode",
+    );
+    await waitFor(
+      () => evaluate("document.documentElement.dataset.aumaraFlightRuntime === 'guest-ready' ? true : null"),
+      10000,
+      "adaptive mobile runtime",
+    );
+    const mobileFirst = await waitFor(
+      () => evaluate("window.__AUMARA?.mobileSafeMode === true && window.__AUMARA?.provider === 'CESIUM_SOURCE_MAP' && window.__AUMARA?.firstFrameRendered && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,mobileSafeMode:window.__AUMARA.mobileSafeMode}) : null"),
+      25000,
+      "mobile Cesium first frame",
+    );
+    const mobileFinal = await waitFor(
+      () => evaluate("window.__AUMARA?.flightComplete && window.__AUMARA?.stage === 'PARCEL_READY' && window.__AUMARA?.localSkippedForMobile === true && window.__AUMARA?.mobileFinalVisual === 'VERIFIED_PROPERTY_PHOTO' && !window.__AUMARA?.fatalRenderError ? ({provider:window.__AUMARA.provider,stage:window.__AUMARA.stage,localSkippedForMobile:window.__AUMARA.localSkippedForMobile,mobileFinalVisual:window.__AUMARA.mobileFinalVisual}) : null"),
+      50000,
+      "mobile verified-property final",
+    );
+    console.log("SPATIAL_MOBILE_FIRST_FRAME_PASS", JSON.stringify(mobileFirst));
+    console.log("SPATIAL_MOBILE_PARCEL_PASS", JSON.stringify(mobileFinal));
+  }
+
   console.log("AUMARA_LIVE_RUNTIME_PASS");
 } finally {
   try { ws?.close(); } catch {}

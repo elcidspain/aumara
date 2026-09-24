@@ -76,8 +76,8 @@ jobs:
           ready=0
           for i in $(seq 1 90); do
             if curl --fail --silent --show-error --max-time 15 \
-              https://www.aumara.me/spatial/flight-runtime.js \
-              | grep -Fq 'AUMARA_START_LOCAL_FLIGHT'; then
+              https://www.aumara.me/spatial/guest-flight-v6.mjs \
+              | grep -Fq 'cesium-parcel-mobile-dense-desktop'; then
               ready=1
               break
             fi
