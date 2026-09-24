@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
-import { BOOK_SUPERIOR, PLACE, SITE_URL } from "@/lib/guest";
+import { BOOK_SUPERIOR, SITE_URL } from "@/lib/guest";
+import { superiorVacationRentalJsonLd } from "@/lib/schema";
 
 const pageUrl = `${SITE_URL}/superior`;
 const image = `${SITE_URL}/media/stills/superior-living.jpg`;
@@ -34,47 +35,7 @@ const jsonLd = [
       { "@type": "ListItem", position: 2, name: "Superior Chalet", item: pageUrl },
     ],
   },
-  {
-    "@context": "https://schema.org",
-    "@type": "Accommodation",
-    name: "Superior Chalet",
-    identifier: "674466",
-    url: pageUrl,
-    image,
-    description:
-      "Complete independent house at AUMARA in Benidoleig, Marina Alta, for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me — not Booking.com.",
-    numberOfBedrooms: 1,
-    occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: PLACE.streetAddress,
-      postalCode: PLACE.postalCode,
-      addressLocality: PLACE.addressLocality,
-      addressRegion: PLACE.addressRegion,
-      addressCountry: PLACE.addressCountry,
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: PLACE.latitude,
-      longitude: PLACE.longitude,
-    },
-    containedInPlace: {
-      "@type": "LodgingBusiness",
-      name: "AUMARA",
-      url: SITE_URL,
-      legalName: "EL CID VENTURES BENIDOLEIG S.L.",
-    },
-    amenityFeature: [
-      { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
-      { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
-      { "@type": "LocationFeatureSpecification", name: "Separate bedroom", value: true },
-    ],
-    potentialAction: {
-      "@type": "ReserveAction",
-      target: BOOK_SUPERIOR,
-      name: "Book Superior Chalet directly",
-    },
-  },
+  superiorVacationRentalJsonLd(),
 ];
 
 export default function SuperiorPage() {

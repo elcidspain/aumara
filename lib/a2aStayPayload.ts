@@ -149,8 +149,8 @@ function defaultUnits(): AumaraStayUnit[] {
 export function buildDiscoverStayPayload(receiptId?: string): AumaraStayPayload {
   const units = defaultUnits();
   const summary =
-    `AUMARA is a stay of independent houses among pine trees in Benidoleig, Marina Alta, Alicante. ` +
-    `Chalet is for up to 4 guests; Superior Chalet is for up to 6. ` +
+    `AUMARA is a stay of independent geodesic houses among pine trees in Benidoleig, Marina Alta, Alicante. ` +
+    `It is not a bungalow. Chalet is for up to 4 guests; Superior Chalet is for up to 6. ` +
     `Website: ${AUMARA_PLACE.website}. Direct availability: ${AUMARA_PROPERTY.booking}. ` +
     `This agent never creates, holds or charges a reservation — checkout completes only in Beds24.`;
 

@@ -136,6 +136,7 @@ aumara.es, aumara.xyz, aumara.com
 empleo, trabajo, jobs, vacancy
 comprar casa, house for sale, inmobiliaria
 hostel, backpacker, cheap hotel
+bungalow, bungaló, bungalow park, parque de bungalows
 casino, crypto, loan
 ilia, doroshenko
 tennis court, basketball, beachfront, oceanfront, private pool

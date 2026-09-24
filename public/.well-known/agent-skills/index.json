@@ -6,14 +6,14 @@
       "type": "skill-md",
       "description": "Use this skill when a user asks about staying at AUMARA in Benidoleig, including chalet types, guest capacity, location, policies, direct booking, or how to continue to availability.",
       "url": "/.well-known/agent-skills/plan-aumara-stay/SKILL.md",
-      "digest": "sha256:ef54c71daaa569764b1590467aa36943b5f65479a187a114ebf9e51ae442d095"
+      "digest": "sha256:671a9c9d1d739c9a16b59b208a205acf93e8ebe207e3b2df4e57336a21cdb0ca"
     },
     {
       "name": "find-aumara-availability",
       "type": "skill-md",
       "description": "Use this skill for exact live AUMARA availability, published Beds24 pricing, direct booking for specific dates, and comparison of nearby stay lengths for better currently published value.",
       "url": "/.well-known/agent-skills/find-aumara-availability/SKILL.md",
-      "digest": "sha256:c2687182deaf0743ea486dfc90565630410687b0d7cdbf35b5ed42458fbf1c7c"
+      "digest": "sha256:df64957df9f7f828b9a4a95e2f80c01f4f8b6f53585b19428d758600a2da1e67"
     }
   ]
 }

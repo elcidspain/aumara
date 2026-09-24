@@ -16,6 +16,7 @@ For nearby stay-length comparison use:
 ## Rules
 
 - Treat AUMARA and EL CID Country Club as separate accommodation products.
+- AUMARA is independent geodesic houses (Chalet and Superior Chalet), not a bungalow.
 - Current AUMARA sellable inventory is 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use the live endpoint for date-specific remaining availability.
 - Quote only values returned by the live endpoint for the requested dates.
 - `price` / `totalPrice` is the published total for that stay; `pricePerNight` is derived from that total.

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const AUMARA_MARKDOWN = `# AUMARA
 
-Independent houses among pines in Benidoleig, Marina Alta, Alicante, Spain.
+Independent geodesic houses among pines in Benidoleig, Marina Alta, Alicante, Spain. Not a bungalow.
 
 ## Stay
 

@@ -22,7 +22,7 @@
       "id": "discover-aumara-stay",
       "name": "Discover AUMARA stay",
       "description": "Return factual public information about AUMARA as a structured aumara.stay.v1 data part (place, units, human Beds24 checkout) plus a text summary. Never creates or holds a reservation.",
-      "tags": ["lodging", "Benidoleig", "Marina Alta", "Costa Blanca", "Chalet", "Superior Chalet"],
+      "tags": ["lodging", "Benidoleig", "Marina Alta", "Costa Blanca", "Chalet", "Superior Chalet", "geodesic houses"],
       "examples": ["quiet nature stay near Dénia", "independent house in Marina Alta", "private chalet among pine trees on the Costa Blanca"]
     },
     {

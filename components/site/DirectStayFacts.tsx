@@ -21,10 +21,11 @@ export default function DirectStayFacts() {
         </h2>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
           AUMARA, cerca de Dénia. Chalet: casa independiente para hasta 4 personas. Superior Chalet: casa independiente
-          para hasta 6, con dormitorio separado. Reserva directa en aumara.me — no en Booking.com.
+          para hasta 6, con dormitorio separado. Reserva directa en aumara.me — no en Booking.com. No es un bungalow.
         </p>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 12px" }}>
-          Independent houses in Benidoleig. Chalet up to 4 guests. Superior Chalet up to 6. Direct booking on aumara.me.
+          Independent geodesic houses in Benidoleig. Chalet up to 4 guests. Superior Chalet up to 6. Direct booking on
+          aumara.me. Not a bungalow.
         </p>
         <p style={{ maxWidth: 720, lineHeight: 1.7, color: "#29483c", margin: "0 0 18px" }}>
           Бенидолеиг, рядом с Денией. Chalet до 4 человек, Superior Chalet до 6. Прямое бронирование на aumara.me.

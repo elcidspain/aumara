@@ -77,3 +77,10 @@ Do not use Booking.com as the owned conversion destination anymore.
 
 Brand AUMARA → legal operator EL CID VENTURES BENIDOLEIG S.L. → booking Beds24 324882.
 EL CID (knight) is the sister public brand, not the stay product name.
+
+## Google Business Profile
+
+Live Search/Knowledge Panel must not say Bungalow. Product is independent geodesic houses: Chalet and Superior Chalet.
+Canonical NAP and the category click path: `docs/GBP_CANON.md`.
+Website JSON-LD: `LodgingBusiness` + `VacationRental`, `additionalType` House / Chalet, never Bungalow.
+Public phone on the profile: Elena +34 649 242 159. Address: Urb. Rincón del Silencio, 3, 03759 Benidoleig — not 03750 Alicante.

@@ -71,6 +71,48 @@ for (const file of machineTruthFiles) {
   }
 }
 
+const schemaPath = path.join(process.cwd(), "lib/schema.ts");
+const schema = fs.readFileSync(schemaPath, "utf8");
+if (/additionalType:\s*"Bungalow"/i.test(schema) || /additionalType:\s*'Bungalow'/i.test(schema)) {
+  console.error("Schema gate failed: lodging additionalType must not be Bungalow");
+  failed = true;
+}
+if (!/UNIT_ADDITIONAL_TYPE = "Chalet"/.test(schema)) {
+  console.error("Schema gate failed: unit additionalType must be Chalet");
+  failed = true;
+}
+if (!/PROPERTY_ADDITIONAL_TYPE = "House"/.test(schema)) {
+  console.error("Schema gate failed: property additionalType must be House");
+  failed = true;
+}
+if (!/publicPhone: "\+34649242159"/.test(schema)) {
+  console.error("Schema gate failed: public phone must match GBP Elena number");
+  failed = true;
+}
+if (!/VacationRental/.test(schema) || !/ReserveAction/.test(schema)) {
+  console.error("Schema gate failed: VacationRental + ReserveAction required for bookings");
+  failed = true;
+}
+
+function bungalowClaim(text) {
+  const stripped = text
+    .replace(/no es un bungalow/gi, "")
+    .replace(/not a bungalow/gi, "")
+    .replace(/AUMARA es un bungalow\?/gi, "")
+    .replace(/It is not a bungalow(?: and not a bungalow park)?/gi, "")
+    .replace(/never Bungalow/gi, "")
+    .replace(/Never Bungalow/gi, "");
+  return /(?:es un|is a|as a|type:\s*["']?Bungalow)\s*bungalow/i.test(stripped) ||
+    /additionalType:\s*["']Bungalow["']/i.test(stripped);
+}
+
+for (const file of files) {
+  if (bungalowClaim(fs.readFileSync(file, "utf8"))) {
+    console.error(`Bungalow category claim in ${file}`);
+    failed = true;
+  }
+}
+
 for (const [file, re, label] of brandLeaks) {
   const source = file === guestHomePath ? guestHome : i18n;
   if (re.test(source)) {

@@ -37,6 +37,10 @@ const faqs = [
     q: "Cómo se consulta disponibilidad y precio?",
     a: "En el motor de reserva directa de AUMARA. Beds24 es el checkout de AUMARA, no un anuncio de OTA. Precio, estancia mínima y cancelación salen para las fechas elegidas, antes de confirmar.",
   },
+  {
+    q: "AUMARA es un bungalow?",
+    a: "No. AUMARA no es un bungalow. Son casas independientes en Benidoleig: Chalet para 4 y Superior Chalet para 6. Reserva directa en aumara.me.",
+  },
 ];
 
 const jsonLd = [
@@ -103,10 +107,16 @@ export default function FaqPage() {
           . Beds24 es el checkout de AUMARA, no un anuncio de OTA. Precio y cancelación salen para las fechas elegidas,
           antes de confirmar.
         </p>
+        <h2>AUMARA es un bungalow?</h2>
+        <p>
+          No. AUMARA no es un bungalow. Son casas independientes en Benidoleig: Chalet para 4 y Superior Chalet para 6.
+          Reserva directa en aumara.me.
+        </p>
         <h2>English</h2>
         <p>
-          AUMARA is in Benidoleig, near Denia. Book Chalet (up to 4) or Superior Chalet (up to 6) directly on aumara.me
-          — not Booking.com. Live dates, price and cancellation sit in the AUMARA checkout.
+          AUMARA is in Benidoleig, near Denia. Independent geodesic houses: Chalet (up to 4) or Superior Chalet (up to
+          6). Direct booking on aumara.me — not Booking.com. AUMARA is not a bungalow. Live dates, price and
+          cancellation sit in the AUMARA checkout.
         </p>
       </InfoShell>
     </>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import InfoShell from "../_components/InfoShell";
-import { BOOK_CHALET, PLACE, SITE_URL } from "@/lib/guest";
+import { BOOK_CHALET, SITE_URL } from "@/lib/guest";
+import { chaletVacationRentalJsonLd } from "@/lib/schema";
 
 const pageUrl = `${SITE_URL}/chalet`;
 const image = `${SITE_URL}/media/stills/chalet-mezzanine.jpg`;
@@ -34,45 +35,7 @@ const jsonLd = [
       { "@type": "ListItem", position: 2, name: "Chalet", item: pageUrl },
     ],
   },
-  {
-    "@context": "https://schema.org",
-    "@type": "Accommodation",
-    name: "Chalet",
-    identifier: "674465",
-    url: pageUrl,
-    image,
-    description:
-      "Complete independent house at AUMARA in Benidoleig, Marina Alta, for up to 4 guests. Own entrance, sleeping zone and mezzanine. Direct booking on aumara.me — not Booking.com.",
-    occupancy: { "@type": "QuantitativeValue", maxValue: 4, unitText: "occupants" },
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: PLACE.streetAddress,
-      postalCode: PLACE.postalCode,
-      addressLocality: PLACE.addressLocality,
-      addressRegion: PLACE.addressRegion,
-      addressCountry: PLACE.addressCountry,
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: PLACE.latitude,
-      longitude: PLACE.longitude,
-    },
-    containedInPlace: {
-      "@type": "LodgingBusiness",
-      name: "AUMARA",
-      url: SITE_URL,
-      legalName: "EL CID VENTURES BENIDOLEIG S.L.",
-    },
-    amenityFeature: [
-      { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
-      { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
-    ],
-    potentialAction: {
-      "@type": "ReserveAction",
-      target: BOOK_CHALET,
-      name: "Book Chalet directly",
-    },
-  },
+  chaletVacationRentalJsonLd(),
 ];
 
 export default function ChaletPage() {

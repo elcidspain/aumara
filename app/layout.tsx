@@ -4,7 +4,8 @@ import Script from "next/script";
 import "./globals.css";
 import GuestActivation from "@/components/site/GuestActivation";
 import AgentWebTools from "@/components/site/AgentWebTools";
-import { PLACE, SITE_URL } from "@/lib/guest";
+import { SITE_URL } from "@/lib/guest";
+import { lodgingBusinessJsonLd } from "@/lib/schema";
 import {
   GA_MEASUREMENT_ID,
   GOOGLE_ADS_TAG_ID,
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | AUMARA",
   },
   description:
-    "Casas independientes en Benidoleig, Marina Alta, Costa Blanca. Chalet para 4 y Superior Chalet para 6. Reserva directa en aumara.me, no en Booking.com.",
+    "Casas geodésicas independientes en Benidoleig, Marina Alta, Costa Blanca. Chalet para 4 y Superior Chalet para 6. Reserva directa en aumara.me, no en Booking.com.",
   keywords: [
     "AUMARA",
     "Benidoleig",
@@ -32,6 +33,8 @@ export const metadata: Metadata = {
     "Dénia",
     "Chalet",
     "Superior Chalet",
+    "casas geodésicas",
+    "geodesic houses",
     "casa 6 personas",
     "reserva directa",
   ],
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     title: "AUMARA | Casas en Benidoleig, cerca de Dénia",
     description:
-      "Casas independientes entre pinos en Benidoleig, Marina Alta. Chalet y Superior Chalet. Reserva directa en aumara.me.",
+      "Casas geodésicas independientes entre pinos en Benidoleig, Marina Alta. Chalet y Superior Chalet. Reserva directa en aumara.me.",
     url: SITE_URL,
     siteName: "AUMARA",
     locale: "es_ES",
@@ -56,74 +59,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#f2eadc" };
 
-const address = {
-  "@type": "PostalAddress",
-  streetAddress: PLACE.streetAddress,
-  postalCode: PLACE.postalCode,
-  addressLocality: PLACE.addressLocality,
-  addressRegion: PLACE.addressRegion,
-  addressCountry: PLACE.addressCountry,
-};
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "LodgingBusiness",
-  name: "AUMARA",
-  legalName: "EL CID VENTURES BENIDOLEIG S.L.",
-  taxID: "B53816989",
-  url: SITE_URL,
-  description: "Independent houses among pine trees in Benidoleig, Marina Alta, Alicante. Direct booking on aumara.me — not Booking.com.",
-  image: [
-    heroImage,
-    `${SITE_URL}/media/hero/three-houses-02.webp`,
-    `${SITE_URL}/media/hero/three-houses-03.webp`,
-    `${SITE_URL}/media/stills/inside-valley.jpg`,
-    `${SITE_URL}/media/stills/chalet-mezzanine.jpg`,
-    `${SITE_URL}/media/stills/superior-living.jpg`,
-  ],
-  email: "elcidspain@gmail.com",
-  telephone: "+34622914323",
-  address,
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: PLACE.latitude,
-    longitude: PLACE.longitude,
-  },
-  hasMap: PLACE.maps,
-  currenciesAccepted: "EUR",
-  areaServed: [
-    { "@type": "Place", name: "Benidoleig" },
-    { "@type": "Place", name: "Marina Alta" },
-    { "@type": "Place", name: "Dénia" },
-    { "@type": "Place", name: "Costa Blanca" },
-  ],
-  containsPlace: [
-    {
-      "@type": "Accommodation",
-      name: "Chalet",
-      occupancy: { "@type": "QuantitativeValue", maxValue: 4 },
-      url: `${SITE_URL}/chalet`,
-      image: `${SITE_URL}/media/stills/chalet-mezzanine.jpg`,
-      amenityFeature: [{ "@type": "LocationFeatureSpecification", name: "Entire house", value: true }],
-    },
-    {
-      "@type": "Accommodation",
-      name: "Superior Chalet",
-      description: "Complete house in Benidoleig for up to 6 guests. Separate bedroom, own entrance. Direct booking on aumara.me.",
-      occupancy: { "@type": "QuantitativeValue", maxValue: 6, unitText: "occupants" },
-      numberOfBedrooms: 1,
-      url: `${SITE_URL}/superior`,
-      image: `${SITE_URL}/media/stills/superior-living.jpg`,
-      address,
-      amenityFeature: [
-        { "@type": "LocationFeatureSpecification", name: "Entire house", value: true },
-        { "@type": "LocationFeatureSpecification", name: "Private entrance", value: true },
-        { "@type": "LocationFeatureSpecification", name: "Separate bedroom", value: true },
-      ],
-    },
-  ],
-  potentialAction: { "@type": "ReserveAction", target: "https://beds24.com/booking2.php?propid=324882", name: "Book AUMARA directly" },
-};
+const jsonLd = lodgingBusinessJsonLd();
 
 const gaId = isGaMeasurementId(GA_MEASUREMENT_ID) ? GA_MEASUREMENT_ID : "";
 const adsId = isGoogleAdsTagId(GOOGLE_ADS_TAG_ID) ? GOOGLE_ADS_TAG_ID : "";
