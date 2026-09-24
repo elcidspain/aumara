@@ -1,18 +1,24 @@
 import { prepareAumaraWorldFlight } from "./world-flight.mjs";
-import { prepareAumaraGlbFlight } from "./glb-flight.mjs";
 
 const BOOK = "https://beds24.com/booking2.php?propid=324882";
 let installed = false;
 let running = false;
 let generation = 0;
 let worldRuntime = null;
-let localRuntime = null;
+let denseRuntime = null;
+let denseModulePromise = null;
 
-async function preparePreferredLocalRuntime() {
-  const glb = await prepareAumaraGlbFlight();
-  return { runtime: glb, kind: "textured-glb" };
+function prepareDenseRuntime() {
+  if (!denseModulePromise) denseModulePromise = import("./dense-flight.mjs").then((m) => m.prepareAumaraDenseFlight());
+  return denseModulePromise;
 }
 
+function isMobileSafeMode() {
+  const ua = navigator.userAgent || "";
+  const coarse = globalThis.matchMedia?.("(pointer: coarse)")?.matches;
+  const narrow = Math.min(innerWidth || 9999, innerHeight || 9999) < 900;
+  return !!(coarse || narrow || /iPhone|iPad|iPod|Android/i.test(ua));
+}
 
 function ensureStyles() {
   if (document.getElementById("aumara-guest-flight-css")) return;
@@ -32,6 +38,10 @@ function ensureStyles() {
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Playfair+Display:wght@500;600&display=swap");
 #stage #close{z-index:7!important;display:inline-flex!important}
 #aumara-guest-flight{position:absolute;inset:0;z-index:4;overflow:hidden;background:transparent;pointer-events:none;color:#f3ecde;opacity:1;transition:opacity .8s ease}
+#aumara-guest-flight::before{content:"";position:absolute;inset:-2%;background:#07110c url("./world/blue-marble-2048.jpg") center/cover no-repeat;filter:saturate(.88) contrast(1.02) brightness(.72);transform:scale(1.03);opacity:1;transition:opacity .75s ease}
+#aumara-guest-flight.world-live::before{opacity:0}
+#aumara-guest-flight.arrived::before{opacity:1;background-image:linear-gradient(180deg,rgba(3,10,7,.02),rgba(3,10,7,.12) 52%,rgba(3,10,7,.60)),url('/media/hero/three-houses-01.webp');background-position:center 54%;filter:saturate(.96) contrast(1.03) brightness(.94);transform:scale(1.01)}
+#aumara-guest-flight.arrived .agf-shade{background:linear-gradient(180deg,rgba(3,10,7,.02),rgba(3,10,7,.04) 50%,rgba(3,10,7,.58))}
 #aumara-guest-flight.off{opacity:0;pointer-events:none}
 .agf-frame{position:absolute;inset:-3%;opacity:0;background-position:center;background-size:cover;filter:saturate(.92) contrast(1.04);will-change:transform,opacity}
 .agf-frame.on{opacity:1;animation:agfZoom 3.6s cubic-bezier(.2,.55,.25,1) both}
@@ -83,14 +93,15 @@ async function startGuestFlight() {
   if (running) return true;
   running = true;
   const token = ++generation;
+  const mobileSafeMode = isMobileSafeMode();
   const stage = document.getElementById("stage");
   if (!stage) { running = false; return false; }
   ensureStyles();
   const root = ensureUi(stage);
   root.style.display = "block";
   root.style.removeProperty("opacity");
-  root.classList.remove("off");
-  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, events:[] };
+  root.classList.remove("off", "world-live");
+  window.__AUMARA = { provider:"CESIUM_SOURCE_MAP", stage:"LOADING", firstFrameRendered:false, fatalRenderError:false, renderError:null, waypointReached:null, flightComplete:false, fullSiteSourceSurface:false, mobileSafeMode, events:[] };
   window.__AUMARA_LOCAL_FRAME_VISIBLE = false;
   document.getElementById('flight-cover')?.classList.remove('off');
   const loadingText = document.querySelector('#flight-cover span');
@@ -109,7 +120,7 @@ async function startGuestFlight() {
 
   function fail(error) {
     if (token !== generation) return;
-    worldRuntime?.stop(); localRuntime?.stop(); running = false;
+    worldRuntime?.stop(); denseRuntime?.stop(); running = false;
     window.__AUMARA.fatalRenderError = true;
     window.__AUMARA.renderError = String(error?.message || error).replace(/https?:\/\/[^\s]+/g, '[resource]').slice(0, 160);
     window.__AUMARA.stage = 'ERROR';
@@ -118,16 +129,39 @@ async function startGuestFlight() {
     if (loadingText) loadingText.textContent = 'Puedes volver a intentar el recorrido.';
     showEndPanel(stage);
   }
+  function finishAtParcel() {
+    if (token !== generation) return;
+    running = false;
+    root.classList.remove("off", "world-live");
+    root.classList.add("arrived");
+    root.style.display = "block";
+    root.querySelector('#agf-label').textContent = "AUMARA";
+    root.querySelector('#agf-sub').textContent = "Casas geodésicas · Benidoleig";
+    root.querySelector('#agf-progress-bar').style.width = "100%";
+    document.getElementById("flight-cover")?.classList.add("off");
+    const state = window.__AUMARA || (window.__AUMARA = {});
+    state.provider = "CESIUM_SOURCE_MAP";
+    state.stage = "PARCEL_READY";
+    state.flightComplete = true;
+    state.localSkippedForMobile = true;
+    state.localTwinVisible = false;
+    state.localTwinLoaded = false;
+    state.fatalRenderError = false;
+    state.renderError = null;
+    showEndPanel(stage);
+    const source = document.getElementById("agf-source");
+    if (source) source.textContent = "AUMARA · Benidoleig · Costa Blanca";
+    state.mobileFinalVisual = "VERIFIED_PROPERTY_PHOTO";
+  }
+
   async function enterDense() {
     if (token !== generation) return;
     try {
-      const prepared = await densePromise;
+      const dense = await densePromise;
       if (token !== generation) return;
-      if (!prepared?.runtime) throw new Error("local-runtime-unavailable");
-      localRuntime = prepared.runtime;
-      window.__AUMARA.localRuntimeKind = prepared.kind;
-      if (prepared.fallbackReason) window.__AUMARA.localFallbackReason = prepared.fallbackReason;
-      localRuntime.start({
+      if (!dense) throw new Error("dense-runtime-unavailable");
+      denseRuntime = dense;
+      dense.start({
         complete: () => {
           if (token !== generation) return;
           running = false;
@@ -149,13 +183,14 @@ async function startGuestFlight() {
     } catch (error) { fail(error); }
   }
   try {
-    densePromise = preparePreferredLocalRuntime();
+    densePromise = mobileSafeMode ? null : prepareDenseRuntime();
     const global = await prepareAumaraWorldFlight();
     if (token !== generation) return false;
     worldRuntime = global;
-    global.start({ complete: () => { void enterDense(); }, error: fail, stage: (label, progress) => {
+    global.start({ complete: () => { if (mobileSafeMode) finishAtParcel(); else void enterDense(); }, error: fail, stage: (label, progress) => {
       if (token !== generation) return;
       window.__AUMARA.stage = label;
+      root.classList.add("world-live");
       root.querySelector('#agf-label').textContent = label;
       root.querySelector('#agf-sub').textContent = label === 'AUMARA' ? 'Casas entre pinos y vistas al valle' : 'Destino AUMARA · Costa Blanca';
       root.querySelector('#agf-progress-bar').style.width = `${progress * 100}%`;
@@ -170,7 +205,7 @@ function stopGuestFlight(keepVisible = false) {
   const stage = document.getElementById("stage");
   if (stage && !keepVisible) stage.classList.remove("on", "local-world");
   worldRuntime?.stop();
-  localRuntime?.stop();
+  denseRuntime?.stop();
   document.body.style.overflow = "";
   const cesiumHost = document.getElementById("c");
   if (cesiumHost) cesiumHost.style.visibility = "visible";
@@ -189,7 +224,7 @@ export function installAumaraGuestFlight() {
     window.location.replace("/");
   };
   document.documentElement.dataset.aumaraFlightRuntime = "guest-ready";
-  document.documentElement.dataset.aumaraFlightMode = "cesium-to-textured-site";
+  document.documentElement.dataset.aumaraFlightMode = "cesium-parcel-mobile-dense-desktop";
   const hashFlight = location.hash === "#flight";
   if (hashFlight) { try { history.replaceState(null, "", location.pathname + location.search); } catch {} }
   if (document.getElementById('stage')) {
