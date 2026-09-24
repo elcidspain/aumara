@@ -9,6 +9,7 @@ on:
       - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
+      - 'scripts/assert-live-html.mjs'
       - 'scripts/flight-restart-smoke.mjs'
       - 'scripts/flight-runtime-regression.mjs'
       - 'package.json'
@@ -23,6 +24,7 @@ on:
       - 'app/spatial/**'
       - 'scripts/copy-spatial-three.mjs'
       - 'scripts/live-runtime-smoke.mjs'
+      - 'scripts/assert-live-html.mjs'
       - 'scripts/flight-restart-smoke.mjs'
       - 'scripts/flight-runtime-regression.mjs'
       - 'package.json'
@@ -76,8 +78,9 @@ jobs:
           ready=0
           for i in $(seq 1 90); do
             if curl --fail --silent --show-error --max-time 15 \
+              -o /tmp/aumara-guest-flight.mjs \
               https://www.aumara.me/spatial/guest-flight-v6.mjs \
-              | grep -Fq 'cesium-parcel-mobile-dense-desktop'; then
+              && grep -Fq 'cesium-parcel-mobile-dense-desktop' /tmp/aumara-guest-flight.mjs; then
               ready=1
               break
             fi
@@ -88,6 +91,10 @@ jobs:
             https://www.aumara.me/spatial/vendor/three.module.min.js \
             -o /tmp/aumara-three.module.min.js
           test -s /tmp/aumara-three.module.min.js
+
+      - name: Public HTML identity (no curl pipes)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run assert-live
 
       - name: Public production sound + flight smoke
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
