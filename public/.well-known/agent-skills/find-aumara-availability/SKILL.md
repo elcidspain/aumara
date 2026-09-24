@@ -16,7 +16,7 @@ For nearby stay-length comparison use:
 ## Rules
 
 - Treat AUMARA and EL CID Country Club as separate accommodation products.
-- AUMARA public rentable inventory is 4 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each.
+- Current AUMARA sellable inventory is 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use the live endpoint for date-specific remaining availability.
 - Quote only values returned by the live endpoint for the requested dates.
 - `price` / `totalPrice` is the published total for that stay; `pricePerNight` is derived from that total.
 - `availableUnits` is the live published remaining inventory for the room type at lookup time.

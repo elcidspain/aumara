@@ -54,7 +54,7 @@ const tools = [
   },
 ];
 
-const guestGuide = `AUMARA is a separate accommodation product at Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain. Canonical WGS84 coordinates: 38.79353655, -0.02037598. Cova de les Calaveres is a nearby landmark, not the AUMARA location. Public inventory: 4 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
+const guestGuide = `AUMARA is a separate accommodation product at Urb. Rincón del Silencio, 3, 03759 Benidoleig, Alicante, Spain. Canonical WGS84 coordinates: 38.79353655, -0.02037598. Cova de les Calaveres is a nearby landmark, not the AUMARA location. Current sellable inventory: 3 Chalet units for up to 4 guests each and 2 Superior Chalet units for up to 6 guests each. One remaining physical unit is outside the sellable inventory unless current PMS evidence changes. Use aumara_live_availability for exact dates and aumara_compare_stay_lengths to find the strongest currently published value. Never invent unpublished availability, discounts, prices or policies. Canonical site: https://www.aumara.me/`;
 
 const bookingOptions = {
   property: "AUMARA",

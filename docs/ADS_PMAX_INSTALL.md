@@ -14,7 +14,6 @@ Top queries: `costa blanca` (31), `holiday rental costa blanca` (5).
 
 1. Billing: Visa •••• 6608 declined 1 Sep 2026. Update card or PMax will not serve.
 2. Conversions: none configured (Google email 3 Sep 2026). Create Book action before Maximize conversions.
-3. Gift sitelink: wait for PR #10 merge. Live site does not yet have `#gift` or six-house copy.
 
 There is no Google Ads API connector on this workspace. This file is the paste pack for ads.google.com.
 
@@ -59,8 +58,6 @@ Do not use Beds24 as the campaign Final URL. Beds24 is the booking / conversion 
 14. Vuelves a ti
 15. Book on AUMARA.me
 
-Hold until PR #10 is live: `Seis casas privadas`.
-
 ### Long headlines ES (≤90)
 
 1. Hay lugares que te dan más. En AUMARA vuelves a ti.
@@ -74,7 +71,7 @@ Hold until PR #10 is live: `Seis casas privadas`.
 1. Casa geodésica privada en Benidoleig. Reserva directa en AUMARA.me.
 2. Chalet o Superior. Fechas vivas en Beds24.
 3. Casa privada en Marina Alta. Sin intermediarios.
-4. Luz, aire y caminos entre casas. El Cid Ventures.
+4. Luz, aire y caminos entre casas. AUMARA.
 5. Entra, camina el terreno y reserva la casa completa.
 
 ### Headlines EN (use only if the asset group language is EN; do not mix with ES in one group)
@@ -102,9 +99,6 @@ Hold until PR #10 is live: `Seis casas privadas`.
 - Recorrido → https://www.aumara.me/#explore
 - Disponibilidad → https://www.aumara.me/#availability
 - Reserva directa → https://beds24.com/booking2.php?propid=324882
-- El Cid resto → https://elcidspain.com/
-
-Hold `#gift` until PR #10 merge.
 
 ### Structured snippets
 
@@ -181,7 +175,6 @@ Create before enabling PMax.
 
 1. Primary — Book / Purchase. Destination URL contains `beds24.com/booking2.php`. If Beds24 thank-you URL is available, use that as the exact conversion page.
 2. Secondary, observe only — Click to Beds24 (`propid=324882`).
-3. Call asset: +34 966 57 99 70.
 
 Google tag is wired on the canon (`app/layout.tsx`) behind `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
 Set that env on Vercel project `aumara-path-cut` to a real `G-…` ID from the Ads/GA4 account.
@@ -194,4 +187,3 @@ Do not invent an ID. Without it, no gtag ships. Then create the Book conversion.
 3. Campaigns → + → Performance Max → paste this pack.
 4. Enable only after 1 and 2. If the card is still declined, leave PAUSED.
 5. Do not pause `Aumara_Booking_Search`.
-6. After PR #10 merge, add gift sitelink `#gift` and the six-house headline.
