@@ -53,7 +53,7 @@ const nodes: Record<string, NodeCopy> = {
 const EN: Copy = {
   navWalk: "Walk the place", navHouses: "Houses", navRetreats: "Retreats", navOperator: "Operator", navBook: "Book",
   eyebrow: "Benidoleig · Marina Alta · Costa Blanca",
-  h1: "Places that give you more.\nAt AUMARA you find yourself again.",
+  h1: "Geodesic houses.\nCosta Blanca.",
   lead: "Independent houses among pines, open to the valley. A complete house. Your own entrance.",
   ctaWalk: "Walk the place", ctaBookBeds: "Check availability",
   operator: "Operated by EL CID VENTURES BENIDOLEIG S.L. ·",
@@ -115,7 +115,7 @@ export const COPY: Record<Lang, Copy> = {
   es: {
     ...EN,
     navWalk: "Recorrer el lugar", navHouses: "Casas", navRetreats: "Retiros", navOperator: "Quién opera", navBook: "Reservar",
-    h1: "Hay lugares que te dan más.\nEn AUMARA vuelves a encontrarte.",
+    h1: "Casas geodésicas.\nCosta Blanca.",
     lead: "Casas independientes entre pinos, abiertas al valle. Casa completa. Entrada propia.",
     ctaWalk: "Recorrer el lugar", ctaBookBeds: "Consultar disponibilidad",
     checkin: "Entrada", checkout: "Salida", openAvail: "Consultar disponibilidad",
@@ -125,20 +125,20 @@ export const COPY: Record<Lang, Copy> = {
   ru: {
     ...EN,
     navWalk: "Пройти место", navHouses: "Дома", navRetreats: "Ретриты", navOperator: "Кто ведёт", navBook: "Бронь",
-    h1: "Есть места, которые дают больше.\nВ AUMARA ты снова находишь себя.",
+    h1: "Геодезические дома.\nКоста-Бланка.",
     lead: "Отдельные дома среди сосен, открытые долине. Целый дом. Свой вход.",
     ctaWalk: "Пройти место", ctaBookBeds: "Смотреть даты",
     checkin: "Заезд", checkout: "Выезд", openAvail: "Смотреть даты",
   },
-  fr: { ...EN, h1: "Il y a des lieux qui donnent plus.\nÀ AUMARA tu te retrouves." },
-  de: { ...EN, h1: "Es gibt Orte, die mehr geben.\nIn AUMARA findest du dich wieder." },
-  nl: { ...EN, h1: "Er zijn plekken die meer geven.\nIn AUMARA kom je weer tot jezelf." },
-  it: { ...EN, h1: "Ci sono luoghi che danno di più.\nAd AUMARA ti ritrovi." },
-  pt: { ...EN, h1: "Há lugares que te dão mais.\nNa AUMARA voltas a encontrar-te." },
-  ca: { ...EN, h1: "Hi ha llocs que et donen més.\nA AUMARA et tornes a trobar." },
-  pl: { ...EN, h1: "Są miejsca, które dają więcej.\nW AUMARA znów odnajdujesz siebie." },
-  uk: { ...EN, h1: "Є місця, які дають більше.\nВ AUMARA ти знову знаходиш себе." },
-  sv: { ...EN, h1: "Det finns platser som ger mer.\nPå AUMARA hittar du dig själv igen." },
+  fr: { ...EN, h1: "Maisons géodésiques.\nCosta Blanca." },
+  de: { ...EN, h1: "Geodätische Häuser.\nCosta Blanca." },
+  nl: { ...EN, h1: "Geodetische huizen.\nCosta Blanca." },
+  it: { ...EN, h1: "Case geodetiche.\nCosta Blanca." },
+  pt: { ...EN, h1: "Casas geodésicas.\nCosta Blanca." },
+  ca: { ...EN, h1: "Cases geodèsiques.\nCosta Blanca." },
+  pl: { ...EN, h1: "Domy geodezyjne.\nCosta Blanca." },
+  uk: { ...EN, h1: "Геодезичні будинки.\nКоста-Бланка." },
+  sv: { ...EN, h1: "Geodetiska hus.\nCosta Blanca." },
 };
 
 const STORAGE = "aumara-lang";
