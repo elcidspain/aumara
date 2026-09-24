@@ -163,7 +163,6 @@ export default function GuestHome() {
             <a href="#explore">{t.navWalk}</a>
             <a href="#houses">{t.navHouses}</a>
             <a href="#retreats">{t.navRetreats}</a>
-            <a href="#operator">{t.navOperator}</a>
             <a className="book" href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
               {t.navBook}
             </a>
@@ -516,66 +515,6 @@ export default function GuestHome() {
                 <a className="btn primary" href="mailto:elcidspain@gmail.com?subject=AUMARA%20private%20gathering">
                   {t.discuss}
                 </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section" id="operator">
-          <div className="wrap">
-            <div className="section-head">
-              <p className="eyebrow">{t.opEyebrow}</p>
-              <h2>{t.opH2}</h2>
-              <p>{t.opP}</p>
-            </div>
-            <div className="identity">
-              <div className="identity-card">
-                <p className="eyebrow">{t.brandPlace}</p>
-                <h3>AUMARA</h3>
-                <p>{t.brandP}</p>
-                <div className="identity-row">
-                  <strong>{t.rowBook}</strong>
-                  <span>
-                    <a href={BOOK_DIRECT} target="_blank" rel="noopener noreferrer">
-                      {t.rowBookV}
-                    </a>
-                  </span>
-                </div>
-                <div className="identity-row">
-                  <strong>{t.rowFmt}</strong>
-                  <span>{t.rowFmtV}</span>
-                </div>
-                <div className="identity-row">
-                  <strong>{t.rowWalk}</strong>
-                  <span>{t.rowWalkV}</span>
-                </div>
-              </div>
-              <div className="identity-card">
-                <p className="eyebrow">{t.legalEyebrow}</p>
-                <h3>EL CID VENTURES BENIDOLEIG S.L.</h3>
-                <p>{t.legalP}</p>
-                <div className="identity-row">
-                  <strong>{t.rowCif}</strong>
-                  <span>B53816989</span>
-                </div>
-                <div className="identity-row">
-                  <strong>{t.rowAddr}</strong>
-                  <span>{t.addr}</span>
-                </div>
-                <div className="identity-row">
-                  <strong>{t.rowEmail}</strong>
-                  <span>
-                    <a href="mailto:elcidspain@gmail.com">elcidspain@gmail.com</a>
-                  </span>
-                </div>
-                <div className="identity-row">
-                  <strong>WhatsApp</strong>
-                  <span>
-                    <a href="https://wa.me/34649242159" target="_blank" rel="noopener noreferrer">Elena Semina · +34 649 242 159</a><br />
-                    <a href="https://wa.me/34622914323" target="_blank" rel="noopener noreferrer">Ilya · +34 622 914 323</a><br />
-                    <a href="https://wa.me/34622537748" target="_blank" rel="noopener noreferrer">Lera · +34 622 537 748</a>
-                  </span>
-                </div>
               </div>
             </div>
           </div>
